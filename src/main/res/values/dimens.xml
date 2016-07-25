@@ -1,0 +1,5 @@
+<resources>
+
+    <dimen name="scratch__touch_radius">30dip</dimen>
+
+</resources>

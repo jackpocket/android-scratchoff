@@ -1,0 +1,5 @@
+<resources>
+
+    <integer name="scratch__threshold_percent">65</integer>
+
+</resources>
