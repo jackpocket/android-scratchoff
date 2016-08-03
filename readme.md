@@ -12,7 +12,7 @@ A simple library for implementing scratchable Views.
     }
 
     dependencies {
-        compile('com.jackpocket:scratchoff:1.0.0')
+        compile('com.jackpocket:scratchoff:1.0.1')
     }
 ```
 
@@ -66,13 +66,14 @@ Now that you have a layout, we need to attach the **ScratchoffController** to it
 ```
     ScratchoffController controller = new ScratchoffController(context)
             .setThresholdPercent(0.40d)
+            .setTouchRadiusDip(context, 30)
             .setFadeOnClear(true)
             .setClearOnThresholdReached(true)
             .setCompletionCallback(() -> {  })
             .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
 ```
 
-In this example, you only **need** the constructor and the **attach(View, View)** method to enable scratching. The default values for all the other methods are configurable by overriding the appropriate resources.
+In this example, you only *need* the constructor and the **attach(View, View)** method to enable scratching. The default values for all the other methods are configurable by overriding the appropriate resources.
 
 Since the foreground View in our example is a **ScratchableLinearLayout** (which implements **ScratchableLayout**), the ScratchoffController will automatically attach itself to the View and drawing will work correctly (the same goes for the **ScratchableRelativeLayout**).
 

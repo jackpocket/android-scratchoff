@@ -62,7 +62,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
      * @param behindView The View to be revealed
      */
     public ScratchoffController attach(View scratchableLayout, View behindView){
-        stopProcessors();
+        safelyStopProcessors();
 
         this.scratchableLayout = scratchableLayout;
         this.behindView = behindView;
@@ -79,7 +79,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         if(scratchableLayout == null)
             throw new IllegalStateException("Cannot attach to a null View! Ensure you call attach(View, View) with valid Views!");
 
-        stopProcessors();
+        safelyStopProcessors();
 
         this.processor = new ScratchoffProcessor(this);
 
@@ -102,7 +102,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         this.enabled = true;
         this.thresholdReached = false;
 
-        processor.start();
+        safelyStartProcessors();
     }
 
     @Override
@@ -124,21 +124,19 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public ScratchoffController onPause() {
-        stopProcessors();
+        safelyStopProcessors();
 
         return this;
     }
 
     public ScratchoffController onResume() {
-        if(enabled && !(processor == null || processor.isActive()))
-            processor.start();
+        safelyStartProcessors();
 
         return this;
     }
 
     public ScratchoffController onDestroy() {
-        if(processor != null && processor.isActive())
-            processor.cancel();
+        safelyStopProcessors();
 
         if(layoutDrawer != null)
             layoutDrawer.destroy();
@@ -184,6 +182,16 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return this;
     }
 
+    public ScratchoffController setTouchRadiusPx(int touchRadius) {
+        this.touchRadius = touchRadius;
+        return this;
+    }
+
+    public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
+        this.touchRadius = ViewHelper.getPxFromDip(context, touchRadius);
+        return this;
+    }
+
     public ScratchoffController setCompletionCallback(Runnable completionCallback){
         this.completionCallback = completionCallback;
         return this;
@@ -214,8 +222,13 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return behindView;
     }
 
-    private void stopProcessors(){
-        if(processor != null)
+    private void safelyStartProcessors(){
+        if(enabled && !(processor == null || processor.isActive()))
+            processor.start();
+    }
+
+    private void safelyStopProcessors(){
+        if(processor != null && processor.isActive())
             processor.cancel();
     }
 
