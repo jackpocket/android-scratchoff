@@ -6,14 +6,14 @@ A simple library for implementing scratchable Views.
 
 # Installation
 
-```
-    repositories {
-        jcenter()
-    }
+```groovy
+repositories {
+    jcenter()
+}
 
-    dependencies {
-        compile('com.jackpocket:scratchoff:1.0.1')
-    }
+dependencies {
+    compile('com.jackpocket:scratchoff:1.0.2')
+}
 ```
 
 # Usage
@@ -63,14 +63,14 @@ Note: be careful with the dimensions of both the behind-View and the foreground 
 
 Now that you have a layout, we need to attach the **ScratchoffController** to it:
 
-```
-    ScratchoffController controller = new ScratchoffController(context)
-            .setThresholdPercent(0.40d)
-            .setTouchRadiusDip(context, 30)
-            .setFadeOnClear(true)
-            .setClearOnThresholdReached(true)
-            .setCompletionCallback(() -> {  })
-            .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+```java
+ScratchoffController controller = new ScratchoffController(context)
+        .setThresholdPercent(0.40d)
+        .setTouchRadiusDip(context, 30)
+        .setFadeOnClear(true)
+        .setClearOnThresholdReached(true)
+        .setCompletionCallback(() -> {  })
+        .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
 ```
 
 In this example, you only *need* the constructor and the **attach(View, View)** method to enable scratching. The default values for all the other methods are configurable by overriding the appropriate resources.
@@ -79,23 +79,44 @@ Since the foreground View in our example is a **ScratchableLinearLayout** (which
 
 Please note: If you're not using one of the supplied ScratchableLayouts, you must manually call **ScratchoffController.draw(Canvas)** from your custom View's **onDraw(Canvas)** method.
 
+### Re-using the ScratchController
+
+With version 1.0.2, the ScratchController can be correctly reset using `ScratchController.reset()`, but you must set the background color of your ScratchableLayout back to something opaque before calling it, as the ScratchableLayoutDrawer must set it to transparent afterwards in order to efficiently process scratched paths. e.g.
+
+```java
+controller = new ScratchoffController(this)
+        .setCompletionCallback(() ->{
+            findViewById(R.id.scratch_view)
+                    .setBackgroundColor(0xFF3C9ADF); // Make sure to set the background. Don't worry, it's still hidden if it cleared
+
+            new Handler(Looper.getMainLooper())
+                    .postDelayed(() -> 
+                            controller.reset(), 2000);
+        })
+        .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+```
+
+### Lifecycle
+
 As a final note, if using the ScratchoffController in the context of an Activity, you may want to also ensure you call the correct lifecycle methods for *onPause()*, *onResume()*, and *onDestroy()* as needed, to ensure the processors will stop/restart and not run needlessly in the background. e.g.
 
-    @Override
-    public void onPause(){
-        controller.onPause();
-        super.onPause();
-    }
+```java
+@Override
+public void onPause(){
+    controller.onPause();
+    super.onPause();
+}
 
-    @Override
-    public void onResume(){
-        super.onResume();
-        controller.onResume();
-    }
+@Override
+public void onResume(){
+    super.onResume();
+    controller.onResume();
+}
 
-    @Override
-    public void onDestroy(){
-        controller.onDestroy();
-        super.onDestroy();
-    }
+@Override
+public void onDestroy(){
+    controller.onDestroy();
+    super.onDestroy();
+}
+```
 

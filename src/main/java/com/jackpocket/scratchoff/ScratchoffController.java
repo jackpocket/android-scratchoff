@@ -67,27 +67,28 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         this.scratchableLayout = scratchableLayout;
         this.behindView = behindView;
 
-        this.layoutDrawer = new ScratchableLayoutDrawer()
-                .attach(this, scratchableLayout, behindView);
-
-        scratchableLayout.setOnTouchListener(this);
-
         return reset();
     }
 
-    public ScratchoffController reset() {
+    /**
+     * Reset the controller to its pre-scratched state. attach(View, View) must be called prior to resetting.
+     */
+    public ScratchoffController reset(){
         if(scratchableLayout == null)
             throw new IllegalStateException("Cannot attach to a null View! Ensure you call attach(View, View) with valid Views!");
 
         safelyStopProcessors();
 
-        this.processor = new ScratchoffProcessor(this);
-
         scratchableLayout.clearAnimation();
-
         scratchableLayout.setVisibility(View.VISIBLE);
-
         scratchableLayout.invalidate();
+
+        this.layoutDrawer = new ScratchableLayoutDrawer()
+                .attach(this, scratchableLayout, behindView);
+
+        scratchableLayout.setOnTouchListener(this);
+
+        this.processor = new ScratchoffProcessor(this);
 
         if(scratchableLayout instanceof ScratchableLayout)
             ((ScratchableLayout) scratchableLayout).initialize(this);
@@ -159,6 +160,8 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
         if(layoutDrawer != null)
             layoutDrawer.clear(fadeOnClear);
+
+        safelyStopProcessors();
 
         return this;
     }

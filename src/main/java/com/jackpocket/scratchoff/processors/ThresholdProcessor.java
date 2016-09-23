@@ -8,6 +8,7 @@ public class ThresholdProcessor extends Processor {
 
     private static final int SLEEP_DELAY_WAITING = 50;
     private static final int SLEEP_DELAY_RUNNING = 500;
+    private static final int SLEEP_DELAY_START = 1000;
 
     private static final int ALPHA_INDEX = 24;
     private static final int ALPHA_ZERO = 0x00;
@@ -32,6 +33,8 @@ public class ThresholdProcessor extends Processor {
 
     @Override
     protected void doInBackground() throws Exception {
+        Thread.sleep(SLEEP_DELAY_START);
+
         while(isActive() && !controller.isThresholdReached()){
             getUpdatedDrawingCache();
 
