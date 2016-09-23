@@ -18,7 +18,7 @@ public class ScratchoffProcessor extends Processor {
 
     private ArrayList<Path> queuedEvents = new ArrayList<Path>();
 
-    private int[] lastTouchEvent;
+    private int[] lastTouchEvent = new int[]{ 0, 0 };
 
     public ScratchoffProcessor(ScratchoffController controller) {
         this.controller = controller;
@@ -28,7 +28,10 @@ public class ScratchoffProcessor extends Processor {
     }
 
     public void onReceieveMotionEvent(MotionEvent e, boolean actionDown) {
-        int[] event = new int[]{ (int) e.getX(), (int) e.getY() };
+        int[] event = new int[]{
+                (int) e.getX(),
+                (int) e.getY()
+        };
 
         if(!actionDown){
             Path path = new Path();
