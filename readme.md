@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     compile('com.jackpocket:scratchoff:1.1.0')
+    compile 'com.android.support:support-v4:23.4.0'
 }
 ```
 
@@ -22,41 +23,39 @@ The goal of this library is to create a scratchoff interface. By storing and man
 
 First, you need a RelativeLayout (to align layouts on top of one another) consisting of 2 sub-layouts, a behind-View and the View to be scratched away from the foreground. Here is a simple example using the **ScratchableLinearLayout**:
 
-```
+```xml
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-        <RelativeLayout
-            android:id="@+id/scratch_view_behind"
+        android:id="@+id/scratch_view_behind"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#818B8D" >
+        <ImageView
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:background="#818B8D" >
-
-            <ImageView
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_margin="25dip"
-                android:adjustViewBounds="true"
-                android:src="@drawable/some_drawable_to_be_revealed" />
-        </RelativeLayout>
-
-        <com.jackpocket.scratchoff.views.ScratchableLinearLayout
-            android:id="@+id/scratch_view"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:background="#3C9ADF" >
-
-            <ImageView
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:adjustViewBounds="true"
-                android:gravity="center"
-                android:src="@drawable/some_top_drawable" />
-        </com.jackpocket.scratchoff.views.ScratchableLinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_margin="25dip"
+            android:adjustViewBounds="true"
+            android:src="@drawable/some_drawable_to_be_revealed" />
     </RelativeLayout>
+
+    <com.jackpocket.scratchoff.views.ScratchableLinearLayout
+        android:id="@+id/scratch_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#3C9ADF" >
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:adjustViewBounds="true"
+            android:gravity="center"
+            android:src="@drawable/some_top_drawable" />
+    </com.jackpocket.scratchoff.views.ScratchableLinearLayout>
+</RelativeLayout>
 ```
 
 Note: be careful with the dimensions of both the behind-View and the foreground View. The **ScratchableLayoutDrawer** will attempt to set the foreground View's LayoutParam width and height attributes to match that of the behind-View so that their dimensions line up perfectly. 
@@ -119,4 +118,6 @@ public void onDestroy(){
     super.onDestroy();
 }
 ```
+
+Since version 1.1.0, the processors will stop if `ViewCompat.isAttachedToWindow(View)` returns false for whatever scratchable layout the controller was attached to (that's why there's now a support package dependency...).
 
