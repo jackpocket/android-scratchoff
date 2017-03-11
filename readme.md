@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile('com.jackpocket:scratchoff:1.0.2')
+    compile('com.jackpocket:scratchoff:1.1.0')
 }
 ```
 

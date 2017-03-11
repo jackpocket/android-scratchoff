@@ -12,29 +12,28 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 
-import java.util.ArrayList;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class ScratchableLayoutDrawer<T extends View> {
 
-    private T scratchView;
-    private Bitmap imageMutable;
+    private WeakReference<T> scratchView;
+
+    private Canvas pathStrippedCanvas;
+    private Bitmap pathStrippedImage;
 
     private LayoutCallback gridListener;
-
-    private List<Path> paths = new ArrayList<Path>();
 
     private Paint clearPaint;
     private boolean cleared = false;
 
     public ScratchableLayoutDrawer(){
         this.cleared = false;
-        this.imageMutable = null;
-        this.paths = new ArrayList<Path>();
+        this.pathStrippedImage = null;
     }
 
     public ScratchableLayoutDrawer attach(ScratchoffController controller, T scratchView, final View behindView){
-        this.scratchView = scratchView;
+        this.scratchView = new WeakReference<T>(scratchView);
         this.gridListener = controller;
 
         scratchView.setWillNotDraw(false);
@@ -48,47 +47,49 @@ public class ScratchableLayoutDrawer<T extends View> {
         clearPaint.setStrokeCap(Paint.Cap.ROUND);
         clearPaint.setStrokeJoin(Paint.Join.ROUND);
         clearPaint.setAntiAlias(true);
-        clearPaint.setStrokeWidth(controller.getTouchRadius() * 2);
+        clearPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
 
-        setBehindView(behindView);
+        setBehindView(scratchView, behindView);
 
         return this;
     }
 
-    private void setBehindView(final View behindView) {
+    private void setBehindView(final T scratchView, final View behindView) {
         ViewHelper.addGlobalLayoutRequest(behindView,
                 new Runnable(){
                     public void run(){
-                        initializeBehindView(behindView);
+                        initializeBehindView(scratchView, behindView);
 
-                        waitForDisplay();
+                        waitForDisplay(scratchView);
                     }
                 });
     }
 
-    private void initializeBehindView(View view) {
+    private void initializeBehindView(final T scratchView, final View behindView) {
         ViewGroup.LayoutParams params = scratchView.getLayoutParams();
-        params.width = view.getWidth();
-        params.height = view.getHeight();
+        params.width = behindView.getWidth();
+        params.height = behindView.getHeight();
 
         scratchView.setLayoutParams(params);
     }
 
-    private void waitForDisplay() {
+    private void waitForDisplay(final T scratchView) {
         ViewHelper.addGlobalLayoutRequest(scratchView,
                 new Runnable(){
                     public void run(){
-                        initializePostDisplay();
+                        initializePostDisplay(scratchView);
                     }
                 });
     }
 
-    private void initializePostDisplay() {
+    private void initializePostDisplay(final T scratchView) {
         scratchView.setDrawingCacheEnabled(true);
         scratchView.buildDrawingCache();
 
         Bitmap cached = scratchView.getDrawingCache();
-        imageMutable = Bitmap.createBitmap(cached);
+        pathStrippedImage = Bitmap.createBitmap(cached);
+
+        pathStrippedCanvas = new Canvas(pathStrippedImage);
 
         scratchView.setDrawingCacheEnabled(false);
 
@@ -96,33 +97,33 @@ public class ScratchableLayoutDrawer<T extends View> {
 
         hideChildren();
 
-        gridListener.onScratchableLayoutAvailable(imageMutable.getWidth(),
-                imageMutable.getHeight());
+        gridListener.onScratchableLayoutAvailable(pathStrippedImage.getWidth(),
+                pathStrippedImage.getHeight());
     }
 
     public void draw(Canvas canvas) {
-        if(cleared || imageMutable == null)
+        if(cleared || pathStrippedImage == null)
             return;
-        else{
-            canvas.drawBitmap(imageMutable, 0, 0, null);
-
-            for(Path path : getPaths())
-                canvas.drawPath(path, clearPaint);
-        }
+        else
+            canvas.drawBitmap(pathStrippedImage, 0, 0, null);
     }
+
     public void addPaths(List<Path> paths) {
-        getPaths()
-                .addAll(paths);
-    }
+        if(pathStrippedImage == null)
+            return;
 
-    private synchronized List<Path> getPaths() {
-        return paths;
+        synchronized(pathStrippedImage){
+            for(Path path : paths)
+                pathStrippedCanvas.drawPath(path, clearPaint);
+        }
     }
 
     public void destroy() {
-        if(imageMutable != null){
-            imageMutable.recycle();
-            imageMutable = null;
+        if(pathStrippedImage != null){
+            pathStrippedImage.recycle();
+            pathStrippedImage = null;
+
+            pathStrippedCanvas = null;
         }
     }
 
@@ -131,10 +132,21 @@ public class ScratchableLayoutDrawer<T extends View> {
 
         if(fade)
             fadeOut();
-        else scratchView.invalidate();
+        else{
+
+            final View v = scratchView.get();
+
+            if(v != null)
+                v.invalidate();
+        }
     }
 
     private void fadeOut() {
+        final View v = scratchView.get();
+
+        if(v == null)
+            return;
+
         AlphaAnimation anim = new AlphaAnimation(1f, 0f);
         anim.setDuration(1000);
         anim.setFillAfter(true);
@@ -144,18 +156,23 @@ public class ScratchableLayoutDrawer<T extends View> {
             public void onAnimationRepeat(Animation animation) { }
 
             public void onAnimationEnd(Animation animation) {
-                scratchView.setVisibility(View.GONE);
+                v.setVisibility(View.GONE);
 
                 showChildren();
             }
         });
 
-        scratchView.startAnimation(anim);
+        v.startAnimation(anim);
     }
 
     private void hideChildren(){
-        if(scratchView instanceof ViewGroup){
-            ViewGroup group = (ViewGroup) scratchView;
+        final View v = scratchView.get();
+
+        if(v == null)
+            return;
+
+        if(v instanceof ViewGroup){
+            ViewGroup group = (ViewGroup) v;
 
             for(int i = 0; i < group.getChildCount(); i++)
                 group.getChildAt(i)
@@ -164,13 +181,22 @@ public class ScratchableLayoutDrawer<T extends View> {
     }
 
     private void showChildren(){
-        if(scratchView instanceof ViewGroup){
-            ViewGroup group = (ViewGroup) scratchView;
+        final View v = scratchView.get();
+
+        if(v == null)
+            return;
+
+        if(v instanceof ViewGroup){
+            ViewGroup group = (ViewGroup) v;
 
             for(int i = 0; i < group.getChildCount(); i++)
                 group.getChildAt(i)
                         .setVisibility(View.VISIBLE);
         }
+    }
+
+    public Bitmap getPathStrippedImage(){
+        return pathStrippedImage;
     }
 
 }

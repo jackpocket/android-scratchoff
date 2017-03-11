@@ -6,6 +6,7 @@ import android.view.MotionEvent;
 import com.jackpocket.scratchoff.ScratchoffController;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ScratchoffProcessor extends Processor {
 
@@ -16,7 +17,7 @@ public class ScratchoffProcessor extends Processor {
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
-    private ArrayList<Path> queuedEvents = new ArrayList<Path>();
+    private List<Path> queuedEvents = new ArrayList<Path>();
 
     private int[] lastTouchEvent = new int[]{ 0, 0 };
 
@@ -46,8 +47,8 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     protected void doInBackground() throws Exception {
-        while(isActive()){
-            final ArrayList<Path> tempEvents = queuedEvents;
+        while(isActive() && controller.isProcessingAllowed()){
+            final List<Path> tempEvents = queuedEvents;
             queuedEvents = new ArrayList<Path>();
 
             if(tempEvents.size() > 0){
@@ -57,7 +58,8 @@ public class ScratchoffProcessor extends Processor {
                     }
                 });
 
-                invalidationProcessor.onReceievePaths(tempEvents);
+                invalidationProcessor.addPaths(tempEvents);
+                thresholdProcessor.addPaths(tempEvents);
             }
 
             sleep(SLEEP_DELAY);

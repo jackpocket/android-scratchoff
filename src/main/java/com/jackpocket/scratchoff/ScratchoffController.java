@@ -3,6 +3,7 @@ package com.jackpocket.scratchoff;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
+import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -10,20 +11,21 @@ import android.view.View.OnTouchListener;
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
-    private View scratchableLayout;
+    private WeakReference<View> scratchableLayout = new WeakReference<View>(null);
     private ScratchableLayoutDrawer layoutDrawer;
 
     private ScratchoffProcessor processor;
 
     private Runnable completionCallback;
 
-    private View behindView;
+    private WeakReference<View> behindView = new WeakReference<View>(null);
 
-    private int touchRadius;
+    private int touchRadiusPx;
     private boolean thresholdReached = false;
     private double thresholdPercent = 0.65d;
 
@@ -43,7 +45,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     public ScratchoffController(Context context, Runnable completionCallback) {
         this.completionCallback = completionCallback;
 
-        this.touchRadius = (int) context.getResources()
+        this.touchRadiusPx = (int) context.getResources()
                 .getDimension(R.dimen.scratch__touch_radius);
 
         this.thresholdPercent = context.getResources()
@@ -64,8 +66,8 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     public ScratchoffController attach(View scratchableLayout, View behindView){
         safelyStopProcessors();
 
-        this.scratchableLayout = scratchableLayout;
-        this.behindView = behindView;
+        this.scratchableLayout = new WeakReference<View>(scratchableLayout);
+        this.behindView = new WeakReference<View>(behindView);
 
         return reset();
     }
@@ -74,24 +76,28 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
      * Reset the controller to its pre-scratched state. attach(View, View) must be called prior to resetting.
      */
     public ScratchoffController reset(){
-        if(scratchableLayout == null)
+        View layout = scratchableLayout.get();
+
+        if(layout == null)
             throw new IllegalStateException("Cannot attach to a null View! Ensure you call attach(View, View) with valid Views!");
 
         safelyStopProcessors();
 
-        scratchableLayout.clearAnimation();
-        scratchableLayout.setVisibility(View.VISIBLE);
-        scratchableLayout.invalidate();
+        if(layout != null){
+            layout.clearAnimation();
+            layout.setVisibility(View.VISIBLE);
+            layout.invalidate();
 
-        this.layoutDrawer = new ScratchableLayoutDrawer()
-                .attach(this, scratchableLayout, behindView);
+            this.layoutDrawer = new ScratchableLayoutDrawer()
+                    .attach(this, layout, behindView.get());
 
-        scratchableLayout.setOnTouchListener(this);
+            layout.setOnTouchListener(this);
+        }
 
         this.processor = new ScratchoffProcessor(this);
 
-        if(scratchableLayout instanceof ScratchableLayout)
-            ((ScratchableLayout) scratchableLayout).initialize(this);
+        if(layout instanceof ScratchableLayout)
+            ((ScratchableLayout) layout).initialize(this);
 
         return this;
     }
@@ -167,7 +173,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public View getScratchImageLayout() {
-        return scratchableLayout;
+        return scratchableLayout.get();
     }
 
     public ScratchoffController setThresholdPercent(double thresholdPercent) {
@@ -186,12 +192,12 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public ScratchoffController setTouchRadiusPx(int touchRadius) {
-        this.touchRadius = touchRadius;
+        this.touchRadiusPx = touchRadius;
         return this;
     }
 
     public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
-        this.touchRadius = ViewHelper.getPxFromDip(context, touchRadius);
+        this.touchRadiusPx = ViewHelper.getPxFromDip(context, touchRadius);
         return this;
     }
 
@@ -209,12 +215,18 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return thresholdPercent;
     }
 
-    public int getTouchRadius() {
-        return touchRadius;
+    public int getTouchRadiusPx() {
+        return touchRadiusPx;
     }
 
     public boolean isThresholdReached() {
         return thresholdReached;
+    }
+
+    public boolean isProcessingAllowed() {
+        return !thresholdReached
+                && scratchableLayout.get() != null
+                && ViewCompat.isAttachedToWindow(scratchableLayout.get());
     }
 
     public int getTotalGridItemsCount() {
@@ -222,7 +234,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public View getViewBehind() {
-        return behindView;
+        return behindView.get();
     }
 
     private void safelyStartProcessors(){
@@ -240,8 +252,10 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public void post(Runnable runnable){
-        if(scratchableLayout != null)
-            scratchableLayout.post(runnable);
+        View layout = scratchableLayout.get();
+
+        if(layout != null)
+            layout.post(runnable);
     }
 
 }
