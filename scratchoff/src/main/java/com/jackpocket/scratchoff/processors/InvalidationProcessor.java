@@ -35,7 +35,7 @@ public class InvalidationProcessor extends Processor {
                 queuedEvents.clear();
             }
 
-            sleep(SLEEP_DELAY);
+            Thread.sleep(SLEEP_DELAY);
         }
     }
 

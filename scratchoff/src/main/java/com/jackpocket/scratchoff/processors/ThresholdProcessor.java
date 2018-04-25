@@ -65,7 +65,7 @@ public class ThresholdProcessor extends Processor {
         while(isActive() && controller.isProcessingAllowed()){
             processImage();
 
-            sleep(SLEEP_DELAY_RUNNING);
+            Thread.sleep(SLEEP_DELAY_RUNNING);
         }
 
         safelyReleaseCurrentBitmap();

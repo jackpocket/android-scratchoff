@@ -62,7 +62,7 @@ public class ScratchoffProcessor extends Processor {
                 thresholdProcessor.addPaths(tempEvents);
             }
 
-            sleep(SLEEP_DELAY);
+            Thread.sleep(SLEEP_DELAY);
         }
     }
 

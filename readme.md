@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     compile('com.jackpocket:scratchoff:1.1.0')
-    compile 'com.android.support:support-v4:23.4.0'
+    compile 'com.android.support:appcompat-v7:27.1.1'
 }
 ```
 

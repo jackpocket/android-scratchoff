@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:id="@+id/scratch_view_behind"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#818B8D" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="REVEALED!"
+            android:textColor="#88FFFFFF"
+            android:textSize="20dip" />
+    </RelativeLayout>
+
+    <com.jackpocket.scratchoff.views.ScratchableLinearLayout
+        android:id="@+id/scratch_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:background="#3C9ADF" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="SCRATCH ME"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:textSize="20dip"/>
+    </com.jackpocket.scratchoff.views.ScratchableLinearLayout>
+</RelativeLayout>
