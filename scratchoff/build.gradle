@@ -17,7 +17,7 @@ android {
     buildToolsVersion "27.0.3"
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 9
         targetSdkVersion 27
     }
     buildTypes {
@@ -44,7 +44,7 @@ ext {
     artifact = 'scratchoff'
 
     libraryDescription = 'A Scratchoff View system.'
-    libraryVersion = '1.1.1'
+    libraryVersion = '1.2.0'
 
     developerId = 'jackpocket'
     developerName = 'Jackpocket'
