@@ -12,8 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile('com.jackpocket:scratchoff:1.2.0')
-    compile 'com.android.support:appcompat-v7:27.1.1'
+    compile('com.jackpocket:scratchoff:1.3.0')
 }
 ```
 
@@ -118,6 +117,3 @@ public void onDestroy(){
     super.onDestroy();
 }
 ```
-
-Since version 1.1.0, the processors will stop if `ViewCompat.isAttachedToWindow(View)` returns false for whatever scratchable layout the controller was attached to (that's why there's now a support package dependency...).
-

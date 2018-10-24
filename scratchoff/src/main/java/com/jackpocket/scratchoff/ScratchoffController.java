@@ -3,7 +3,6 @@ package com.jackpocket.scratchoff;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
-import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -226,7 +225,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     public boolean isProcessingAllowed() {
         return !thresholdReached
                 && scratchableLayout.get() != null
-                && ViewCompat.isAttachedToWindow(scratchableLayout.get());
+                && ViewHelper.isAttachedToWindow(scratchableLayout.get());
     }
 
     public int getTotalGridItemsCount() {

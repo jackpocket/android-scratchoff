@@ -41,4 +41,12 @@ public class ViewHelper {
         return (int) (dip * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    @SuppressLint("NewApi")
+    public static boolean isAttachedToWindow(View view) {
+        if (Build.VERSION.SDK_INT < 19) {
+            return view.getWindowToken() != null;
+        }
+
+        return view.isAttachedToWindow();
+    }
 }
