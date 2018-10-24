@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
+import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
 import java.lang.ref.WeakReference;
@@ -19,6 +20,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     private ScratchableLayoutDrawer layoutDrawer;
 
     private ScratchoffProcessor processor;
+    private ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener;
 
     private Runnable completionCallback;
 
@@ -94,6 +96,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         }
 
         this.processor = new ScratchoffProcessor(this);
+        this.processor.setScratchValueChangedListener(scratchValueChangedListener);
 
         if(layout instanceof ScratchableLayout)
             ((ScratchableLayout) layout).initialize(this);
@@ -116,8 +119,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         if(!enabled)
             return false;
 
-        processor.onReceieveMotionEvent(event,
-                event.getAction() == MotionEvent.ACTION_DOWN);
+        processor.onReceieveMotionEvent(event, event.getAction() == MotionEvent.ACTION_DOWN);
 
         this.lastTouchEvent = System.currentTimeMillis();
 
@@ -151,7 +153,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public void onThresholdReached() {
-        thresholdReached = true;
+        this.thresholdReached = true;
 
         if(clearOnThresholdReached)
             clear();
@@ -161,7 +163,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     public ScratchoffController clear() {
-        enabled = false;
+        this.enabled = false;
 
         if(layoutDrawer != null)
             layoutDrawer.clear(fadeOnClear);
@@ -200,8 +202,24 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return this;
     }
 
+    /**
+     * Set a Runnable to be triggered when the percentage of scratched area exceeds the threshold.
+     */
     public ScratchoffController setCompletionCallback(Runnable completionCallback){
         this.completionCallback = completionCallback;
+        return this;
+    }
+
+    /**
+     * Set a callback to be triggered when the percentage of scratched area changes.
+     * Callback values are in the range [0, 100]
+     */
+    public ScratchoffController setScratchValueChangedListener(ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener) {
+        this.scratchValueChangedListener = scratchValueChangedListener;
+
+        if (processor != null)
+            this.processor.setScratchValueChangedListener(scratchValueChangedListener);
+
         return this;
     }
 
@@ -256,5 +274,4 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         if(layout != null)
             layout.post(runnable);
     }
-
 }

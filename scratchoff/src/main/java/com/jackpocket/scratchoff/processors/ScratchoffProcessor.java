@@ -28,6 +28,10 @@ public class ScratchoffProcessor extends Processor {
         this.invalidationProcessor = new InvalidationProcessor(controller);
     }
 
+    public void setScratchValueChangedListener(ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener) {
+        thresholdProcessor.setScratchValueChangedListener(scratchValueChangedListener);
+    }
+
     public void onReceieveMotionEvent(MotionEvent e, boolean actionDown) {
         int[] event = new int[]{
                 (int) e.getX(),
@@ -87,5 +91,4 @@ public class ScratchoffProcessor extends Processor {
 
         super.cancel();
     }
-
 }
