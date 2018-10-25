@@ -11,8 +11,12 @@ import java.util.List;
 
 public class ThresholdProcessor extends Processor {
 
-    private static final int SLEEP_DELAY_RUNNING = 500;
-    private static final int SLEEP_DELAY_START = 1000;
+    public interface ScratchValueChangedListener {
+        public void onScratchPercentChanged(double percentCompleted);
+    }
+
+    private static final int SLEEP_DELAY_RUNNING = 50;
+    private static final int SLEEP_DELAY_START = 100;
 
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
@@ -24,6 +28,8 @@ public class ThresholdProcessor extends Processor {
     private Canvas canvas;
     private Paint markerPaint = new Paint();
 
+    private ScratchValueChangedListener valueChangedListener;
+    private double lastPercentScratched = -1;
     private boolean thresholdReached = false;
 
     public ThresholdProcessor(ScratchoffController controller) {
@@ -33,6 +39,11 @@ public class ThresholdProcessor extends Processor {
         this.markerPaint.setStyle(Paint.Style.STROKE);
         this.markerPaint.setStrokeCap(Paint.Cap.ROUND);
         this.markerPaint.setStrokeJoin(Paint.Join.ROUND);
+    }
+
+    public ThresholdProcessor setScratchValueChangedListener(ScratchValueChangedListener valueChangedListener) {
+        this.valueChangedListener = valueChangedListener;
+        return this;
     }
 
     @Override
@@ -79,14 +90,23 @@ public class ThresholdProcessor extends Processor {
         this.canvas.drawColor(MARKER_UNTOUCHED);
     }
 
-    private void processImage(){
+    private void processImage() {
+        if (thresholdReached)
+            return;
+
         double percentScratched = Math.min(1, getScratchedCount(currentBitmap) / (currentBitmap.getWidth() * currentBitmap.getHeight()));
 
-        if(controller.getThresholdPercent() < percentScratched && !thresholdReached){
-            thresholdReached = true;
+        if (percentScratched != this.lastPercentScratched) {
+            postScratchValueChanged(percentScratched);
+        }
+
+        if(controller.getThresholdPercent() < percentScratched){
+            this.thresholdReached = true;
 
             postThresholdReached();
         }
+
+        this.lastPercentScratched = percentScratched;
     }
 
     private double getScratchedCount(Bitmap bitmap) {
@@ -110,6 +130,19 @@ public class ThresholdProcessor extends Processor {
         });
     }
 
+    private void postScratchValueChanged(final double value) {
+        final ScratchValueChangedListener valueChangedListener = this.valueChangedListener;
+
+        if (valueChangedListener == null)
+            return;
+
+        controller.post(new Runnable() {
+            public void run() {
+                valueChangedListener.onScratchPercentChanged(value);
+            }
+        });
+    }
+
     @Override
     public void cancel(){
         super.cancel();
@@ -128,5 +161,4 @@ public class ThresholdProcessor extends Processor {
         }
         catch(Exception e){ e.printStackTrace(); }
     }
-
 }

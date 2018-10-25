@@ -12,8 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile('com.jackpocket:scratchoff:1.2.0')
-    compile 'com.android.support:appcompat-v7:27.1.1'
+    compile('com.jackpocket:scratchoff:1.3.0')
 }
 ```
 
@@ -84,13 +83,16 @@ With version 1.0.2, the ScratchController can be correctly reset using `ScratchC
 
 ```java
 controller = new ScratchoffController(this)
-        .setCompletionCallback(() ->{
+        .setCompletionCallback(() -> {
             findViewById(R.id.scratch_view)
                     .setBackgroundColor(0xFF3C9ADF); // Make sure to set the background. Don't worry, it's still hidden if it cleared
 
             new Handler(Looper.getMainLooper())
                     .postDelayed(() -> 
                             controller.reset(), 2000);
+        })
+        .setScratchValueChangedListener(percentChanged -> {
+            // Do something on scratch percent value changed
         })
         .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
 ```
@@ -118,6 +120,3 @@ public void onDestroy(){
     super.onDestroy();
 }
 ```
-
-Since version 1.1.0, the processors will stop if `ViewCompat.isAttachedToWindow(View)` returns false for whatever scratchable layout the controller was attached to (that's why there's now a support package dependency...).
-

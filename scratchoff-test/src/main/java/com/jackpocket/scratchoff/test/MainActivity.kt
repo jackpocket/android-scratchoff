@@ -2,23 +2,29 @@ package com.jackpocket.scratchoff.test
 
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.os.Looper
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.jackpocket.scratchoff.ScratchoffController
+import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
+import java.lang.ref.WeakReference
 
-class MainActivity: AppCompatActivity() {
+class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedListener {
 
     private lateinit var controller: ScratchoffController
+    private var scratchPercentTitleView = WeakReference<TextView>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
 
+        this.scratchPercentTitleView = WeakReference(findViewById(R.id.scratch_value_title))
+
         this.controller = ScratchoffController(this)
-                .setThresholdPercent(.3)
+                .setThresholdPercent(.4)
                 .setFadeOnClear(true)
                 .setTouchRadiusDip(this, 25)
                 .setCompletionCallback({
@@ -28,6 +34,7 @@ class MainActivity: AppCompatActivity() {
                     Handler(Looper.getMainLooper())
                             .postDelayed({ controller.reset() }, 2000)
                 })
+                .setScratchValueChangedListener(this)
                 .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind))
     }
 
@@ -47,6 +54,10 @@ class MainActivity: AppCompatActivity() {
         this.controller.onDestroy()
 
         super.onDestroy()
+    }
+
+    override fun onScratchPercentChanged(percentCompleted: Double) {
+        scratchPercentTitleView.get()?.text = "Scratched ${percentCompleted * 100}%"
     }
 
     companion object {
