@@ -119,7 +119,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         if(!enabled)
             return false;
 
-        processor.onReceieveMotionEvent(event, event.getAction() == MotionEvent.ACTION_DOWN);
+        processor.onReceiveMotionEvent(event, event.getAction() == MotionEvent.ACTION_DOWN);
 
         this.lastTouchEvent = System.currentTimeMillis();
 

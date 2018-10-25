@@ -32,7 +32,7 @@ public class ScratchoffProcessor extends Processor {
         thresholdProcessor.setScratchValueChangedListener(scratchValueChangedListener);
     }
 
-    public void onReceieveMotionEvent(MotionEvent e, boolean actionDown) {
+    public void onReceiveMotionEvent(MotionEvent e, boolean actionDown) {
         int[] event = new int[]{
                 (int) e.getX(),
                 (int) e.getY()
@@ -46,14 +46,14 @@ public class ScratchoffProcessor extends Processor {
             queuedEvents.add(path);
         }
 
-        lastTouchEvent = event;
+        this.lastTouchEvent = event;
     }
 
     @Override
     protected void doInBackground() throws Exception {
         while(isActive() && controller.isProcessingAllowed()){
             final List<Path> tempEvents = queuedEvents;
-            queuedEvents = new ArrayList<Path>();
+            this.queuedEvents = new ArrayList<Path>();
 
             if(tempEvents.size() > 0){
                 controller.post(new Runnable() {
