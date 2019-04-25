@@ -12,6 +12,7 @@ import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScratchoffController implements OnTouchListener, LayoutCallback {
@@ -38,6 +39,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     private boolean enabled = true;
 
     private long lastTouchEvent = 0;
+    private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
 
     public ScratchoffController(Context context) {
         this(context, null);
@@ -116,6 +118,10 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
+        for (OnTouchListener observer : touchObservers) {
+            observer.onTouch(view, event);
+        }
+
         if(!enabled)
             return false;
 
@@ -266,6 +272,26 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     public ScratchableLayoutDrawer getLayoutDrawer(){
         return layoutDrawer;
+    }
+
+    /**
+     * Add an OnTouchListener to observe MotionEvents as they are passed
+     * into the ScratchoffController. Events will be forwarded regardless of
+     * the ScratchoffController's enabled state, and all return values will be ignored.
+     *
+     * If adding observers (in Activity.onResume), you should also call
+     * ScratchoffController.removeTouchObservers (in Activity.onPause).
+     *
+     * @param touchListener a non-null OnTouchListener
+     */
+    public ScratchoffController addTouchObserver(OnTouchListener touchListener) {
+        this.touchObservers.add(touchListener);
+
+        return this;
+    }
+
+    public void removeTouchObservers() {
+        this.touchObservers.clear();
     }
 
     public void post(Runnable runnable){
