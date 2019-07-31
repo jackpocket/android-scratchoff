@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile('com.jackpocket:scratchoff:1.3.0')
+    compile('com.jackpocket:scratchoff:1.3.1')
 }
 ```
 
@@ -105,18 +105,48 @@ As a final note, if using the ScratchoffController in the context of an Activity
 @Override
 public void onPause(){
     controller.onPause();
+    controller.removeTouchObservers()
+
     super.onPause();
 }
 
 @Override
 public void onResume(){
     super.onResume();
+
     controller.onResume();
+    controller.addTouchObserver((view, event) -> {
+        // Do something on MotionEvent?
+    });
 }
 
 @Override
 public void onDestroy(){
     controller.onDestroy();
+
     super.onDestroy();
+}
+```
+
+### Observing MotionEvents
+
+As of version 1.3.1, you can add an `OnTouchListener` to the `ScratchoffController` to observe `MotionEvents` as they come in, regardless of enabled state. When adding these observers, it'd be a good idea to remove them in the appropriate lifecycle methods.
+
+
+```java
+@Override
+public void onPause(){
+    controller.removeTouchObservers()
+
+    ....
+}
+
+@Override
+public void onResume(){
+    ....
+
+    controller.addTouchObserver((view, event) -> {
+        // Do something on a particular MotionEvent?
+    });
 }
 ```

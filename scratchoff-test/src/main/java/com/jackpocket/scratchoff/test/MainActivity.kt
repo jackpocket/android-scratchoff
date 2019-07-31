@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.os.Looper
+import android.view.MotionEvent
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.jackpocket.scratchoff.ScratchoffController
@@ -11,7 +13,7 @@ import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import java.lang.ref.WeakReference
 
-class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedListener {
+class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedListener, View.OnTouchListener {
 
     private lateinit var controller: ScratchoffController
     private var scratchPercentTitleView = WeakReference<TextView>(null)
@@ -42,12 +44,14 @@ class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedL
         super.onResume()
 
         this.controller.onResume()
+        this.controller.addTouchObserver(this)
     }
 
     override fun onPause() {
         super.onPause()
 
         this.controller.onPause()
+        this.controller.removeTouchObservers()
     }
 
     override fun onDestroy() {
@@ -58,6 +62,16 @@ class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedL
 
     override fun onScratchPercentChanged(percentCompleted: Double) {
         scratchPercentTitleView.get()?.text = "Scratched ${percentCompleted * 100}%"
+    }
+
+    override fun onTouch(view: View, event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> Log.d(TAG, "Observed ACTION_DOWN")
+            MotionEvent.ACTION_UP -> Log.d(TAG, "Observed ACTION_UP")
+        }
+
+        // Our return is ignored here
+        return false
     }
 
     companion object {
