@@ -290,6 +290,17 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return this;
     }
 
+    /**
+     * Remove a OnTouchListener from the ScratchoffController.
+     *
+     * @param touchListener a non-null OnTouchListener
+     */
+    public ScratchoffController removeTouchObserver(OnTouchListener touchListener) {
+        this.touchObservers.remove(touchListener);
+
+        return this;
+    }
+
     public void removeTouchObservers() {
         this.touchObservers.clear();
     }
