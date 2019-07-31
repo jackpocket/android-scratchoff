@@ -43,7 +43,9 @@ public class ScratchoffProcessor extends Processor {
             path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
             path.lineTo(event[0], event[1]);
 
-            queuedEvents.add(path);
+            synchronized (queuedEvents) {
+                queuedEvents.add(path);
+            }
         }
 
         this.lastTouchEvent = event;
@@ -52,22 +54,33 @@ public class ScratchoffProcessor extends Processor {
     @Override
     protected void doInBackground() throws Exception {
         while(isActive() && controller.isProcessingAllowed()){
-            final List<Path> tempEvents = queuedEvents;
-            this.queuedEvents = new ArrayList<Path>();
+            final List<Path> events = synchronouslyDequeueEvents();
 
-            if(tempEvents.size() > 0){
+            if(events.size() > 0){
                 controller.post(new Runnable() {
                     public void run() {
-                        controller.addPaths(tempEvents);
+                        controller.addPaths(events);
                     }
                 });
 
-                invalidationProcessor.addPaths(tempEvents);
-                thresholdProcessor.addPaths(tempEvents);
+                invalidationProcessor.addPaths(events);
+                thresholdProcessor.addPaths(events);
             }
 
             Thread.sleep(SLEEP_DELAY);
         }
+    }
+
+    private List<Path> synchronouslyDequeueEvents() {
+        final List<Path> tempEvents;
+
+        synchronized (queuedEvents) {
+            tempEvents = new ArrayList<Path>(queuedEvents);
+
+            this.queuedEvents.clear();
+        }
+
+        return tempEvents;
     }
 
     @Override
