@@ -150,3 +150,6 @@ public void onResume(){
     });
 }
 ```
+
+Additional credits:
++ [scratchoff-test/src/res/drawable/ic_touch_indicator.xml](https://www.svgrepo.com/svg/9543/touch)
