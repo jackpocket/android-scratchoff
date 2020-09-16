@@ -76,10 +76,10 @@ public class ThresholdProcessor extends Processor {
     protected void doInBackground() throws Exception {
         Thread.sleep(SLEEP_DELAY_START);
 
-        if(controller.isProcessingAllowed())
+        if (controller.isProcessingAllowed())
             prepareCanvas();
 
-        while(isActive() && controller.isProcessingAllowed()){
+        while (isActive() && controller.isProcessingAllowed()) {
             processImage();
 
             Thread.sleep(SLEEP_DELAY_RUNNING);
@@ -158,7 +158,7 @@ public class ThresholdProcessor extends Processor {
     }
 
     private void safelyReleaseCurrentBitmap() {
-        try{
+        try {
             synchronized (lock) {
                 if (currentBitmap == null)
                     return;
