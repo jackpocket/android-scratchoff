@@ -34,11 +34,7 @@ class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedL
                 .setClearAnimationInterpolator(LinearInterpolator())
                 .setTouchRadiusDip(this, 25)
                 .setCompletionCallback({
-                    findViewById<ScratchableLinearLayout>(R.id.scratch_view)
-                            .setBackgroundColor(-0xc36521)
-
-                    Handler(Looper.getMainLooper())
-                            .postDelayed({ controller.reset() }, 2000)
+                    // Do something?
                 })
                 .setScratchValueChangedListener(this)
                 .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind))
@@ -76,6 +72,15 @@ class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedL
 
         // Our return is ignored here
         return false
+    }
+
+    fun resetActionClicked(view: View?) {
+        // Reset the scratchable View's background color, as the ScratchableLayoutDrawer
+        // will set the background to Color.TRANSPARENT after capturing the content
+        findViewById<ScratchableLinearLayout>(R.id.scratch_view)
+                .setBackgroundColor(-0xc36521)
+
+        controller.reset()
     }
 
     companion object {

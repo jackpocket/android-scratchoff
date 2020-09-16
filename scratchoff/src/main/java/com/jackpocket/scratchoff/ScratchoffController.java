@@ -74,7 +74,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
      * @param scratchableLayout The View to scratch away. If not an instance of ScratchableLayout, you must handle the calls to ScratchoffController.draw(Canvas) manually.
      * @param behindView The View to be revealed
      */
-    public ScratchoffController attach(View scratchableLayout, View behindView){
+    public ScratchoffController attach(View scratchableLayout, View behindView) {
         safelyStopProcessors();
 
         this.scratchableLayout = new WeakReference<View>(scratchableLayout);
@@ -86,17 +86,13 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     /**
      * Reset the controller to its pre-scratched state. attach(View, View) must be called prior to resetting.
      */
-    public ScratchoffController reset(){
+    public ScratchoffController reset() {
         View layout = scratchableLayout.get();
 
         if (layout == null)
             throw new IllegalStateException("Cannot attach to a null View! Ensure you call attach(View, View) with valid Views!");
 
         safelyStopProcessors();
-
-        layout.clearAnimation();
-        layout.setVisibility(View.VISIBLE);
-        layout.invalidate();
 
         this.layoutDrawer = new ScratchableLayoutDrawer()
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
@@ -141,7 +137,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return true;
     }
 
-    public void draw(Canvas canvas){
+    public void draw(Canvas canvas) {
         if (layoutDrawer != null)
             layoutDrawer.draw(canvas);
     }
@@ -199,7 +195,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return this;
     }
 
-    public ScratchoffController setClearOnThresholdReached(boolean clearOnThresholdReached){
+    public ScratchoffController setClearOnThresholdReached(boolean clearOnThresholdReached) {
         this.clearOnThresholdReached = clearOnThresholdReached;
 
         return this;
@@ -238,7 +234,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     /**
      * Set a Runnable to be triggered when the percentage of scratched area exceeds the threshold.
      */
-    public ScratchoffController setCompletionCallback(Runnable completionCallback){
+    public ScratchoffController setCompletionCallback(Runnable completionCallback) {
         this.completionCallback = completionCallback;
 
         return this;
@@ -288,14 +284,14 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         return behindView.get();
     }
 
-    private void safelyStartProcessors(){
-        if (enabled && !(processor == null || processor.isActive()))
+    private void safelyStartProcessors() {
+        if (enabled && processor != null)
             processor.start();
     }
 
-    private void safelyStopProcessors(){
-        if (processor != null && processor.isActive())
-            processor.cancel();
+    private void safelyStopProcessors() {
+        if (processor != null)
+            processor.stop();
     }
 
     public ScratchableLayoutDrawer getLayoutDrawer(){
@@ -333,7 +329,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         this.touchObservers.clear();
     }
 
-    public void post(Runnable runnable){
+    public void post(Runnable runnable) {
         View layout = scratchableLayout.get();
 
         if (layout != null)

@@ -27,8 +27,8 @@ public class InvalidationProcessor extends Processor {
     }
 
     @Override
-    protected void doInBackground() throws Exception {
-        while (isActive() && controller.isProcessingAllowed()){
+    protected void doInBackground(long id) throws Exception {
+        while (isActive(id) && controller.isProcessingAllowed()){
             synchronized (queuedEvents) {
                 if(queuedEvents.size() > 0)
                     controller.getScratchImageLayout()

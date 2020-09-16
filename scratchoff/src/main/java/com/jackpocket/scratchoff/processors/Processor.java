@@ -2,47 +2,38 @@ package com.jackpocket.scratchoff.processors;
 
 public abstract class Processor implements Runnable {
 
-    private boolean active = false;
-    private Thread activeThread;
+    private long activeThreadId = 0;
 
     public void start() {
         this.stop();
 
-        this.active = true;
+        this.activeThreadId = System.nanoTime();
 
-        this.activeThread = new Thread(this);
-        this.activeThread.start();
+        new Thread(this)
+                .start();
     }
 
     @Override
     public void run() {
         try {
-            doInBackground();
+            doInBackground(activeThreadId);
         }
-        catch(Throwable e){ e.printStackTrace(); }
-
-        this.active = false;
-        this.activeThread = null;
+        catch(Throwable e) { e.printStackTrace(); }
     }
 
-    protected abstract void doInBackground() throws Exception;
+    protected abstract void doInBackground(long id) throws Exception;
 
+    @Deprecated()
     public void cancel() {
-        this.active = false;
         this.stop();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void stop() {
-        try {
-            if (activeThread != null)
-                activeThread.stop();
-        }
-        catch(Exception e){ }
-
-        this.activeThread = null;
+        this.activeThreadId = System.nanoTime();
     }
 
-    public boolean isActive(){
-        return active;
+    protected boolean isActive(long id) {
+        return id == activeThreadId;
     }
 }

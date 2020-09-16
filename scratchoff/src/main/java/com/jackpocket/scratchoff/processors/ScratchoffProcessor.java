@@ -52,8 +52,8 @@ public class ScratchoffProcessor extends Processor {
     }
 
     @Override
-    protected void doInBackground() throws Exception {
-        while (isActive() && controller.isProcessingAllowed()) {
+    protected void doInBackground(long id) throws Exception {
+        while (isActive(id) && controller.isProcessingAllowed()) {
             final List<Path> events = synchronouslyDequeueEvents();
 
             if (events.size() > 0){
@@ -85,23 +85,17 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     public void start() {
-        if (thresholdProcessor != null)
-            thresholdProcessor.start();
-
-        if (invalidationProcessor != null)
-            invalidationProcessor.start();
-
         super.start();
+
+        thresholdProcessor.start();
+        invalidationProcessor.start();
     }
 
     @Override
-    public void cancel() {
-        if (thresholdProcessor != null)
-            thresholdProcessor.cancel();
+    public void stop() {
+        thresholdProcessor.stop();
+        invalidationProcessor.stop();
 
-        if (invalidationProcessor != null)
-            invalidationProcessor.cancel();
-
-        super.cancel();
+        super.stop();
     }
 }

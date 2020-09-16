@@ -19,15 +19,23 @@ import java.util.List;
 
 public class ScratchableLayoutDrawer {
 
+    enum State {
+        UNATTACHED,
+        PREPARING,
+        SCRATCHABLE,
+        CLEARING,
+        CLEARED
+    }
+
     private WeakReference<View> scratchView;
 
+    private State state = State.UNATTACHED;
     private Canvas pathStrippedCanvas;
     private Bitmap pathStrippedImage;
 
     private LayoutCallback gridListener;
 
     private Paint clearPaint;
-    private boolean cleared = false;
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
@@ -39,30 +47,39 @@ public class ScratchableLayoutDrawer {
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(ScratchoffController controller, View scratchView, final View behindView) {
-        this.scratchView = new WeakReference<View>(scratchView);
-        this.gridListener = controller;
-        this.cleared = false;
+        synchronized (lock) {
+            this.scratchView = new WeakReference<View>(scratchView);
+            this.gridListener = controller;
+            this.state = State.PREPARING;
 
-        scratchView.setWillNotDraw(false);
+            scratchView.clearAnimation();
+            scratchView.setVisibility(View.VISIBLE);
+            scratchView.setWillNotDraw(false);
 
-        ViewHelper.disableHardwareAcceleration(scratchView);
+            showChildren();
 
-        clearPaint = new Paint();
-        clearPaint.setAlpha(0xFF);
-        clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        clearPaint.setStyle(Paint.Style.STROKE);
-        clearPaint.setStrokeCap(Paint.Cap.ROUND);
-        clearPaint.setStrokeJoin(Paint.Join.ROUND);
-        clearPaint.setAntiAlias(true);
-        clearPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
+            scratchView.invalidate();
 
-        setBehindView(scratchView, behindView);
+            ViewHelper.disableHardwareAcceleration(scratchView);
 
-        return this;
+            clearPaint = new Paint();
+            clearPaint.setAlpha(0xFF);
+            clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+            clearPaint.setStyle(Paint.Style.STROKE);
+            clearPaint.setStrokeCap(Paint.Cap.ROUND);
+            clearPaint.setStrokeJoin(Paint.Join.ROUND);
+            clearPaint.setAntiAlias(true);
+            clearPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
+
+            setBehindView(scratchView, behindView);
+
+            return this;
+        }
     }
 
     private void setBehindView(final View scratchView, final View behindView) {
-        ViewHelper.addGlobalLayoutRequest(behindView,
+        ViewHelper.addGlobalLayoutRequest(
+                behindView,
                 new Runnable(){
                     public void run(){
                         initializeBehindView(scratchView, behindView);
@@ -81,7 +98,8 @@ public class ScratchableLayoutDrawer {
     }
 
     private void waitForDisplay(final View scratchView) {
-        ViewHelper.addGlobalLayoutRequest(scratchView,
+        ViewHelper.addGlobalLayoutRequest(
+                scratchView,
                 new Runnable(){
                     public void run(){
                         initializePostDisplay(scratchView);
@@ -90,31 +108,49 @@ public class ScratchableLayoutDrawer {
     }
 
     private void initializePostDisplay(final View scratchView) {
-        scratchView.setDrawingCacheEnabled(true);
-        scratchView.buildDrawingCache();
+        synchronized (lock) {
+            this.pathStrippedImage = createBitmapFromScratchableView(scratchView);
+            this.pathStrippedCanvas = new Canvas(pathStrippedImage);
 
-        Bitmap cached = scratchView.getDrawingCache();
-        pathStrippedImage = Bitmap.createBitmap(cached);
+            scratchView.setBackgroundColor(Color.TRANSPARENT);
 
-        pathStrippedCanvas = new Canvas(pathStrippedImage);
+            hideChildren();
 
-        scratchView.setDrawingCacheEnabled(false);
+            gridListener.onScratchableLayoutAvailable(
+                    pathStrippedImage.getWidth(),
+                    pathStrippedImage.getHeight());
 
-        scratchView.setBackgroundColor(Color.TRANSPARENT);
+            this.state = State.SCRATCHABLE;
+        }
+    }
 
-        hideChildren();
+    private Bitmap createBitmapFromScratchableView(final View scratchView) {
+        Bitmap bitmap = Bitmap.createBitmap(
+                scratchView.getWidth(),
+                scratchView.getHeight(),
+                Bitmap.Config.ARGB_8888);
 
-        gridListener.onScratchableLayoutAvailable(pathStrippedImage.getWidth(),
-                pathStrippedImage.getHeight());
+        Canvas canvas = new Canvas(bitmap);
+
+        scratchView.draw(canvas);
+
+        return bitmap;
     }
 
     @SuppressWarnings("WeakerAccess")
     public void draw(Canvas canvas) {
         synchronized (lock) {
-            if (cleared || pathStrippedImage == null)
+            if (pathStrippedImage == null)
                 return;
 
-            canvas.drawBitmap(pathStrippedImage, 0, 0, null);
+            switch (state) {
+                case UNATTACHED:
+                case PREPARING:
+                case CLEARED:
+                    return;
+                default:
+                    canvas.drawBitmap(pathStrippedImage, 0, 0, null);
+            }
         }
     }
 
@@ -132,6 +168,8 @@ public class ScratchableLayoutDrawer {
     @SuppressWarnings("WeakerAccess")
     public void destroy() {
         synchronized (lock) {
+            this.state = State.UNATTACHED;
+
             if (pathStrippedImage == null)
                 return;
 
@@ -144,13 +182,15 @@ public class ScratchableLayoutDrawer {
 
     @SuppressWarnings("WeakerAccess")
     public void clear(boolean fade) {
-        if (fade) {
-            fadeOut();
+        synchronized (lock) {
+            if (fade) {
+                fadeOut();
 
-            return;
+                return;
+            }
+
+            hideAndMarkScratchableSurfaceViewCleared();
         }
-
-        hideAndMarkScratchableSurfaceViewCleared();
     }
 
     private void fadeOut() {
@@ -169,7 +209,12 @@ public class ScratchableLayoutDrawer {
             public void onAnimationRepeat(Animation animation) { }
 
             public void onAnimationEnd(Animation animation) {
-                hideAndMarkScratchableSurfaceViewCleared();
+                synchronized (lock) {
+                    if (ScratchableLayoutDrawer.this.state != State.CLEARING)
+                        return;
+
+                    hideAndMarkScratchableSurfaceViewCleared();
+                }
             }
         });
 
@@ -177,7 +222,7 @@ public class ScratchableLayoutDrawer {
     }
 
     private void hideAndMarkScratchableSurfaceViewCleared() {
-        ScratchableLayoutDrawer.this.cleared = true;
+        this.state = State.CLEARED;
 
         final View view = scratchView.get();
 

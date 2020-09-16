@@ -7,6 +7,7 @@ import android.graphics.Path;
 
 import com.jackpocket.scratchoff.ScratchoffController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ThresholdProcessor extends Processor {
@@ -21,6 +22,8 @@ public class ThresholdProcessor extends Processor {
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
 
+    private static final int PERCENT_SCRATCHED_UNTOUCHED = -1;
+
     private ScratchoffController controller;
 
     private Bitmap currentBitmap;
@@ -29,10 +32,12 @@ public class ThresholdProcessor extends Processor {
     private Paint markerPaint = new Paint();
 
     private ScratchValueChangedListener valueChangedListener;
-    private double lastPercentScratched = -1;
+    private double lastPercentScratched = PERCENT_SCRATCHED_UNTOUCHED;
     private boolean thresholdReached = false;
 
-    private final Boolean lock = true;
+    private final Boolean evaluatorLock = true;
+
+    private final ArrayList<Path> pathHistory = new ArrayList<Path>();
 
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(ScratchoffController controller) {
@@ -63,7 +68,9 @@ public class ThresholdProcessor extends Processor {
 
     @SuppressWarnings("WeakerAccess")
     public void addPaths(List<Path> paths) {
-        synchronized (lock) {
+        synchronized (evaluatorLock) {
+            pathHistory.addAll(paths);
+
             if (currentBitmap == null)
                 return;
 
@@ -73,14 +80,16 @@ public class ThresholdProcessor extends Processor {
     }
 
     @Override
-    protected void doInBackground() throws Exception {
+    protected void doInBackground(long id) throws Exception {
         Thread.sleep(SLEEP_DELAY_START);
 
         if (controller.isProcessingAllowed())
             prepareCanvas();
 
-        while (isActive() && controller.isProcessingAllowed()) {
-            processImage();
+        while (isActive(id) && controller.isProcessingAllowed()) {
+            synchronized (evaluatorLock) {
+                processImage();
+            }
 
             Thread.sleep(SLEEP_DELAY_RUNNING);
         }
@@ -89,11 +98,18 @@ public class ThresholdProcessor extends Processor {
     }
 
     private void prepareCanvas() {
-        this.currentBitmap = Bitmap.createBitmap(controller.getLayoutDrawer()
-                .getPathStrippedImage());
+        Bitmap layoutDrawerBitmap = controller.getLayoutDrawer()
+                .getPathStrippedImage();
+
+        this.currentBitmap = Bitmap.createBitmap(layoutDrawerBitmap);
 
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
+
+        synchronized (evaluatorLock) {
+            for (Path path : pathHistory)
+                canvas.drawPath(path, markerPaint);
+        }
     }
 
     private void processImage() {
@@ -151,15 +167,15 @@ public class ThresholdProcessor extends Processor {
     }
 
     @Override
-    public void cancel() {
-        super.cancel();
+    public void stop() {
+        super.stop();
 
         safelyReleaseCurrentBitmap();
     }
 
     private void safelyReleaseCurrentBitmap() {
         try {
-            synchronized (lock) {
+            synchronized (evaluatorLock) {
                 if (currentBitmap == null)
                     return;
 
