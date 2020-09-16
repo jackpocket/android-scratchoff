@@ -11,13 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ScratchableLayoutDrawer<T extends View> {
+public class ScratchableLayoutDrawer {
 
-    private WeakReference<T> scratchView;
+    private WeakReference<View> scratchView;
 
     private Canvas pathStrippedCanvas;
     private Bitmap pathStrippedImage;
@@ -27,15 +29,19 @@ public class ScratchableLayoutDrawer<T extends View> {
     private Paint clearPaint;
     private boolean cleared = false;
 
+    private Interpolator clearAnimationInterpolator = new LinearInterpolator();
+    private long clearAnimationDurationMs = 1000;
+
     private final Boolean lock = true;
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer() { }
 
     @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer attach(ScratchoffController controller, T scratchView, final View behindView) {
-        this.scratchView = new WeakReference<T>(scratchView);
+    public ScratchableLayoutDrawer attach(ScratchoffController controller, View scratchView, final View behindView) {
+        this.scratchView = new WeakReference<View>(scratchView);
         this.gridListener = controller;
+        this.cleared = false;
 
         scratchView.setWillNotDraw(false);
 
@@ -55,7 +61,7 @@ public class ScratchableLayoutDrawer<T extends View> {
         return this;
     }
 
-    private void setBehindView(final T scratchView, final View behindView) {
+    private void setBehindView(final View scratchView, final View behindView) {
         ViewHelper.addGlobalLayoutRequest(behindView,
                 new Runnable(){
                     public void run(){
@@ -66,7 +72,7 @@ public class ScratchableLayoutDrawer<T extends View> {
                 });
     }
 
-    private void initializeBehindView(final T scratchView, final View behindView) {
+    private void initializeBehindView(final View scratchView, final View behindView) {
         ViewGroup.LayoutParams params = scratchView.getLayoutParams();
         params.width = behindView.getWidth();
         params.height = behindView.getHeight();
@@ -74,7 +80,7 @@ public class ScratchableLayoutDrawer<T extends View> {
         scratchView.setLayoutParams(params);
     }
 
-    private void waitForDisplay(final T scratchView) {
+    private void waitForDisplay(final View scratchView) {
         ViewHelper.addGlobalLayoutRequest(scratchView,
                 new Runnable(){
                     public void run(){
@@ -83,7 +89,7 @@ public class ScratchableLayoutDrawer<T extends View> {
                 });
     }
 
-    private void initializePostDisplay(final T scratchView) {
+    private void initializePostDisplay(final View scratchView) {
         scratchView.setDrawingCacheEnabled(true);
         scratchView.buildDrawingCache();
 
@@ -138,28 +144,24 @@ public class ScratchableLayoutDrawer<T extends View> {
 
     @SuppressWarnings("WeakerAccess")
     public void clear(boolean fade) {
-        this.cleared = false;
-
         if (fade) {
             fadeOut();
 
             return;
         }
 
-        final View v = scratchView.get();
-
-        if (v != null)
-            v.invalidate();
+        hideAndMarkScratchableSurfaceViewCleared();
     }
 
     private void fadeOut() {
         final View v = scratchView.get();
 
-        if(v == null)
+        if (v == null)
             return;
 
         AlphaAnimation anim = new AlphaAnimation(1f, 0f);
-        anim.setDuration(1000);
+        anim.setDuration(clearAnimationDurationMs);
+        anim.setInterpolator(clearAnimationInterpolator);
         anim.setFillAfter(true);
         anim.setAnimationListener(new Animation.AnimationListener() {
             public void onAnimationStart(Animation animation) { }
@@ -167,13 +169,24 @@ public class ScratchableLayoutDrawer<T extends View> {
             public void onAnimationRepeat(Animation animation) { }
 
             public void onAnimationEnd(Animation animation) {
-                v.setVisibility(View.GONE);
-
-                showChildren();
+                hideAndMarkScratchableSurfaceViewCleared();
             }
         });
 
         v.startAnimation(anim);
+    }
+
+    private void hideAndMarkScratchableSurfaceViewCleared() {
+        ScratchableLayoutDrawer.this.cleared = true;
+
+        final View view = scratchView.get();
+
+        if (view == null)
+            return;
+
+        view.setVisibility(View.GONE);
+
+        showChildren();
     }
 
     private void hideChildren() {
@@ -210,5 +223,19 @@ public class ScratchableLayoutDrawer<T extends View> {
         synchronized (lock) {
             return pathStrippedImage;
         }
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer setClearAnimationDurationMs(long clearAnimationDurationMs) {
+        this.clearAnimationDurationMs = clearAnimationDurationMs;
+
+        return this;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
+        this.clearAnimationInterpolator = clearAnimationInterpolator;
+
+        return this;
     }
 }

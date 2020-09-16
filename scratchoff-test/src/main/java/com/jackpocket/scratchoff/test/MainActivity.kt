@@ -6,12 +6,14 @@ import android.util.Log
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.jackpocket.scratchoff.ScratchoffController
 import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import java.lang.ref.WeakReference
+import java.util.concurrent.TimeUnit
 
 class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedListener, View.OnTouchListener {
 
@@ -28,6 +30,8 @@ class MainActivity: AppCompatActivity(), ThresholdProcessor.ScratchValueChangedL
         this.controller = ScratchoffController(this)
                 .setThresholdPercent(.4)
                 .setFadeOnClear(true)
+                .setClearAnimationDuration(1, TimeUnit.SECONDS)
+                .setClearAnimationInterpolator(LinearInterpolator())
                 .setTouchRadiusDip(this, 25)
                 .setCompletionCallback({
                     findViewById<ScratchableLinearLayout>(R.id.scratch_view)

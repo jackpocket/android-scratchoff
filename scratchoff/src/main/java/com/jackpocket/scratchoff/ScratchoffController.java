@@ -7,6 +7,8 @@ import android.graphics.Path;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
@@ -15,6 +17,7 @@ import com.jackpocket.scratchoff.views.ScratchableLayout;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
@@ -36,6 +39,9 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     private boolean clearOnThresholdReached;
     private boolean fadeOnClear;
+
+    private Interpolator clearAnimationInterpolator = new LinearInterpolator();
+    private long clearAnimationDurationMs = 1000;
 
     private boolean enabled = true;
 
@@ -93,6 +99,8 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         layout.invalidate();
 
         this.layoutDrawer = new ScratchableLayoutDrawer()
+                .setClearAnimationDurationMs(clearAnimationDurationMs)
+                .setClearAnimationInterpolator(clearAnimationInterpolator)
                 .attach(this, layout, behindView.get());
 
         layout.setOnTouchListener(this);
@@ -199,6 +207,18 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     public ScratchoffController setFadeOnClear(boolean fadeOnClear) {
         this.fadeOnClear = fadeOnClear;
+
+        return this;
+    }
+
+    public ScratchoffController setClearAnimationDuration(long value, TimeUnit unit) {
+        this.clearAnimationDurationMs = unit.toMillis(value);
+
+        return this;
+    }
+
+    public ScratchoffController setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
+        this.clearAnimationInterpolator = clearAnimationInterpolator;
 
         return this;
     }
