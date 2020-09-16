@@ -4,19 +4,24 @@ import android.graphics.Path;
 
 import com.jackpocket.scratchoff.ScratchoffController;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InvalidationProcessor extends Processor {
 
+    public interface Delegate {
+        public void postInvalidateScratchableLayout();
+    }
+
     private static final int SLEEP_DELAY = 15;
 
-    private ScratchoffController controller;
+    private WeakReference<Delegate> delegate;
     private final List<Path> queuedEvents = new ArrayList<Path>();
 
     @SuppressWarnings("WeakerAccess")
-    public InvalidationProcessor(ScratchoffController controller) {
-        this.controller = controller;
+    public InvalidationProcessor(Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -28,11 +33,13 @@ public class InvalidationProcessor extends Processor {
 
     @Override
     protected void doInBackground(long id) throws Exception {
-        while (isActive(id) && controller.isProcessingAllowed()){
+        while (isActive(id)) {
             synchronized (queuedEvents) {
-                if(queuedEvents.size() > 0)
-                    controller.getScratchImageLayout()
-                            .postInvalidate();
+                Delegate delegate = this.delegate.get();
+
+                if (delegate != null && 0 < queuedEvents.size()) {
+                    delegate.postInvalidateScratchableLayout();
+                }
 
                 queuedEvents.clear();
             }

@@ -5,8 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import com.jackpocket.scratchoff.ScratchoffController;
-
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +13,12 @@ public class ThresholdProcessor extends Processor {
 
     public interface ScratchValueChangedListener {
         public void onScratchPercentChanged(double percentCompleted);
+    }
+
+    public interface Delegate {
+        public int[] getScratchableLayoutSize();
+        public void postScratchPercentChanged(double percent);
+        public void postScratchThresholdReached();
     }
 
     private static final int SLEEP_DELAY_RUNNING = 50;
@@ -24,15 +29,15 @@ public class ThresholdProcessor extends Processor {
 
     private static final int PERCENT_SCRATCHED_UNTOUCHED = -1;
 
-    private ScratchoffController controller;
-
+    private WeakReference<Delegate> delegate;
     private Bitmap currentBitmap;
 
     private Canvas canvas;
     private Paint markerPaint = new Paint();
 
-    private ScratchValueChangedListener valueChangedListener;
     private double lastPercentScratched = PERCENT_SCRATCHED_UNTOUCHED;
+
+    private final double completionThreshold;
     private boolean thresholdReached = false;
 
     private final Boolean evaluatorLock = true;
@@ -40,25 +45,19 @@ public class ThresholdProcessor extends Processor {
     private final ArrayList<Path> pathHistory = new ArrayList<Path>();
 
     @SuppressWarnings("WeakerAccess")
-    public ThresholdProcessor(ScratchoffController controller) {
-        this.controller = controller;
+    public ThresholdProcessor(int touchRadiusPx, double completionThreshold, Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
+        this.completionThreshold = completionThreshold;
 
         this.markerPaint.setAntiAlias(true);
         this.markerPaint.setStyle(Paint.Style.STROKE);
         this.markerPaint.setStrokeCap(Paint.Cap.ROUND);
         this.markerPaint.setStrokeJoin(Paint.Join.ROUND);
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public ThresholdProcessor setScratchValueChangedListener(ScratchValueChangedListener valueChangedListener) {
-        this.valueChangedListener = valueChangedListener;
-
-        return this;
+        this.markerPaint.setStrokeWidth(touchRadiusPx * 2);
     }
 
     @Override
     public void start() {
-        this.markerPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
         this.thresholdReached = false;
 
         safelyReleaseCurrentBitmap();
@@ -83,10 +82,9 @@ public class ThresholdProcessor extends Processor {
     protected void doInBackground(long id) throws Exception {
         Thread.sleep(SLEEP_DELAY_START);
 
-        if (controller.isProcessingAllowed())
-            prepareCanvas();
+        prepareCanvas();
 
-        while (isActive(id) && controller.isProcessingAllowed()) {
+        while (isActive(id)) {
             synchronized (evaluatorLock) {
                 processImage();
             }
@@ -98,10 +96,14 @@ public class ThresholdProcessor extends Processor {
     }
 
     private void prepareCanvas() {
-        Bitmap layoutDrawerBitmap = controller.getLayoutDrawer()
-                .getPathStrippedImage();
+        Delegate delegate = this.delegate.get();
 
-        this.currentBitmap = Bitmap.createBitmap(layoutDrawerBitmap);
+        if (delegate == null)
+            return;
+
+        int[] layoutSize = delegate.getScratchableLayoutSize();
+
+        this.currentBitmap = Bitmap.createBitmap(layoutSize[0], layoutSize[1], Bitmap.Config.ARGB_8888);
 
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
@@ -113,57 +115,47 @@ public class ThresholdProcessor extends Processor {
     }
 
     private void processImage() {
-        if (thresholdReached)
+        Delegate delegate = this.delegate.get();
+        Bitmap currentBitmap = this.currentBitmap;
+
+        if (delegate == null || currentBitmap == null || thresholdReached)
             return;
 
-        double percentScratched = Math.min(1, ((double) getScratchedCount(currentBitmap)) / (currentBitmap.getWidth() * currentBitmap.getHeight()));
+        double percentScratched = calculatePercentScratched(currentBitmap);
 
         if (percentScratched != this.lastPercentScratched) {
-            postScratchValueChanged(percentScratched);
+            delegate.postScratchPercentChanged(percentScratched);
         }
 
-        if (controller.getThresholdPercent() < percentScratched) {
+        if (completionThreshold < percentScratched) {
             this.thresholdReached = true;
 
-            postThresholdReached();
+            delegate.postScratchThresholdReached();
         }
 
         this.lastPercentScratched = percentScratched;
+    }
+
+    private double calculatePercentScratched(Bitmap bitmap) {
+        return Math.min(1, ((double) getScratchedCount(bitmap)) / (bitmap.getWidth() * bitmap.getHeight()));
     }
 
     private int getScratchedCount(Bitmap bitmap) {
         int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
+        return countColorMatches(MARKER_SCRATCHED, pixels);
+    }
+
+    static int countColorMatches(int color, int[] pixels) {
         int scratched = 0;
 
         for (int pixel : pixels) {
-            if (pixel == MARKER_SCRATCHED)
+            if (pixel == color)
                 scratched++;
         }
 
         return scratched;
-    }
-
-    private void postThresholdReached() {
-        controller.post(new Runnable() {
-            public void run() {
-                controller.onThresholdReached();
-            }
-        });
-    }
-
-    private void postScratchValueChanged(final double value) {
-        final ScratchValueChangedListener valueChangedListener = this.valueChangedListener;
-
-        if (valueChangedListener == null)
-            return;
-
-        controller.post(new Runnable() {
-            public void run() {
-                valueChangedListener.onScratchPercentChanged(value);
-            }
-        });
     }
 
     @Override

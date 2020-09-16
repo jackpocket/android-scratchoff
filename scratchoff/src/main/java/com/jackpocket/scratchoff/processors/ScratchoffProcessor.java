@@ -5,38 +5,54 @@ import android.view.MotionEvent;
 
 import com.jackpocket.scratchoff.ScratchoffController;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScratchoffProcessor extends Processor {
 
+    public interface Delegate {
+        public void postNewScratchedPaths(List<Path> paths);
+    }
+
     private static final int SLEEP_DELAY = 10;
 
-    private ScratchoffController controller;
+    private WeakReference<Delegate> delegate;
 
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
     private final List<Path> queuedEvents = new ArrayList<Path>();
 
-    private int[] lastTouchEvent = new int[]{ 0, 0 };
+    private int[] lastTouchEvent = new int[] { 0, 0 };
 
     public ScratchoffProcessor(ScratchoffController controller) {
-        this.controller = controller;
+        this.delegate = new WeakReference<Delegate>(controller);
 
-        this.thresholdProcessor = new ThresholdProcessor(controller);
+        this.thresholdProcessor = new ThresholdProcessor(
+                controller.getTouchRadiusPx(),
+                controller.getThresholdPercent(),
+                controller);
+
         this.invalidationProcessor = new InvalidationProcessor(controller);
     }
 
-    public void setScratchValueChangedListener(ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener) {
-        thresholdProcessor.setScratchValueChangedListener(scratchValueChangedListener);
+    public ScratchoffProcessor(
+            Delegate delegate,
+            ThresholdProcessor thresholdProcessor,
+            InvalidationProcessor invalidationProcessor) {
+
+        this.delegate = new WeakReference<Delegate>(delegate);
+        this.thresholdProcessor = thresholdProcessor;
+        this.invalidationProcessor = invalidationProcessor;
     }
 
     public void onReceiveMotionEvent(MotionEvent e, boolean actionDown) {
-        int[] event = new int[]{
-                (int) e.getX(),
-                (int) e.getY()
-        };
+        onReceiveMotionEvent((int) e.getX(), (int) e.getY(), actionDown);
+    }
+
+    protected void onReceiveMotionEvent(int x, int y, boolean actionDown) {
+        int[] event = new int[] { x, y };
 
         if (!actionDown) {
             Path path = new Path();
@@ -53,15 +69,12 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     protected void doInBackground(long id) throws Exception {
-        while (isActive(id) && controller.isProcessingAllowed()) {
-            final List<Path> events = synchronouslyDequeueEvents();
+        while (isActive(id)) {
+            Delegate delegate = this.delegate.get();
+            List<Path> events = synchronouslyDequeueEvents();
 
-            if (events.size() > 0){
-                controller.post(new Runnable() {
-                    public void run() {
-                        controller.addPaths(events);
-                    }
-                });
+            if (delegate != null && 0 < events.size()) {
+                delegate.postNewScratchedPaths(events);
 
                 invalidationProcessor.addPaths(events);
                 thresholdProcessor.addPaths(events);
@@ -97,5 +110,11 @@ public class ScratchoffProcessor extends Processor {
         invalidationProcessor.stop();
 
         super.stop();
+    }
+
+    protected List<Path> getQueuedEvents() {
+        synchronized (queuedEvents) {
+            return queuedEvents;
+        }
     }
 }

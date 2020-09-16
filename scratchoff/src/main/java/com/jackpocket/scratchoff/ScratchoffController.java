@@ -2,6 +2,7 @@ package com.jackpocket.scratchoff;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.view.MotionEvent;
@@ -10,6 +11,7 @@ import android.view.View.OnTouchListener;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
+import com.jackpocket.scratchoff.processors.InvalidationProcessor;
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
@@ -19,7 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class ScratchoffController implements OnTouchListener, LayoutCallback {
+public class ScratchoffController implements OnTouchListener,
+        LayoutCallback,
+        ScratchoffProcessor.Delegate,
+        ThresholdProcessor.Delegate,
+        InvalidationProcessor.Delegate {
 
     private WeakReference<View> scratchableLayout = new WeakReference<View>(null);
     private ScratchableLayoutDrawer layoutDrawer;
@@ -35,7 +41,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     private boolean thresholdReached = false;
     private double thresholdPercent;
 
-    private int totalGridItemsCount;
+    private int[] gridSize;
 
     private boolean clearOnThresholdReached;
     private boolean fadeOnClear;
@@ -102,7 +108,6 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         layout.setOnTouchListener(this);
 
         this.processor = new ScratchoffProcessor(this);
-        this.processor.setScratchValueChangedListener(scratchValueChangedListener);
 
         if (layout instanceof ScratchableLayout)
             ((ScratchableLayout) layout).initialize(this);
@@ -112,7 +117,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     @Override
     public void onScratchableLayoutAvailable(int width, int height) {
-        this.totalGridItemsCount = width * height;
+        this.gridSize = new int[] { width, height };
 
         this.enabled = true;
         this.thresholdReached = false;
@@ -247,9 +252,6 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     public ScratchoffController setScratchValueChangedListener(ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener) {
         this.scratchValueChangedListener = scratchValueChangedListener;
 
-        if (processor != null)
-            this.processor.setScratchValueChangedListener(scratchValueChangedListener);
-
         return this;
     }
 
@@ -268,16 +270,6 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     public boolean isThresholdReached() {
         return thresholdReached;
-    }
-
-    public boolean isProcessingAllowed() {
-        return !thresholdReached
-                && scratchableLayout.get() != null
-                && ViewHelper.isAttachedToWindow(scratchableLayout.get());
-    }
-
-    public int getTotalGridItemsCount() {
-        return totalGridItemsCount;
     }
 
     public View getViewBehind() {
@@ -327,6 +319,49 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
 
     public void removeTouchObservers() {
         this.touchObservers.clear();
+    }
+
+    @Override
+    public void postNewScratchedPaths(final List<Path> paths) {
+        post(new Runnable() {
+            public void run() {
+                addPaths(paths);
+            }
+        });
+    }
+
+    @Override
+    public int[] getScratchableLayoutSize() {
+        return new int[] { gridSize[0], gridSize[1] };
+    }
+
+    @Override
+    public void postScratchPercentChanged(final double percent) {
+        final ThresholdProcessor.ScratchValueChangedListener valueChangedListener = this.scratchValueChangedListener;
+
+        if (valueChangedListener == null)
+            return;
+
+        post(new Runnable() {
+            public void run() {
+                valueChangedListener.onScratchPercentChanged(percent);
+            }
+        });
+    }
+
+    @Override
+    public void postScratchThresholdReached() {
+        post(new Runnable() {
+            public void run() {
+                onThresholdReached();
+            }
+        });
+    }
+
+    @Override
+    public void postInvalidateScratchableLayout() {
+        getScratchImageLayout()
+                .postInvalidate();
     }
 
     public void post(Runnable runnable) {
