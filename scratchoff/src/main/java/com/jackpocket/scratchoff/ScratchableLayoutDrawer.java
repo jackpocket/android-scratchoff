@@ -27,12 +27,13 @@ public class ScratchableLayoutDrawer<T extends View> {
     private Paint clearPaint;
     private boolean cleared = false;
 
-    public ScratchableLayoutDrawer(){
-        this.cleared = false;
-        this.pathStrippedImage = null;
-    }
+    private final Boolean lock = true;
 
-    public ScratchableLayoutDrawer attach(ScratchoffController controller, T scratchView, final View behindView){
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer() { }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer attach(ScratchoffController controller, T scratchView, final View behindView) {
         this.scratchView = new WeakReference<T>(scratchView);
         this.gridListener = controller;
 
@@ -101,25 +102,33 @@ public class ScratchableLayoutDrawer<T extends View> {
                 pathStrippedImage.getHeight());
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void draw(Canvas canvas) {
-        if(cleared || pathStrippedImage == null)
-            return;
-        else
+        synchronized (lock) {
+            if (cleared || pathStrippedImage == null)
+                return;
+
             canvas.drawBitmap(pathStrippedImage, 0, 0, null);
+        }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void addPaths(List<Path> paths) {
-        if(pathStrippedImage == null)
-            return;
+        synchronized (lock) {
+            if (pathStrippedImage == null)
+                return;
 
-        synchronized(pathStrippedImage){
-            for(Path path : paths)
+            for (Path path : paths)
                 pathStrippedCanvas.drawPath(path, clearPaint);
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void destroy() {
-        if(pathStrippedImage != null){
+        synchronized (lock) {
+            if (pathStrippedImage == null)
+                return;
+
             pathStrippedImage.recycle();
             pathStrippedImage = null;
 
@@ -127,18 +136,20 @@ public class ScratchableLayoutDrawer<T extends View> {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void clear(boolean fade) {
         this.cleared = false;
 
-        if(fade)
+        if (fade) {
             fadeOut();
-        else{
 
-            final View v = scratchView.get();
-
-            if(v != null)
-                v.invalidate();
+            return;
         }
+
+        final View v = scratchView.get();
+
+        if (v != null)
+            v.invalidate();
     }
 
     private void fadeOut() {
@@ -165,28 +176,28 @@ public class ScratchableLayoutDrawer<T extends View> {
         v.startAnimation(anim);
     }
 
-    private void hideChildren(){
+    private void hideChildren() {
         final View v = scratchView.get();
 
-        if(v == null)
+        if (v == null)
             return;
 
-        if(v instanceof ViewGroup){
+        if (v instanceof ViewGroup){
             ViewGroup group = (ViewGroup) v;
 
-            for(int i = 0; i < group.getChildCount(); i++)
+            for (int i = 0; i < group.getChildCount(); i++)
                 group.getChildAt(i)
                         .setVisibility(View.GONE);
         }
     }
 
-    private void showChildren(){
+    private void showChildren() {
         final View v = scratchView.get();
 
-        if(v == null)
+        if (v == null)
             return;
 
-        if(v instanceof ViewGroup){
+        if (v instanceof ViewGroup){
             ViewGroup group = (ViewGroup) v;
 
             for(int i = 0; i < group.getChildCount(); i++)
@@ -195,8 +206,9 @@ public class ScratchableLayoutDrawer<T extends View> {
         }
     }
 
-    public Bitmap getPathStrippedImage(){
-        return pathStrippedImage;
+    public Bitmap getPathStrippedImage() {
+        synchronized (lock) {
+            return pathStrippedImage;
+        }
     }
-
 }

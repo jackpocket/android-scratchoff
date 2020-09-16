@@ -1,5 +1,6 @@
 package com.jackpocket.scratchoff;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
@@ -45,6 +46,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
         this(context, null);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ScratchoffController(Context context, Runnable completionCallback) {
         this.completionCallback = completionCallback;
 
@@ -117,6 +119,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
     }
 
     @Override
+    @SuppressLint("ClickableViewAccessibility")
     public boolean onTouch(View view, MotionEvent event) {
         for (OnTouchListener observer : touchObservers) {
             observer.onTouch(view, event);
@@ -168,6 +171,7 @@ public class ScratchoffController implements OnTouchListener, LayoutCallback {
             completionCallback.run();
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ScratchoffController clear() {
         this.enabled = false;
 

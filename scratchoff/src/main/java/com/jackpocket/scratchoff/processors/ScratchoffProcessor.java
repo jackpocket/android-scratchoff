@@ -17,7 +17,7 @@ public class ScratchoffProcessor extends Processor {
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
-    private List<Path> queuedEvents = new ArrayList<Path>();
+    private final List<Path> queuedEvents = new ArrayList<Path>();
 
     private int[] lastTouchEvent = new int[]{ 0, 0 };
 
@@ -38,7 +38,7 @@ public class ScratchoffProcessor extends Processor {
                 (int) e.getY()
         };
 
-        if(!actionDown){
+        if (!actionDown) {
             Path path = new Path();
             path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
             path.lineTo(event[0], event[1]);
@@ -53,10 +53,10 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     protected void doInBackground() throws Exception {
-        while(isActive() && controller.isProcessingAllowed()){
+        while (isActive() && controller.isProcessingAllowed()) {
             final List<Path> events = synchronouslyDequeueEvents();
 
-            if(events.size() > 0){
+            if (events.size() > 0){
                 controller.post(new Runnable() {
                     public void run() {
                         controller.addPaths(events);
@@ -85,10 +85,10 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     public void start() {
-        if(thresholdProcessor != null)
+        if (thresholdProcessor != null)
             thresholdProcessor.start();
 
-        if(invalidationProcessor != null)
+        if (invalidationProcessor != null)
             invalidationProcessor.start();
 
         super.start();
@@ -96,10 +96,10 @@ public class ScratchoffProcessor extends Processor {
 
     @Override
     public void cancel() {
-        if(thresholdProcessor != null)
+        if (thresholdProcessor != null)
             thresholdProcessor.cancel();
 
-        if(invalidationProcessor != null)
+        if (invalidationProcessor != null)
             invalidationProcessor.cancel();
 
         super.cancel();

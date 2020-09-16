@@ -32,6 +32,9 @@ public class ThresholdProcessor extends Processor {
     private double lastPercentScratched = -1;
     private boolean thresholdReached = false;
 
+    private final Boolean lock = true;
+
+    @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(ScratchoffController controller) {
         this.controller = controller;
 
@@ -41,13 +44,15 @@ public class ThresholdProcessor extends Processor {
         this.markerPaint.setStrokeJoin(Paint.Join.ROUND);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor setScratchValueChangedListener(ScratchValueChangedListener valueChangedListener) {
         this.valueChangedListener = valueChangedListener;
+
         return this;
     }
 
     @Override
-    public void start(){
+    public void start() {
         this.markerPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
         this.thresholdReached = false;
 
@@ -56,12 +61,13 @@ public class ThresholdProcessor extends Processor {
         super.start();
     }
 
-    public void addPaths(List<Path> paths){
-        if(currentBitmap == null)
-            return;
+    @SuppressWarnings("WeakerAccess")
+    public void addPaths(List<Path> paths) {
+        synchronized (lock) {
+            if (currentBitmap == null)
+                return;
 
-        synchronized(currentBitmap){
-            for(Path path : paths)
+            for (Path path : paths)
                 canvas.drawPath(path, markerPaint);
         }
     }
@@ -82,7 +88,7 @@ public class ThresholdProcessor extends Processor {
         safelyReleaseCurrentBitmap();
     }
 
-    private void prepareCanvas(){
+    private void prepareCanvas() {
         this.currentBitmap = Bitmap.createBitmap(controller.getLayoutDrawer()
                 .getPathStrippedImage());
 
@@ -94,13 +100,13 @@ public class ThresholdProcessor extends Processor {
         if (thresholdReached)
             return;
 
-        double percentScratched = Math.min(1, getScratchedCount(currentBitmap) / (currentBitmap.getWidth() * currentBitmap.getHeight()));
+        double percentScratched = Math.min(1, ((double) getScratchedCount(currentBitmap)) / (currentBitmap.getWidth() * currentBitmap.getHeight()));
 
         if (percentScratched != this.lastPercentScratched) {
             postScratchValueChanged(percentScratched);
         }
 
-        if(controller.getThresholdPercent() < percentScratched){
+        if (controller.getThresholdPercent() < percentScratched) {
             this.thresholdReached = true;
 
             postThresholdReached();
@@ -109,15 +115,16 @@ public class ThresholdProcessor extends Processor {
         this.lastPercentScratched = percentScratched;
     }
 
-    private double getScratchedCount(Bitmap bitmap) {
+    private int getScratchedCount(Bitmap bitmap) {
         int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-        double scratched = 0;
+        int scratched = 0;
 
-        for(int pixel : pixels)
-            if(pixel == MARKER_SCRATCHED)
+        for (int pixel : pixels) {
+            if (pixel == MARKER_SCRATCHED)
                 scratched++;
+        }
 
         return scratched;
     }
@@ -144,15 +151,18 @@ public class ThresholdProcessor extends Processor {
     }
 
     @Override
-    public void cancel(){
+    public void cancel() {
         super.cancel();
 
         safelyReleaseCurrentBitmap();
     }
 
-    private void safelyReleaseCurrentBitmap(){
+    private void safelyReleaseCurrentBitmap() {
         try{
-            if(currentBitmap != null){
+            synchronized (lock) {
+                if (currentBitmap == null)
+                    return;
+
                 currentBitmap.recycle();
                 currentBitmap = null;
 

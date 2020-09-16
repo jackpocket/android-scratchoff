@@ -12,22 +12,24 @@ public class InvalidationProcessor extends Processor {
     private static final int SLEEP_DELAY = 15;
 
     private ScratchoffController controller;
-    private List<Path> queuedEvents = new ArrayList<Path>();
+    private final List<Path> queuedEvents = new ArrayList<Path>();
 
+    @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(ScratchoffController controller) {
         this.controller = controller;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void addPaths(List<Path> paths) {
-        synchronized(queuedEvents){
+        synchronized (queuedEvents){
             queuedEvents.addAll(paths);
         }
     }
 
     @Override
     protected void doInBackground() throws Exception {
-        while(isActive() && controller.isProcessingAllowed()){
-            synchronized(queuedEvents){
+        while (isActive() && controller.isProcessingAllowed()){
+            synchronized (queuedEvents) {
                 if(queuedEvents.size() > 0)
                     controller.getScratchImageLayout()
                             .postInvalidate();
@@ -38,5 +40,4 @@ public class InvalidationProcessor extends Processor {
             Thread.sleep(SLEEP_DELAY);
         }
     }
-
 }
