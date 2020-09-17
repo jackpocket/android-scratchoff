@@ -44,7 +44,7 @@ class ThresholdProcessorTests {
             override fun isActive(id: Long): Boolean {
                 loops += 1
 
-                return loops == 1
+                return loops <= 3
             }
         }
 
