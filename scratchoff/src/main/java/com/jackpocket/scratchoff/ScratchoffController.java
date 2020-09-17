@@ -49,7 +49,7 @@ public class ScratchoffController implements OnTouchListener,
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
 
-    private boolean enabled = true;
+    private boolean scratchableLayoutAvailable = true;
 
     private long lastTouchEvent = 0;
     private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
@@ -119,7 +119,7 @@ public class ScratchoffController implements OnTouchListener,
     public void onScratchableLayoutAvailable(int width, int height) {
         this.gridSize = new int[] { width, height };
 
-        this.enabled = true;
+        this.scratchableLayoutAvailable = true;
         this.thresholdReached = false;
 
         safelyStartProcessors();
@@ -132,10 +132,10 @@ public class ScratchoffController implements OnTouchListener,
             observer.onTouch(view, event);
         }
 
-        if (!enabled)
+        if (!scratchableLayoutAvailable)
             return false;
 
-        processor.onReceiveMotionEvent(event, event.getAction() == MotionEvent.ACTION_DOWN);
+        processor.onReceiveMotionEvent(event);
 
         this.lastTouchEvent = System.currentTimeMillis();
 
@@ -168,7 +168,7 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public void onThresholdReached() {
+    protected void onThresholdReached() {
         this.thresholdReached = true;
 
         if (clearOnThresholdReached)
@@ -180,7 +180,7 @@ public class ScratchoffController implements OnTouchListener,
 
     @SuppressWarnings("WeakerAccess")
     public ScratchoffController clear() {
-        this.enabled = false;
+        this.scratchableLayoutAvailable = false;
 
         if (layoutDrawer != null)
             layoutDrawer.clear(fadeOnClear);
@@ -276,14 +276,21 @@ public class ScratchoffController implements OnTouchListener,
         return behindView.get();
     }
 
-    private void safelyStartProcessors() {
-        if (enabled && processor != null)
-            processor.start();
+    protected void safelyStartProcessors() {
+        if (!scratchableLayoutAvailable)
+            return;
+
+        if (processor == null || processor.isActive())
+            return;
+
+        processor.start();
     }
 
-    private void safelyStopProcessors() {
-        if (processor != null)
-            processor.stop();
+    protected void safelyStopProcessors() {
+        if (processor == null)
+            return;
+
+        processor.stop();
     }
 
     public ScratchableLayoutDrawer getLayoutDrawer(){
@@ -332,7 +339,15 @@ public class ScratchoffController implements OnTouchListener,
 
     @Override
     public int[] getScratchableLayoutSize() {
-        return new int[] { gridSize[0], gridSize[1] };
+        final int[] gridSize = this.gridSize;
+
+        return gridSize == null
+            ? new int[] { 0, 0 }
+            : new int[] { gridSize[0], gridSize[1] };
+    }
+
+    public boolean isScratchableLayoutAvailable() {
+        return scratchableLayoutAvailable;
     }
 
     @Override
@@ -364,7 +379,7 @@ public class ScratchoffController implements OnTouchListener,
                 .postInvalidate();
     }
 
-    public void post(Runnable runnable) {
+    protected void post(Runnable runnable) {
         View layout = scratchableLayout.get();
 
         if (layout != null)

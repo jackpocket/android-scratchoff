@@ -47,24 +47,34 @@ public class ScratchoffProcessor extends Processor {
         this.invalidationProcessor = invalidationProcessor;
     }
 
-    public void onReceiveMotionEvent(MotionEvent e, boolean actionDown) {
-        onReceiveMotionEvent((int) e.getX(), (int) e.getY(), actionDown);
+    public void onReceiveMotionEvent(MotionEvent e) {
+        onReceiveMotionEvent((int) e.getX(), (int) e.getY(), e.getAction() == MotionEvent.ACTION_DOWN);
     }
 
     protected void onReceiveMotionEvent(int x, int y, boolean actionDown) {
         int[] event = new int[] { x, y };
 
         if (!actionDown) {
-            Path path = new Path();
-            path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
-            path.lineTo(event[0], event[1]);
+            Path scratchPath = createPathFromLastTouchCoordinatesToLocation(x, y);
 
-            synchronized (queuedEvents) {
-                queuedEvents.add(path);
-            }
+            synchronouslyQueueEvent(scratchPath);
         }
 
         this.lastTouchEvent = event;
+    }
+
+    private Path createPathFromLastTouchCoordinatesToLocation(int x, int y) {
+        Path path = new Path();
+        path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
+        path.lineTo(x, y);
+
+        return path;
+    }
+
+    protected void synchronouslyQueueEvent(Path path) {
+        synchronized (queuedEvents) {
+            queuedEvents.add(path);
+        }
     }
 
     @Override
@@ -84,7 +94,7 @@ public class ScratchoffProcessor extends Processor {
         }
     }
 
-    private List<Path> synchronouslyDequeueEvents() {
+    protected List<Path> synchronouslyDequeueEvents() {
         final List<Path> tempEvents;
 
         synchronized (queuedEvents) {

@@ -1,9 +1,9 @@
 package com.jackpocket.scratchoff.processors
 
-import android.graphics.Bitmap
 import android.graphics.Path
 import android.graphics.RectF
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jackpocket.scratchoff.processors.InvalidationProcessor.Delegate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 class ScratchoffProcessorTests {
 
     @Test
-    fun testScratchoffProcessorCorrectlyAddsPaths() {
+    fun testScratchoffProcessorAddsNewPathsOnMotionEvent() {
         val processor = ScratchoffProcessor(null, null, null)
 
         assertEquals(0, processor.queuedEvents.size)
@@ -28,6 +28,27 @@ class ScratchoffProcessorTests {
         processor.computeAndAssertBounds(0, RectF(1f, 1f, 2f, 2f))
         processor.computeAndAssertBounds(1, RectF(2f, 2f, 3f, 3f))
         processor.computeAndAssertBounds(2, RectF(4f, 4f, 5f, 5f))
+    }
+
+    @Test
+    fun testScratchoffProcessorDequeuesEvents() {
+        val processor = ScratchoffProcessor(null, null, null)
+
+        assertEquals(0, processor.queuedEvents.size)
+
+        val path = Path()
+        path.moveTo(1f, 1f)
+        path.lineTo(2f, 2f)
+
+        processor.synchronouslyQueueEvent(path)
+        processor.computeAndAssertBounds(0, RectF(1f, 1f, 2f, 2f))
+
+        assertEquals(1, processor.queuedEvents.size)
+
+        val dequeued = processor.synchronouslyDequeueEvents()
+        dequeued[0].computeAndAssertBounds(RectF(1f, 1f, 2f, 2f))
+
+        assertEquals(0, processor.queuedEvents.size)
     }
 
     @Test
@@ -84,5 +105,48 @@ class ScratchoffProcessorTests {
         this.computeBounds(bounds, true)
 
         assertEquals(expected, bounds)
+    }
+
+    @Test
+    fun testScratchoffProcessorStartsAndStopsSubProcessors() {
+        var startCalls: Int = 0
+        var stopCalls: Int = 0
+
+        val processor = ScratchoffProcessor(
+                null,
+                object: ThresholdProcessor(0, 0.0, object: ThresholdProcessor.Delegate {
+                    override fun postScratchPercentChanged(percent: Double) { }
+                    override fun postScratchThresholdReached() { }
+                    override fun getScratchableLayoutSize(): IntArray {
+                        return intArrayOf()
+                    }
+                }) {
+                    override fun start() {
+                        startCalls++
+                    }
+
+                    override fun stop() {
+                        stopCalls++
+                    }
+                },
+                object: InvalidationProcessor(Delegate {  }) {
+                    override fun start() {
+                        startCalls++
+                    }
+
+                    override fun stop() {
+                        stopCalls++
+                    }
+                })
+
+        processor.start()
+
+        // Starting a Processor should always trigger a stop()
+        assertEquals(2, stopCalls)
+        assertEquals(2, startCalls)
+
+        processor.stop()
+
+        assertEquals(4, stopCalls)
     }
 }

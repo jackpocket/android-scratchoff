@@ -2,7 +2,9 @@ package com.jackpocket.scratchoff.processors;
 
 public abstract class Processor implements Runnable {
 
-    private long activeThreadId = 0;
+    private static long THREAD_ID_INACTIVE = -1;
+
+    private long activeThreadId = THREAD_ID_INACTIVE;
 
     public void start() {
         this.stop();
@@ -15,10 +17,15 @@ public abstract class Processor implements Runnable {
 
     @Override
     public void run() {
+        long threadId = Long.valueOf(this.activeThreadId);
+
         try {
-            doInBackground(activeThreadId);
+            doInBackground(threadId);
         }
         catch(Throwable e) { e.printStackTrace(); }
+
+        if (isActive(threadId))
+            stop();
     }
 
     protected abstract void doInBackground(long id) throws Exception;
@@ -30,10 +37,14 @@ public abstract class Processor implements Runnable {
 
     @SuppressWarnings("WeakerAccess")
     public void stop() {
-        this.activeThreadId = System.nanoTime();
+        this.activeThreadId = THREAD_ID_INACTIVE;
     }
 
     protected boolean isActive(long id) {
-        return id == activeThreadId;
+        return id == activeThreadId && isActive();
+    }
+
+    public boolean isActive() {
+        return activeThreadId != THREAD_ID_INACTIVE;
     }
 }

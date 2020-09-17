@@ -80,9 +80,11 @@ public class ThresholdProcessor extends Processor {
 
     @Override
     protected void doInBackground(long id) throws Exception {
-        Thread.sleep(SLEEP_DELAY_START);
+        while (isActive(id) && currentBitmap == null) {
+            Thread.sleep(SLEEP_DELAY_START);
 
-        prepareCanvas();
+            prepareCanvas();
+        }
 
         while (isActive(id)) {
             synchronized (evaluatorLock) {
@@ -91,8 +93,6 @@ public class ThresholdProcessor extends Processor {
 
             Thread.sleep(SLEEP_DELAY_RUNNING);
         }
-
-        safelyReleaseCurrentBitmap();
     }
 
     private void prepareCanvas() {
@@ -102,6 +102,9 @@ public class ThresholdProcessor extends Processor {
             return;
 
         int[] layoutSize = delegate.getScratchableLayoutSize();
+
+        if (layoutSize[0] < 1 || layoutSize[1] < 1)
+            return;
 
         this.currentBitmap = Bitmap.createBitmap(layoutSize[0], layoutSize[1], Bitmap.Config.ARGB_8888);
 
@@ -137,7 +140,11 @@ public class ThresholdProcessor extends Processor {
     }
 
     private double calculatePercentScratched(Bitmap bitmap) {
-        return Math.min(1, ((double) getScratchedCount(bitmap)) / (bitmap.getWidth() * bitmap.getHeight()));
+        return calculatePercentScratched(getScratchedCount(bitmap), bitmap.getWidth(), bitmap.getHeight());
+    }
+
+    public static double calculatePercentScratched(int scratchedCount, int width, int height) {
+        return Math.min(1, Math.max(0, ((double) scratchedCount) / (width * height)));
     }
 
     private int getScratchedCount(Bitmap bitmap) {
