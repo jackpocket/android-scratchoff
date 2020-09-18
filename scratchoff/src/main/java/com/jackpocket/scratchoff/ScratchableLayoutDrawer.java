@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.view.View;
@@ -14,10 +13,14 @@ import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
+import com.jackpocket.scratchoff.paths.ScratchPathManager;
+import com.jackpocket.scratchoff.paths.ScratchPathPoint;
+import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
+
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ScratchableLayoutDrawer {
+public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     enum State {
         UNATTACHED,
@@ -40,14 +43,14 @@ public class ScratchableLayoutDrawer {
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
 
-    private final Boolean lock = true;
+    private final ScratchPathManager pathManager = new ScratchPathManager();
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer() { }
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(ScratchoffController controller, View scratchView, final View behindView) {
-        synchronized (lock) {
+        synchronized (pathManager) {
             this.scratchView = new WeakReference<View>(scratchView);
             this.gridListener = controller;
             this.state = State.PREPARING;
@@ -62,14 +65,9 @@ public class ScratchableLayoutDrawer {
 
             ViewHelper.disableHardwareAcceleration(scratchView);
 
-            clearPaint = new Paint();
+            clearPaint = ViewHelper.createBaseScratchoffPaint(controller.getTouchRadiusPx());
             clearPaint.setAlpha(0xFF);
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            clearPaint.setStyle(Paint.Style.STROKE);
-            clearPaint.setStrokeCap(Paint.Cap.ROUND);
-            clearPaint.setStrokeJoin(Paint.Join.ROUND);
-            clearPaint.setAntiAlias(true);
-            clearPaint.setStrokeWidth(controller.getTouchRadiusPx() * 2);
 
             setBehindView(scratchView, behindView);
 
@@ -108,7 +106,7 @@ public class ScratchableLayoutDrawer {
     }
 
     private void initializePostDisplay(final View scratchView) {
-        synchronized (lock) {
+        synchronized (pathManager) {
             this.pathStrippedImage = createBitmapFromScratchableView(scratchView);
             this.pathStrippedCanvas = new Canvas(pathStrippedImage);
 
@@ -139,7 +137,7 @@ public class ScratchableLayoutDrawer {
 
     @SuppressWarnings("WeakerAccess")
     public void draw(Canvas canvas) {
-        synchronized (lock) {
+        synchronized (pathManager) {
             if (pathStrippedImage == null)
                 return;
 
@@ -154,20 +152,20 @@ public class ScratchableLayoutDrawer {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public void addPaths(List<Path> paths) {
-        synchronized (lock) {
+    @Override
+    public void postNewScratchedMotionEvents(List<ScratchPathPoint> events) {
+        synchronized (pathManager) {
             if (pathStrippedImage == null)
                 return;
 
-            for (Path path : paths)
-                pathStrippedCanvas.drawPath(path, clearPaint);
+            pathManager.addMotionEvents(events);
+            pathManager.draw(pathStrippedCanvas, clearPaint);
         }
     }
 
     @SuppressWarnings("WeakerAccess")
     public void destroy() {
-        synchronized (lock) {
+        synchronized (pathManager) {
             this.state = State.UNATTACHED;
 
             if (pathStrippedImage == null)
@@ -177,12 +175,14 @@ public class ScratchableLayoutDrawer {
             pathStrippedImage = null;
 
             pathStrippedCanvas = null;
+
+            pathManager.clear();
         }
     }
 
     @SuppressWarnings("WeakerAccess")
     public void clear(boolean fade) {
-        synchronized (lock) {
+        synchronized (pathManager) {
             if (fade) {
                 fadeOut();
 
@@ -209,7 +209,7 @@ public class ScratchableLayoutDrawer {
             public void onAnimationRepeat(Animation animation) { }
 
             public void onAnimationEnd(Animation animation) {
-                synchronized (lock) {
+                synchronized (pathManager) {
                     if (ScratchableLayoutDrawer.this.state != State.CLEARING)
                         return;
 
@@ -265,7 +265,7 @@ public class ScratchableLayoutDrawer {
     }
 
     public Bitmap getPathStrippedImage() {
-        synchronized (lock) {
+        synchronized (pathManager) {
             return pathStrippedImage;
         }
     }

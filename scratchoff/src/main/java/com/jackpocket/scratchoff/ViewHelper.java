@@ -2,6 +2,7 @@ package com.jackpocket.scratchoff;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Paint;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -53,5 +54,16 @@ public class ViewHelper {
         }
 
         return view.isAttachedToWindow();
+    }
+
+    public static Paint createBaseScratchoffPaint(int touchRadiusPx) {
+        Paint markerPaint = new Paint();
+        markerPaint.setAntiAlias(true);
+        markerPaint.setStyle(Paint.Style.STROKE);
+        markerPaint.setStrokeCap(Paint.Cap.ROUND);
+        markerPaint.setStrokeJoin(Paint.Join.ROUND);
+        markerPaint.setStrokeWidth(touchRadiusPx * 2);
+
+        return markerPaint;
     }
 }

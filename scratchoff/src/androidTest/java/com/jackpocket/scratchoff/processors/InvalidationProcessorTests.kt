@@ -1,6 +1,7 @@
 package com.jackpocket.scratchoff.processors
 
-import android.graphics.Path
+import android.view.MotionEvent
+import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -21,7 +22,7 @@ class InvalidationProcessorTests {
 
         assertEquals(0, invalidationCallCount)
 
-        processor.addPaths(listOf(Path()))
+        processor.postNewScratchedMotionEvents(listOf(ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN)))
         processor.run()
 
         assertEquals(1, invalidationCallCount)

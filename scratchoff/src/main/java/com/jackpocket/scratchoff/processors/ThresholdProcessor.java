@@ -3,13 +3,15 @@ package com.jackpocket.scratchoff.processors;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Path;
+
+import com.jackpocket.scratchoff.ViewHelper;
+import com.jackpocket.scratchoff.paths.ScratchPathManager;
+import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ThresholdProcessor extends Processor {
+public class ThresholdProcessor extends Processor implements ScratchoffProcessor.Delegate {
 
     public interface ScratchValueChangedListener {
         public void onScratchPercentChanged(double percentCompleted);
@@ -33,27 +35,22 @@ public class ThresholdProcessor extends Processor {
     private Bitmap currentBitmap;
 
     private Canvas canvas;
-    private Paint markerPaint = new Paint();
+    private Paint markerPaint;
 
     private double lastPercentScratched = PERCENT_SCRATCHED_UNTOUCHED;
 
     private final double completionThreshold;
     private boolean thresholdReached = false;
 
-    private final Boolean evaluatorLock = true;
-
-    private final ArrayList<Path> pathHistory = new ArrayList<Path>();
+    private final ScratchPathManager pathManager = new ScratchPathManager();
 
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(int touchRadiusPx, double completionThreshold, Delegate delegate) {
         this.delegate = new WeakReference<Delegate>(delegate);
         this.completionThreshold = completionThreshold;
 
-        this.markerPaint.setAntiAlias(true);
-        this.markerPaint.setStyle(Paint.Style.STROKE);
-        this.markerPaint.setStrokeCap(Paint.Cap.ROUND);
-        this.markerPaint.setStrokeJoin(Paint.Join.ROUND);
-        this.markerPaint.setStrokeWidth(touchRadiusPx * 2);
+        this.markerPaint = ViewHelper.createBaseScratchoffPaint(touchRadiusPx);
+        this.markerPaint.setColor(MARKER_SCRATCHED);
     }
 
     @Override
@@ -65,16 +62,14 @@ public class ThresholdProcessor extends Processor {
         super.start();
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public void addPaths(List<Path> paths) {
-        synchronized (evaluatorLock) {
-            pathHistory.addAll(paths);
-
+    @Override
+    public void postNewScratchedMotionEvents(List<ScratchPathPoint> events) {
+        synchronized (pathManager) {
             if (currentBitmap == null)
                 return;
 
-            for (Path path : paths)
-                canvas.drawPath(path, markerPaint);
+            pathManager.addMotionEvents(events);
+            pathManager.draw(canvas, markerPaint);
         }
     }
 
@@ -87,7 +82,7 @@ public class ThresholdProcessor extends Processor {
         }
 
         while (isActive(id)) {
-            synchronized (evaluatorLock) {
+            synchronized (pathManager) {
                 processImage();
             }
 
@@ -95,7 +90,7 @@ public class ThresholdProcessor extends Processor {
         }
     }
 
-    private void prepareCanvas() {
+    protected void prepareCanvas() {
         Delegate delegate = this.delegate.get();
 
         if (delegate == null)
@@ -106,18 +101,17 @@ public class ThresholdProcessor extends Processor {
         if (layoutSize[0] < 1 || layoutSize[1] < 1)
             return;
 
-        this.currentBitmap = Bitmap.createBitmap(layoutSize[0], layoutSize[1], Bitmap.Config.ARGB_8888);
+        this.currentBitmap = Bitmap.createBitmap(layoutSize[0], layoutSize[1], Bitmap.Config.RGB_565);
 
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
 
-        synchronized (evaluatorLock) {
-            for (Path path : pathHistory)
-                canvas.drawPath(path, markerPaint);
+        synchronized (pathManager) {
+            pathManager.draw(canvas, markerPaint);
         }
     }
 
-    private void processImage() {
+    protected void processImage() {
         Delegate delegate = this.delegate.get();
         Bitmap currentBitmap = this.currentBitmap;
 
@@ -172,9 +166,9 @@ public class ThresholdProcessor extends Processor {
         safelyReleaseCurrentBitmap();
     }
 
-    private void safelyReleaseCurrentBitmap() {
+    protected void safelyReleaseCurrentBitmap() {
         try {
-            synchronized (evaluatorLock) {
+            synchronized (pathManager) {
                 if (currentBitmap == null)
                     return;
 

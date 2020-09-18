@@ -1,8 +1,8 @@
 package com.jackpocket.scratchoff.processors
 
-import android.graphics.Path
-import android.graphics.RectF
+import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import com.jackpocket.scratchoff.processors.InvalidationProcessor.Delegate
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -12,49 +12,39 @@ import org.junit.runner.RunWith
 class ScratchoffProcessorTests {
 
     @Test
-    fun testScratchoffProcessorAddsNewPathsOnMotionEvent() {
+    fun testScratchoffProcessorAddsNewPathsOnMotionEventAndDequeues() {
         val processor = ScratchoffProcessor(null, null, null)
 
         assertEquals(0, processor.queuedEvents.size)
 
-        processor.onReceiveMotionEvent(1, 1, true)
-        processor.onReceiveMotionEvent(2, 2, false)
-        processor.onReceiveMotionEvent(3, 3, false)
-        processor.onReceiveMotionEvent(4, 4, true)
-        processor.onReceiveMotionEvent(5, 5, false)
+        val events = listOf(
+                ScratchPathPoint(1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE),
+                ScratchPathPoint(3f, 3f, MotionEvent.ACTION_MOVE),
+                ScratchPathPoint(4f, 4f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(5f, 5f, MotionEvent.ACTION_MOVE)
+        )
 
-        assertEquals(3, processor.queuedEvents.size)
+        events.forEach(processor::synchronouslyQueueEvent)
 
-        processor.computeAndAssertBounds(0, RectF(1f, 1f, 2f, 2f))
-        processor.computeAndAssertBounds(1, RectF(2f, 2f, 3f, 3f))
-        processor.computeAndAssertBounds(2, RectF(4f, 4f, 5f, 5f))
-    }
+        assertEquals(5, processor.queuedEvents.size)
 
-    @Test
-    fun testScratchoffProcessorDequeuesEvents() {
-        val processor = ScratchoffProcessor(null, null, null)
-
-        assertEquals(0, processor.queuedEvents.size)
-
-        val path = Path()
-        path.moveTo(1f, 1f)
-        path.lineTo(2f, 2f)
-
-        processor.synchronouslyQueueEvent(path)
-        processor.computeAndAssertBounds(0, RectF(1f, 1f, 2f, 2f))
-
-        assertEquals(1, processor.queuedEvents.size)
+        events.forEachIndexed({ index, item ->
+            assertEquals(item, processor.queuedEvents[index])
+        })
 
         val dequeued = processor.synchronouslyDequeueEvents()
-        dequeued[0].computeAndAssertBounds(RectF(1f, 1f, 2f, 2f))
 
         assertEquals(0, processor.queuedEvents.size)
+
+        events.forEachIndexed({ index, item ->
+            assertEquals(item, dequeued[index])
+        })
     }
 
     @Test
     fun testScratchoffProcessorSendsPathsToSubProcessors() {
-        val expectedResult = RectF(1f, 1f, 2f, 2f)
-        val collectedPaths = mutableListOf<Path>()
+        val collectedPaths = mutableListOf<ScratchPathPoint>()
 
         val processor = object: ScratchoffProcessor(
                 ScratchoffProcessor.Delegate {
@@ -67,13 +57,13 @@ class ScratchoffProcessorTests {
                         return intArrayOf()
                     }
                 }) {
-                    override fun addPaths(paths: MutableList<Path>) {
-                        collectedPaths.addAll(paths)
+                    override fun postNewScratchedMotionEvents(events: MutableList<ScratchPathPoint>) {
+                        collectedPaths.addAll(events)
                     }
                 },
                 object: InvalidationProcessor(Delegate {  }) {
-                    override fun addPaths(paths: MutableList<Path>) {
-                        collectedPaths.addAll(paths)
+                    override fun postNewScratchedMotionEvents(events: MutableList<ScratchPathPoint>) {
+                        collectedPaths.addAll(events)
                     }
                 }) {
             override fun isActive(id: Long): Boolean {
@@ -83,28 +73,21 @@ class ScratchoffProcessorTests {
 
         assertEquals(0, collectedPaths.size)
 
-        processor.onReceiveMotionEvent(1, 1, true)
-        processor.onReceiveMotionEvent(2, 2, false)
+        val events = listOf(
+                ScratchPathPoint(1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE)
+        )
+
+        events.forEach(processor::synchronouslyQueueEvent)
+
         processor.run()
 
         assertEquals(0, processor.queuedEvents.size)
-        assertEquals(3, collectedPaths.size)
+        assertEquals(6, collectedPaths.size)
 
-        collectedPaths.forEach({
-            it.computeAndAssertBounds(expectedResult)
+        collectedPaths.forEach({ point ->
+            assertEquals(3, collectedPaths.count({ point == it }))
         })
-    }
-
-    private fun ScratchoffProcessor.computeAndAssertBounds(index: Int, expected: RectF) {
-        queuedEvents[index].computeAndAssertBounds(expected)
-    }
-
-    private fun Path.computeAndAssertBounds(expected: RectF) {
-        val bounds: RectF = RectF()
-
-        this.computeBounds(bounds, true)
-
-        assertEquals(expected, bounds)
     }
 
     @Test

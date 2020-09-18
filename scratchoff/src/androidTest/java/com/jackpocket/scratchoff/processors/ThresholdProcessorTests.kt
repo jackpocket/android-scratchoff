@@ -1,7 +1,8 @@
 package com.jackpocket.scratchoff.processors
 
-import android.graphics.*
+import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,7 +27,7 @@ class ThresholdProcessorTests {
     }
 
     @Test
-    fun testThresholdProcessorMatchesFromHistoryLoad() {
+    fun testMatchesFromHistoryLoad() {
         var loops: Int = 0
         var scratchPercent: Double = 0.0
 
@@ -48,13 +49,47 @@ class ThresholdProcessorTests {
             }
         }
 
-        val path = Path()
-        path.moveTo(0f, 0f)
-        path.lineTo(0f, 10f)
+        val events = listOf(
+                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+        )
 
-        processor.addPaths(listOf(path))
-        processor.run()
+        processor.prepareCanvas()
+        processor.postNewScratchedMotionEvents(events)
+        processor.safelyReleaseCurrentBitmap()
+        processor.prepareCanvas()
+        processor.processImage()
 
         assertEquals(0.5, scratchPercent, 0.001)
+    }
+
+    @Test
+    fun testProcessImageTriggersThresholdReachedOnlyOnce() {
+        var thresholdReachedCount: Int = 0
+
+        val processor = ThresholdProcessor(10, 0.5, object: ThresholdProcessor.Delegate {
+            override fun postScratchPercentChanged(percent: Double) { }
+
+            override fun postScratchThresholdReached() {
+                thresholdReachedCount += 1
+            }
+
+            override fun getScratchableLayoutSize(): IntArray {
+                return intArrayOf(10, 10)
+            }
+        })
+
+        val events = listOf(
+                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+        )
+
+        processor.prepareCanvas()
+        processor.postNewScratchedMotionEvents(events)
+        processor.processImage()
+        processor.postNewScratchedMotionEvents(events)
+        processor.processImage()
+
+        assertEquals(1, thresholdReachedCount)
     }
 }

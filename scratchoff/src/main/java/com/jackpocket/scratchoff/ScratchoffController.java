@@ -2,15 +2,14 @@ package com.jackpocket.scratchoff;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Path;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
+import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.processors.InvalidationProcessor;
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
@@ -49,9 +48,8 @@ public class ScratchoffController implements OnTouchListener,
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
 
-    private boolean scratchableLayoutAvailable = true;
+    private boolean scratchableLayoutAvailable = false;
 
-    private long lastTouchEvent = 0;
     private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
 
     public ScratchoffController(Context context) {
@@ -135,9 +133,7 @@ public class ScratchoffController implements OnTouchListener,
         if (!scratchableLayoutAvailable)
             return false;
 
-        processor.onReceiveMotionEvent(event);
-
-        this.lastTouchEvent = System.currentTimeMillis();
+        processor.synchronouslyQueueEvent(new ScratchPathPoint(event));
 
         return true;
     }
@@ -255,11 +251,6 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public void addPaths(List<Path> paths) {
-        if (layoutDrawer != null)
-            layoutDrawer.addPaths(paths);
-    }
-
     public double getThresholdPercent() {
         return thresholdPercent;
     }
@@ -329,10 +320,15 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     @Override
-    public void postNewScratchedPaths(final List<Path> paths) {
+    public void postNewScratchedMotionEvents(final List<ScratchPathPoint> events) {
+        final ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
+
+        if (layoutDrawer == null)
+            return;
+
         post(new Runnable() {
             public void run() {
-                addPaths(paths);
+                layoutDrawer.postNewScratchedMotionEvents(events);
             }
         });
     }

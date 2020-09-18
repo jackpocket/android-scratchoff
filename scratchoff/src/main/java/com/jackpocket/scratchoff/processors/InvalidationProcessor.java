@@ -1,14 +1,12 @@
 package com.jackpocket.scratchoff.processors;
 
-import android.graphics.Path;
-
-import com.jackpocket.scratchoff.ScratchoffController;
+import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InvalidationProcessor extends Processor {
+public class InvalidationProcessor extends Processor implements ScratchoffProcessor.Delegate {
 
     public interface Delegate {
         public void postInvalidateScratchableLayout();
@@ -17,17 +15,17 @@ public class InvalidationProcessor extends Processor {
     private static final int SLEEP_DELAY = 15;
 
     private WeakReference<Delegate> delegate;
-    private final List<Path> queuedEvents = new ArrayList<Path>();
+    private final List<ScratchPathPoint> queuedEvents = new ArrayList<ScratchPathPoint>();
 
     @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(Delegate delegate) {
         this.delegate = new WeakReference<Delegate>(delegate);
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public void addPaths(List<Path> paths) {
+    @Override
+    public void postNewScratchedMotionEvents(List<ScratchPathPoint> events) {
         synchronized (queuedEvents){
-            queuedEvents.addAll(paths);
+            queuedEvents.addAll(events);
         }
     }
 

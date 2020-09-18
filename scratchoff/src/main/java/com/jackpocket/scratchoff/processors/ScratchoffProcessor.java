@@ -1,9 +1,7 @@
 package com.jackpocket.scratchoff.processors;
 
-import android.graphics.Path;
-import android.view.MotionEvent;
-
 import com.jackpocket.scratchoff.ScratchoffController;
+import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -12,7 +10,7 @@ import java.util.List;
 public class ScratchoffProcessor extends Processor {
 
     public interface Delegate {
-        public void postNewScratchedPaths(List<Path> paths);
+        public void postNewScratchedMotionEvents(List<ScratchPathPoint> events);
     }
 
     private static final int SLEEP_DELAY = 10;
@@ -22,9 +20,7 @@ public class ScratchoffProcessor extends Processor {
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
-    private final List<Path> queuedEvents = new ArrayList<Path>();
-
-    private int[] lastTouchEvent = new int[] { 0, 0 };
+    private final List<ScratchPathPoint> queuedEvents = new ArrayList<ScratchPathPoint>();
 
     public ScratchoffProcessor(ScratchoffController controller) {
         this.delegate = new WeakReference<Delegate>(controller);
@@ -47,33 +43,9 @@ public class ScratchoffProcessor extends Processor {
         this.invalidationProcessor = invalidationProcessor;
     }
 
-    public void onReceiveMotionEvent(MotionEvent e) {
-        onReceiveMotionEvent((int) e.getX(), (int) e.getY(), e.getAction() == MotionEvent.ACTION_DOWN);
-    }
-
-    protected void onReceiveMotionEvent(int x, int y, boolean actionDown) {
-        int[] event = new int[] { x, y };
-
-        if (!actionDown) {
-            Path scratchPath = createPathFromLastTouchCoordinatesToLocation(x, y);
-
-            synchronouslyQueueEvent(scratchPath);
-        }
-
-        this.lastTouchEvent = event;
-    }
-
-    private Path createPathFromLastTouchCoordinatesToLocation(int x, int y) {
-        Path path = new Path();
-        path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
-        path.lineTo(x, y);
-
-        return path;
-    }
-
-    protected void synchronouslyQueueEvent(Path path) {
+    public void synchronouslyQueueEvent(ScratchPathPoint event) {
         synchronized (queuedEvents) {
-            queuedEvents.add(path);
+            queuedEvents.add(event);
         }
     }
 
@@ -81,24 +53,23 @@ public class ScratchoffProcessor extends Processor {
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
             Delegate delegate = this.delegate.get();
-            List<Path> events = synchronouslyDequeueEvents();
+            List<ScratchPathPoint> events = synchronouslyDequeueEvents();
 
             if (delegate != null && 0 < events.size()) {
-                delegate.postNewScratchedPaths(events);
-
-                invalidationProcessor.addPaths(events);
-                thresholdProcessor.addPaths(events);
+                delegate.postNewScratchedMotionEvents(events);
+                invalidationProcessor.postNewScratchedMotionEvents(events);
+                thresholdProcessor.postNewScratchedMotionEvents(events);
             }
 
             Thread.sleep(SLEEP_DELAY);
         }
     }
 
-    protected List<Path> synchronouslyDequeueEvents() {
-        final List<Path> tempEvents;
+    protected List<ScratchPathPoint> synchronouslyDequeueEvents() {
+        final List<ScratchPathPoint> tempEvents;
 
         synchronized (queuedEvents) {
-            tempEvents = new ArrayList<Path>(queuedEvents);
+            tempEvents = new ArrayList<ScratchPathPoint>(queuedEvents);
 
             this.queuedEvents.clear();
         }
@@ -122,7 +93,7 @@ public class ScratchoffProcessor extends Processor {
         super.stop();
     }
 
-    protected List<Path> getQueuedEvents() {
+    protected List<ScratchPathPoint> getQueuedEvents() {
         synchronized (queuedEvents) {
             return queuedEvents;
         }
