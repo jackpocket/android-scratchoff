@@ -1,6 +1,7 @@
 package com.jackpocket.scratchoff.processors;
 
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
+import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -13,9 +14,10 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
     }
 
     private static final int SLEEP_DELAY = 15;
+    private static final int SLEEP_DELAY_RUNNING_NO_EVENTS = 50;
 
     private WeakReference<Delegate> delegate;
-    private final List<ScratchPathPoint> queuedEvents = new ArrayList<ScratchPathPoint>();
+    private final ScratchPathQueue queue = new ScratchPathQueue();
 
     @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(Delegate delegate) {
@@ -23,24 +25,23 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
     }
 
     @Override
-    public void postNewScratchedMotionEvents(List<ScratchPathPoint> events) {
-        synchronized (queuedEvents){
-            queuedEvents.addAll(events);
-        }
+    public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
+        queue.enqueue(events);
     }
 
     @Override
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
-            synchronized (queuedEvents) {
-                Delegate delegate = this.delegate.get();
+            Delegate delegate = this.delegate.get();
+            List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
 
-                if (delegate != null && 0 < queuedEvents.size()) {
-                    delegate.postInvalidateScratchableLayout();
-                }
+            if (delegate == null || dequeuedEvents.size() < 1) {
+                Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
 
-                queuedEvents.clear();
+                continue;
             }
+
+            delegate.postInvalidateScratchableLayout();
 
             Thread.sleep(SLEEP_DELAY);
         }

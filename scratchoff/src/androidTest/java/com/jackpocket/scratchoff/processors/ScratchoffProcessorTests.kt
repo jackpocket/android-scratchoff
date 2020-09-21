@@ -12,37 +12,6 @@ import org.junit.runner.RunWith
 class ScratchoffProcessorTests {
 
     @Test
-    fun testScratchoffProcessorAddsNewPathsOnMotionEventAndDequeues() {
-        val processor = ScratchoffProcessor(null, null, null)
-
-        assertEquals(0, processor.queuedEvents.size)
-
-        val events = listOf(
-                ScratchPathPoint(1f, 1f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE),
-                ScratchPathPoint(3f, 3f, MotionEvent.ACTION_MOVE),
-                ScratchPathPoint(4f, 4f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(5f, 5f, MotionEvent.ACTION_MOVE)
-        )
-
-        events.forEach(processor::synchronouslyQueueEvent)
-
-        assertEquals(5, processor.queuedEvents.size)
-
-        events.forEachIndexed({ index, item ->
-            assertEquals(item, processor.queuedEvents[index])
-        })
-
-        val dequeued = processor.synchronouslyDequeueEvents()
-
-        assertEquals(0, processor.queuedEvents.size)
-
-        events.forEachIndexed({ index, item ->
-            assertEquals(item, dequeued[index])
-        })
-    }
-
-    @Test
     fun testScratchoffProcessorSendsPathsToSubProcessors() {
         val collectedPaths = mutableListOf<ScratchPathPoint>()
 
@@ -57,12 +26,12 @@ class ScratchoffProcessorTests {
                         return intArrayOf()
                     }
                 }) {
-                    override fun postNewScratchedMotionEvents(events: MutableList<ScratchPathPoint>) {
+                    override fun enqueueScratchMotionEvents(events: MutableList<ScratchPathPoint>) {
                         collectedPaths.addAll(events)
                     }
                 },
                 object: InvalidationProcessor(Delegate {  }) {
-                    override fun postNewScratchedMotionEvents(events: MutableList<ScratchPathPoint>) {
+                    override fun enqueueScratchMotionEvents(events: MutableList<ScratchPathPoint>) {
                         collectedPaths.addAll(events)
                     }
                 }) {
@@ -78,11 +47,11 @@ class ScratchoffProcessorTests {
                 ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE)
         )
 
-        events.forEach(processor::synchronouslyQueueEvent)
+        events.forEach(processor::enqueue)
 
         processor.run()
 
-        assertEquals(0, processor.queuedEvents.size)
+        assertEquals(0, processor.queue.size())
         assertEquals(6, collectedPaths.size)
 
         collectedPaths.forEach({ point ->

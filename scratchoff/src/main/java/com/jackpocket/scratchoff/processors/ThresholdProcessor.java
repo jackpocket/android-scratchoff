@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import com.jackpocket.scratchoff.ViewHelper;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
+import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -23,8 +24,9 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         public void postScratchThresholdReached();
     }
 
-    private static final int SLEEP_DELAY_RUNNING = 50;
     private static final int SLEEP_DELAY_START = 100;
+    private static final int SLEEP_DELAY_RUNNING = 15;
+    private static final int SLEEP_DELAY_RUNNING_NO_EVENTS = 50;
 
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
@@ -43,6 +45,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     private boolean thresholdReached = false;
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
+    private final ScratchPathQueue queue = new ScratchPathQueue();
 
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(int touchRadiusPx, double completionThreshold, Delegate delegate) {
@@ -63,34 +66,43 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     @Override
-    public void postNewScratchedMotionEvents(List<ScratchPathPoint> events) {
+    public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
         synchronized (pathManager) {
             if (currentBitmap == null)
                 return;
 
-            pathManager.addMotionEvents(events);
-            pathManager.draw(canvas, markerPaint);
+            queue.enqueue(events);
         }
     }
 
     @Override
     protected void doInBackground(long id) throws Exception {
+        boolean initialProcessImagePerformed = false;
+
         while (isActive(id) && currentBitmap == null) {
             Thread.sleep(SLEEP_DELAY_START);
 
-            prepareCanvas();
+            prepareBitmapAndCanvasForDrawing();
         }
 
         while (isActive(id)) {
-            synchronized (pathManager) {
-                processImage();
+            if (!drawQueuedScratchMotionEvents() && initialProcessImagePerformed) {
+                Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
+
+                continue;
             }
+
+            synchronized (pathManager) {
+                processScratchedImagePercent();
+            }
+
+            initialProcessImagePerformed = true;
 
             Thread.sleep(SLEEP_DELAY_RUNNING);
         }
     }
 
-    protected void prepareCanvas() {
+    protected void prepareBitmapAndCanvasForDrawing() {
         Delegate delegate = this.delegate.get();
 
         if (delegate == null)
@@ -111,7 +123,19 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         }
     }
 
-    protected void processImage() {
+    protected boolean drawQueuedScratchMotionEvents() {
+        List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
+
+        if (dequeuedEvents.size() < 1)
+            return false;
+
+        pathManager.addMotionEvents(dequeuedEvents);
+        pathManager.draw(canvas, markerPaint);
+
+        return true;
+    }
+
+    protected void processScratchedImagePercent() {
         Delegate delegate = this.delegate.get();
         Bitmap currentBitmap = this.currentBitmap;
 

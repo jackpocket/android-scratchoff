@@ -22,7 +22,7 @@ class InvalidationProcessorTests {
 
         assertEquals(0, invalidationCallCount)
 
-        processor.postNewScratchedMotionEvents(listOf(ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN)))
+        processor.enqueueScratchMotionEvents(listOf(ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN)))
         processor.run()
 
         assertEquals(1, invalidationCallCount)

@@ -27,11 +27,10 @@ class ThresholdProcessorTests {
     }
 
     @Test
-    fun testMatchesFromHistoryLoad() {
-        var loops: Int = 0
+    fun testThresholdCalculationMatchesFromHistoryLoad() {
         var scratchPercent: Double = 0.0
 
-        val processor = object: ThresholdProcessor(5, 1.0, object: Delegate {
+        val processor = ThresholdProcessor(5, 1.0, object: ThresholdProcessor.Delegate {
             override fun postScratchThresholdReached() { }
 
             override fun postScratchPercentChanged(percent: Double) {
@@ -41,24 +40,19 @@ class ThresholdProcessorTests {
             override fun getScratchableLayoutSize(): IntArray {
                 return intArrayOf(10, 10)
             }
-        }) {
-            override fun isActive(id: Long): Boolean {
-                loops += 1
-
-                return loops <= 3
-            }
-        }
+        })
 
         val events = listOf(
                 ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
         )
 
-        processor.prepareCanvas()
-        processor.postNewScratchedMotionEvents(events)
+        processor.prepareBitmapAndCanvasForDrawing()
+        processor.enqueueScratchMotionEvents(events)
         processor.safelyReleaseCurrentBitmap()
-        processor.prepareCanvas()
-        processor.processImage()
+        processor.prepareBitmapAndCanvasForDrawing()
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
 
         assertEquals(0.5, scratchPercent, 0.001)
     }
@@ -84,12 +78,53 @@ class ThresholdProcessorTests {
                 ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
         )
 
-        processor.prepareCanvas()
-        processor.postNewScratchedMotionEvents(events)
-        processor.processImage()
-        processor.postNewScratchedMotionEvents(events)
-        processor.processImage()
+        processor.prepareBitmapAndCanvasForDrawing()
+        processor.enqueueScratchMotionEvents(events)
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
+        processor.enqueueScratchMotionEvents(events)
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
 
         assertEquals(1, thresholdReachedCount)
+    }
+
+    @Test
+    fun testScratchPercentNotUpdatesAfterThresholdReachedTriggered() {
+        var scratchPercent: Double = 0.0
+
+        val processor = ThresholdProcessor(1, 0.5, object: ThresholdProcessor.Delegate {
+            override fun postScratchThresholdReached() { }
+
+            override fun postScratchPercentChanged(percent: Double) {
+                scratchPercent = percent
+            }
+
+            override fun getScratchableLayoutSize(): IntArray {
+                return intArrayOf(1, 10)
+            }
+        })
+
+        processor.prepareBitmapAndCanvasForDrawing()
+        processor.enqueueScratchMotionEvents(listOf(
+                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0f, 3f, MotionEvent.ACTION_MOVE)
+        ))
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
+        processor.enqueueScratchMotionEvents(listOf(
+                ScratchPathPoint(0f, 3f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0f, 6f, MotionEvent.ACTION_MOVE)
+        ))
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
+        processor.enqueueScratchMotionEvents(listOf(
+                ScratchPathPoint(0f, 6f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+        ))
+        processor.drawQueuedScratchMotionEvents()
+        processor.processScratchedImagePercent()
+
+        assertEquals(0.6, scratchPercent, 0.0001)
     }
 }

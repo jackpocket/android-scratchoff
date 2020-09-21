@@ -21,8 +21,6 @@ public class ScratchPathManager {
     public void addMotionEvent(ScratchPathPoint event) {
         switch (event.action) {
             case MotionEvent.ACTION_UP:
-                handleTouchUp();
-
                 break;
             case MotionEvent.ACTION_DOWN:
                 handleTouchDown(event.x, event.y);
@@ -37,12 +35,10 @@ public class ScratchPathManager {
 
     protected void handleTouchDown(float x, float y) {
         synchronized (paths) {
-            if (!activePath.isEmpty()) {
-                paths.add(activePath);
-            }
-
             this.activePath = new Path();
             this.activePath.moveTo(x, y);
+
+            this.paths.add(activePath);
         }
     }
 
@@ -52,19 +48,11 @@ public class ScratchPathManager {
         }
     }
 
-    protected void handleTouchUp() {
-        synchronized (paths) {
-            paths.add(activePath);
-
-            this.activePath = new Path();
-        }
-    }
-
     public void draw(Canvas canvas, Paint paint) {
-        for (Path path : paths)
-            canvas.drawPath(path, paint);
-
-        canvas.drawPath(getActivePath(), paint);
+        synchronized (paths) {
+            for (Path path : paths)
+                canvas.drawPath(path, paint);
+        }
     }
 
     public void clear() {
@@ -74,21 +62,9 @@ public class ScratchPathManager {
         }
     }
 
-    public Path getActivePath() {
-        synchronized (paths) {
-            return activePath;
-        }
-    }
-
     public ArrayList<Path> getPaths() {
         synchronized (paths) {
             return paths;
-        }
-    }
-
-    public int getPathCount() {
-        synchronized (paths) {
-            return paths.size();
         }
     }
 }

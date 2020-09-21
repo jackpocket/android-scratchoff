@@ -2,15 +2,15 @@ package com.jackpocket.scratchoff.processors;
 
 import com.jackpocket.scratchoff.ScratchoffController;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
+import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ScratchoffProcessor extends Processor {
 
     public interface Delegate {
-        public void postNewScratchedMotionEvents(List<ScratchPathPoint> events);
+        public void enqueueScratchMotionEvents(List<ScratchPathPoint> events);
     }
 
     private static final int SLEEP_DELAY = 10;
@@ -20,7 +20,7 @@ public class ScratchoffProcessor extends Processor {
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
-    private final List<ScratchPathPoint> queuedEvents = new ArrayList<ScratchPathPoint>();
+    private final ScratchPathQueue queue = new ScratchPathQueue();
 
     public ScratchoffProcessor(ScratchoffController controller) {
         this.delegate = new WeakReference<Delegate>(controller);
@@ -43,38 +43,24 @@ public class ScratchoffProcessor extends Processor {
         this.invalidationProcessor = invalidationProcessor;
     }
 
-    public void synchronouslyQueueEvent(ScratchPathPoint event) {
-        synchronized (queuedEvents) {
-            queuedEvents.add(event);
-        }
+    public void enqueue(ScratchPathPoint event) {
+        queue.enqueue(event);
     }
 
     @Override
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
             Delegate delegate = this.delegate.get();
-            List<ScratchPathPoint> events = synchronouslyDequeueEvents();
+            List<ScratchPathPoint> events = queue.dequeue();
 
             if (delegate != null && 0 < events.size()) {
-                delegate.postNewScratchedMotionEvents(events);
-                invalidationProcessor.postNewScratchedMotionEvents(events);
-                thresholdProcessor.postNewScratchedMotionEvents(events);
+                delegate.enqueueScratchMotionEvents(events);
+                invalidationProcessor.enqueueScratchMotionEvents(events);
+                thresholdProcessor.enqueueScratchMotionEvents(events);
             }
 
             Thread.sleep(SLEEP_DELAY);
         }
-    }
-
-    protected List<ScratchPathPoint> synchronouslyDequeueEvents() {
-        final List<ScratchPathPoint> tempEvents;
-
-        synchronized (queuedEvents) {
-            tempEvents = new ArrayList<ScratchPathPoint>(queuedEvents);
-
-            this.queuedEvents.clear();
-        }
-
-        return tempEvents;
     }
 
     @Override
@@ -93,9 +79,7 @@ public class ScratchoffProcessor extends Processor {
         super.stop();
     }
 
-    protected List<ScratchPathPoint> getQueuedEvents() {
-        synchronized (queuedEvents) {
-            return queuedEvents;
-        }
+    protected ScratchPathQueue getQueue() {
+        return queue;
     }
 }
