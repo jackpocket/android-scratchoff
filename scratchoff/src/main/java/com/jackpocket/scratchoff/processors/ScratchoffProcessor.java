@@ -43,8 +43,8 @@ public class ScratchoffProcessor extends Processor {
         this.invalidationProcessor = invalidationProcessor;
     }
 
-    public void enqueue(ScratchPathPoint event) {
-        queue.enqueue(event);
+    public void enqueue(List<ScratchPathPoint> events) {
+        queue.enqueue(events);
     }
 
     @Override

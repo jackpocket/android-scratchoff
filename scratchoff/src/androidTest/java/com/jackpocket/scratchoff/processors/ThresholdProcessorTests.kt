@@ -43,8 +43,8 @@ class ThresholdProcessorTests {
         })
 
         val events = listOf(
-                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         )
 
         processor.prepareBitmapAndCanvasForDrawing()
@@ -74,8 +74,8 @@ class ThresholdProcessorTests {
         })
 
         val events = listOf(
-                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         )
 
         processor.prepareBitmapAndCanvasForDrawing()
@@ -107,8 +107,8 @@ class ThresholdProcessorTests {
 
         processor.prepareBitmapAndCanvasForDrawing()
         processor.enqueueScratchMotionEvents(listOf(
-                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 3f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 3f, MotionEvent.ACTION_MOVE)
         ))
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
@@ -116,8 +116,8 @@ class ThresholdProcessorTests {
         assertEquals(0.3f, scratchPercent)
 
         processor.enqueueScratchMotionEvents(listOf(
-                ScratchPathPoint(0f, 3f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 6f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 0f, 3f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 6f, MotionEvent.ACTION_MOVE)
         ))
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
@@ -125,8 +125,8 @@ class ThresholdProcessorTests {
         assertEquals(0.6f, scratchPercent)
 
         processor.enqueueScratchMotionEvents(listOf(
-                ScratchPathPoint(0f, 6f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 0f, 6f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         ))
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()

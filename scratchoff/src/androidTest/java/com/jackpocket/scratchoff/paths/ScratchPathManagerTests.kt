@@ -2,6 +2,7 @@ package com.jackpocket.scratchoff.paths
 
 import android.graphics.Path
 import android.graphics.RectF
+import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,9 +17,9 @@ class ScratchPathManagerTests {
 
         assertEquals(0, manager.paths.size)
 
-        manager.handleTouchDown(0f, 0f)
-        manager.handleTouchDown(0f, 0f)
-        manager.handleTouchDown(0f, 0f)
+        manager.handleTouchDown(0, 0f, 0f)
+        manager.handleTouchDown(0, 0f, 0f)
+        manager.handleTouchDown(0, 0f, 0f)
 
         assertEquals(3, manager.paths.size)
     }
@@ -26,15 +27,30 @@ class ScratchPathManagerTests {
     @Test
     fun testActionMoveChangesActivePathAndDoesNotCreateNewPath() {
         val manager = ScratchPathManager();
-        manager.handleTouchDown(0f, 0f)
+        manager.handleTouchDown(0, 0f, 0f)
 
         assertEquals(1, manager.paths.size)
         manager.paths[0].assertEmpty(true)
 
-        manager.handleTouchMove(1f, 1f)
+        manager.handleTouchMove(0, 1f, 1f)
 
         assertEquals(1, manager.paths.size)
         manager.paths[0].assertEmpty(false)
+    }
+
+    @Test
+    fun testPointerUpFollowedByMoveCreatesNewPath() {
+        val manager = ScratchPathManager();
+
+        val events = listOf(
+                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_POINTER_UP),
+                ScratchPathPoint(0, 3f, 3f, MotionEvent.ACTION_MOVE)
+        )
+
+        manager.addMotionEvents(events)
+
+        assertEquals(2, manager.paths.size)
     }
 
     private fun Path.assertEmpty(value: Boolean) {

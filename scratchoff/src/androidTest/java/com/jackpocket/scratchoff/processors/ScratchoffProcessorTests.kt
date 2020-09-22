@@ -43,12 +43,11 @@ class ScratchoffProcessorTests {
         assertEquals(0, collectedPaths.size)
 
         val events = listOf(
-                ScratchPathPoint(1f, 1f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
         )
 
-        events.forEach(processor::enqueue)
-
+        processor.enqueue(events)
         processor.run()
 
         assertEquals(0, processor.queue.size())

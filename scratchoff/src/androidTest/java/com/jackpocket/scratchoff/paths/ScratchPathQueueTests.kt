@@ -16,11 +16,11 @@ class ScratchPathQueueTests {
         Assert.assertEquals(0, queue.size())
 
         val events = listOf(
-                ScratchPathPoint(1f, 1f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(2f, 2f, MotionEvent.ACTION_MOVE),
-                ScratchPathPoint(3f, 3f, MotionEvent.ACTION_MOVE),
-                ScratchPathPoint(4f, 4f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(5f, 5f, MotionEvent.ACTION_MOVE)
+                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE),
+                ScratchPathPoint(0, 3f, 3f, MotionEvent.ACTION_MOVE),
+                ScratchPathPoint(0, 4f, 4f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 5f, 5f, MotionEvent.ACTION_MOVE)
         )
 
         queue.enqueue(events)

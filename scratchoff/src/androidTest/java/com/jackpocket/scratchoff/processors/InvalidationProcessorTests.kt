@@ -18,7 +18,7 @@ class InvalidationProcessorTests {
         assertEquals(0, invalidationCallCount)
         assertEquals(false, processor.isInvalidationRequired)
 
-        processor.enqueueScratchMotionEvents(listOf(ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN)))
+        processor.enqueueScratchMotionEvents(listOf(ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN)))
 
         assertEquals(true, processor.isInvalidationRequired)
 
@@ -27,8 +27,8 @@ class InvalidationProcessorTests {
         assertEquals(1, invalidationCallCount)
 
         processor.enqueueScratchMotionEvents(listOf(
-                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0f, 0f, MotionEvent.ACTION_DOWN)
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN)
         ))
         processor.performBackgroundInvalidationLoopSegment()
         processor.performBackgroundInvalidationLoopSegment()

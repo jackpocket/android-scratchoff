@@ -136,7 +136,7 @@ public class ScratchoffController implements OnTouchListener,
         if (!scratchableLayoutAvailable)
             return false;
 
-        processor.enqueue(new ScratchPathPoint(event));
+        processor.enqueue(ScratchPathPoint.create(event));
 
         return true;
     }
