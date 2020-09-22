@@ -28,12 +28,12 @@ class ThresholdProcessorTests {
 
     @Test
     fun testThresholdCalculationMatchesFromHistoryLoad() {
-        var scratchPercent: Double = 0.0
+        var scratchPercent: Float = 0.0f
 
         val processor = ThresholdProcessor(5, 1.0, object: ThresholdProcessor.Delegate {
             override fun postScratchThresholdReached() { }
 
-            override fun postScratchPercentChanged(percent: Double) {
+            override fun postScratchPercentChanged(percent: Float) {
                 scratchPercent = percent
             }
 
@@ -54,7 +54,7 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.5, scratchPercent, 0.001)
+        assertEquals(0.5f, scratchPercent)
     }
 
     @Test
@@ -62,7 +62,7 @@ class ThresholdProcessorTests {
         var thresholdReachedCount: Int = 0
 
         val processor = ThresholdProcessor(10, 0.5, object: ThresholdProcessor.Delegate {
-            override fun postScratchPercentChanged(percent: Double) { }
+            override fun postScratchPercentChanged(percent: Float) { }
 
             override fun postScratchThresholdReached() {
                 thresholdReachedCount += 1
@@ -91,12 +91,12 @@ class ThresholdProcessorTests {
 
     @Test
     fun testScratchPercentNotUpdatesAfterThresholdReachedTriggered() {
-        var scratchPercent: Double = 0.0
+        var scratchPercent: Float = 0.0f
 
         val processor = ThresholdProcessor(1, 0.5, object: ThresholdProcessor.Delegate {
             override fun postScratchThresholdReached() { }
 
-            override fun postScratchPercentChanged(percent: Double) {
+            override fun postScratchPercentChanged(percent: Float) {
                 scratchPercent = percent
             }
 
@@ -112,12 +112,18 @@ class ThresholdProcessorTests {
         ))
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
+
+        assertEquals(0.3f, scratchPercent)
+
         processor.enqueueScratchMotionEvents(listOf(
                 ScratchPathPoint(0f, 3f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0f, 6f, MotionEvent.ACTION_MOVE)
         ))
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
+
+        assertEquals(0.6f, scratchPercent)
+
         processor.enqueueScratchMotionEvents(listOf(
                 ScratchPathPoint(0f, 6f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0f, 10f, MotionEvent.ACTION_MOVE)
@@ -125,6 +131,6 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.6, scratchPercent, 0.0001)
+        assertEquals(0.6f, scratchPercent)
     }
 }

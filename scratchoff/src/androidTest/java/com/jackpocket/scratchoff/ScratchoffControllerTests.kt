@@ -12,9 +12,13 @@ import java.lang.IllegalStateException
 @RunWith(AndroidJUnit4::class)
 class ScratchoffControllerTests {
 
+//    private val loggingDelegate = object:
+
     private val context: Context by lazy {
         InstrumentationRegistry.getInstrumentation().context
     }
+
+    private val loggingDelegate = LoggingDelegate()
 
     @Test(expected = IllegalStateException::class)
     fun testThrowsIllegalStateExceptionOnResetWithoutView() {
@@ -47,10 +51,9 @@ class ScratchoffControllerTests {
 
     @Test
     fun testThresholdReachedTriggersCompletionCallbackWithoutClearingEnabled() {
-        var completionCount: Int = 0
         var clearCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(context, loggingDelegate) {
             override fun clear(): ScratchoffController {
                 clearCount += 1
 
@@ -58,12 +61,9 @@ class ScratchoffControllerTests {
             }
         }
         controller.setClearOnThresholdReached(false)
-        controller.setCompletionCallback({
-            completionCount += 1
-        })
         controller.onThresholdReached()
 
-        assertEquals(1, completionCount)
+        assertEquals(1, loggingDelegate.completions)
         assertEquals(0, clearCount)
         assert(controller.isThresholdReached)
     }
@@ -73,7 +73,7 @@ class ScratchoffControllerTests {
         var completionCount: Int = 0
         var clearCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(context, loggingDelegate) {
             override fun clear(): ScratchoffController {
                 clearCount += 1
 
@@ -81,12 +81,9 @@ class ScratchoffControllerTests {
             }
         }
         controller.setClearOnThresholdReached(true)
-        controller.setCompletionCallback({
-            completionCount += 1
-        })
         controller.onThresholdReached()
 
-        assertEquals(1, completionCount)
+        assertEquals(1, loggingDelegate.completions)
         assertEquals(1, clearCount)
         assert(controller.isThresholdReached)
     }
@@ -147,5 +144,22 @@ class ScratchoffControllerTests {
         controller.onResume()
 
         assertEquals(1, startCount)
+    }
+
+    private class LoggingDelegate: ScratchoffController.Delegate {
+
+        var threshold: Float = 0f
+            private set
+
+        var completions: Int = 0
+            private set
+
+        override fun onScratchPercentChanged(controller: ScratchoffController, percentCompleted: Float) {
+            threshold = percentCompleted
+        }
+
+        override fun onScratchThresholdReached(controller: ScratchoffController) {
+            completions += 1
+        }
     }
 }

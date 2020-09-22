@@ -14,13 +14,9 @@ import java.util.List;
 
 public class ThresholdProcessor extends Processor implements ScratchoffProcessor.Delegate {
 
-    public interface ScratchValueChangedListener {
-        public void onScratchPercentChanged(double percentCompleted);
-    }
-
     public interface Delegate {
         public int[] getScratchableLayoutSize();
-        public void postScratchPercentChanged(double percent);
+        public void postScratchPercentChanged(float percent);
         public void postScratchThresholdReached();
     }
 
@@ -142,7 +138,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         if (delegate == null || currentBitmap == null || thresholdReached)
             return;
 
-        double percentScratched = calculatePercentScratched(currentBitmap);
+        float percentScratched = calculatePercentScratched(currentBitmap);
 
         if (percentScratched != this.lastPercentScratched) {
             delegate.postScratchPercentChanged(percentScratched);
@@ -157,12 +153,12 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         this.lastPercentScratched = percentScratched;
     }
 
-    private double calculatePercentScratched(Bitmap bitmap) {
+    private float calculatePercentScratched(Bitmap bitmap) {
         return calculatePercentScratched(getScratchedCount(bitmap), bitmap.getWidth(), bitmap.getHeight());
     }
 
-    public static double calculatePercentScratched(int scratchedCount, int width, int height) {
-        return Math.min(1, Math.max(0, ((double) scratchedCount) / (width * height)));
+    public static float calculatePercentScratched(int scratchedCount, int width, int height) {
+        return Math.min(1, Math.max(0, ((float) scratchedCount) / (width * height)));
     }
 
     private int getScratchedCount(Bitmap bitmap) {

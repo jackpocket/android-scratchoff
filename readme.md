@@ -12,15 +12,20 @@ repositories {
 }
 
 dependencies {
-    compile('com.jackpocket:scratchoff:1.4.0')
+    compile('com.jackpocket:scratchoff:2.0.0')
 }
 ```
 
 # Usage
 
-The goal of this library is to create a scratchoff interface. By storing and manipulating the drawing cache of a View, we can create the effect of scratching it away to reveal what's hidden below. 
+### Layout Setup
 
-First, you need a RelativeLayout (to align layouts on top of one another) consisting of 2 sub-layouts, a behind-View and the View to be scratched away from the foreground. Here is a simple example using the **ScratchableLinearLayout**:
+First, you need a parent `ViewGroup` that supports vertical stacking, like a `RelativeLayout`. That parent `ViewGroup` should consist of 2 sub-layouts: 
+
+1. a behind-View to be revealed
+2. a foreground-View to be scratched away
+
+Here is a simple example using the `ScratchableLinearLayout`:
 
 ```xml
 <RelativeLayout
@@ -32,6 +37,7 @@ First, you need a RelativeLayout (to align layouts on top of one another) consis
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:background="#818B8D" >
+
         <ImageView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -39,6 +45,7 @@ First, you need a RelativeLayout (to align layouts on top of one another) consis
             android:layout_margin="25dip"
             android:adjustViewBounds="true"
             android:src="@drawable/some_drawable_to_be_revealed" />
+
     </RelativeLayout>
 
     <com.jackpocket.scratchoff.views.ScratchableLinearLayout
@@ -46,6 +53,7 @@ First, you need a RelativeLayout (to align layouts on top of one another) consis
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:background="#3C9ADF" >
+
         <ImageView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -53,59 +61,81 @@ First, you need a RelativeLayout (to align layouts on top of one another) consis
             android:adjustViewBounds="true"
             android:gravity="center"
             android:src="@drawable/some_top_drawable" />
+
     </com.jackpocket.scratchoff.views.ScratchableLinearLayout>
 </RelativeLayout>
 ```
 
-Note: be careful with the dimensions of both the behind-View and the foreground View. The **ScratchableLayoutDrawer** will attempt to set the foreground View's LayoutParam width and height attributes to match that of the behind-View so that their dimensions line up perfectly. 
+Note: be careful with the dimensions of both the behind-View and the foreground-View. The `ScratchableLayoutDrawer` will attempt to set the foreground-View's LayoutParam width and height attributes to match that of the behind-View so that their dimensions are equal.
 
-Now that you have a layout, we need to attach the **ScratchoffController** to it:
+### Scratch Threshold Changed / Threshold Reached Callback Setup
+
+The `ScratchoffController` will call its delegate's methods when the scratched threshold has changed or has been reached, but you need to maintain a strong reference to the supplied `ScratchoffController.Delegate` instance.
 
 ```java
-ScratchoffController controller = new ScratchoffController(context)
-        .setThresholdPercent(0.40d)
-        .setTouchRadiusDip(context, 30)
-        .setFadeOnClear(true)
-        .setClearOnThresholdReached(true)
-        .setCompletionCallback(() -> {  })
-        .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+public class MainActivity extends Activity implements ScratchoffController.Delegate {
+
+    public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted) {
+        // This will be called on the main thread any time the scratch threshold has changed.
+        // The values will be between [0.0, 100.0]
+    }
+
+    public void onScratchThresholdReached(ScratchoffController controller) {
+        // This is called on the main thread the moment we know the scratched threshold has been reached.
+        // If the fade-on-clear animation is enabled, it will already have been started, but not completed.
+    }
+}
+
 ```
 
-In this example, you only *need* the constructor and the **attach(View, View)** method to enable scratching. The default values for all the other methods are configurable by overriding the appropriate resources.
+### Attaching the `ScratchoffController`
 
-Since the foreground View in our example is a **ScratchableLinearLayout** (which implements **ScratchableLayout**), the ScratchoffController will automatically attach itself to the View and drawing will work correctly (the same goes for the **ScratchableRelativeLayout**).
-
-Please note: If you're not using one of the supplied ScratchableLayouts, you must manually call **ScratchoffController.draw(Canvas)** from your custom View's **onDraw(Canvas)** method.
-
-### Re-using the ScratchController
-
-With version 1.0.2, the ScratchController can be correctly reset using `ScratchController.reset()`, but you must set the background color of your ScratchableLayout back to something opaque before calling it, as the ScratchableLayoutDrawer must set it to transparent afterwards in order to efficiently process scratched paths. e.g.
+Once we have a layout and delegate setup, we can attach the `ScratchoffController` to it:
 
 ```java
-controller = new ScratchoffController(this)
-        .setCompletionCallback(() -> {
-            findViewById(R.id.scratch_view)
-                    .setBackgroundColor(0xFF3C9ADF); // Make sure to set the background. Don't worry, it's still hidden if it cleared
+// context: android.content.Context
+// delegate: ScratchoffController.Delegate
 
-            new Handler(Looper.getMainLooper())
-                    .postDelayed(() -> 
-                            controller.reset(), 2000);
-        })
-        .setScratchValueChangedListener(percentChanged -> {
-            // Do something on scratch percent value changed
-        })
-        .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+ScratchoffController controller = new ScratchoffController(context)
+    .setDelegate(delegate)
+    .setThresholdPercent(0.40d)
+    .setTouchRadiusDip(context, 30)
+    .setFadeOnClear(true)
+    .setClearOnThresholdReached(true)
+    .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+```
+
+In this example, only the constructor and the final `attach(View, View)` method are required to enable scratching. 
+
+Since the foreground `View` in our example is a `ScratchableLinearLayout` (which implements `ScratchableLayout`), the `ScratchoffController` will automatically attach itself to the `View` and drawing will work without any additional setup (the same goes for the `ScratchableRelativeLayout`).
+
+Note: If you're not using one of the supplied `ScratchableLayouts`, you must manually call `ScratchoffController.draw(Canvas)` from your custom View's `onDraw(Canvas)` method.
+
+### Re-using the `ScratchoffController`
+
+The `ScratchoffController` can be reset using `ScratchController.reset()`, but you **must** set the background color of your `ScratchableLayout` back to something opaque before calling it, as the `ScratchableLayoutDrawer` must set it to transparent afterwards in order to efficiently process scratched paths. e.g.
+
+```java
+public void onScratchThresholdReached(ScratchoffController controller) {
+    // Make sure to set the background of the foreground-View. 
+    // Don't worry, it's hidden if it cleared or still clearing.
+    findViewById(R.id.scratch_view)
+        .setBackgroundColor(0xFF3C9ADF);
+
+    // Reset after a delay, as the clearing animation may still be running at this point
+    new Handler(Looper.getMainLooper())
+        .postDelayed(() -> controller.reset(), 2000);
+}
 ```
 
 ### Lifecycle
 
-As a final note, if using the ScratchoffController in the context of an Activity, you may want to also ensure you call the correct lifecycle methods for *onPause()*, *onResume()*, and *onDestroy()* as needed, to ensure the processors will stop/restart and not run needlessly in the background. e.g.
+Ensure you call the correct lifecycle methods for `onPause()`, `onResume()`, and `onDestroy()`, so that the processors will stop/restart without running needlessly in the background. e.g.
 
 ```java
 @Override
 public void onPause(){
     controller.onPause();
-    controller.removeTouchObservers()
 
     super.onPause();
 }
@@ -115,9 +145,6 @@ public void onResume(){
     super.onResume();
 
     controller.onResume();
-    controller.addTouchObserver((view, event) -> {
-        // Do something on MotionEvent?
-    });
 }
 
 @Override
@@ -128,28 +155,35 @@ public void onDestroy(){
 }
 ```
 
-### Observing MotionEvents
+### Extra: Observing MotionEvents
 
-As of version 1.3.1, you can add an `OnTouchListener` to the `ScratchoffController` to observe `MotionEvents` as they come in, regardless of enabled state. When adding these observers, it'd be a good idea to remove them in the appropriate lifecycle methods.
-
+You can add an `OnTouchListener` to the `ScratchoffController` to observe `MotionEvents` as they come in, regardless of enabled state. When adding these observers, it'd be a good idea to remove them in the appropriate lifecycle methods.
 
 ```java
 @Override
 public void onPause(){
+    ...
     controller.removeTouchObservers()
 
-    ....
+    super.onPause()
 }
 
 @Override
 public void onResume(){
-    ....
+    super.onResume()
 
     controller.addTouchObserver((view, event) -> {
         // Do something on a particular MotionEvent?
     });
+    ...
 }
 ```
 
-Additional credits:
+Note: the return values of `onTouch` will be ignored, as the `ScratchoffController` must maintain control of the touch event collection.
+
+# Upgrading from Version 1.x to Version 2.0.0
+
+Follow the [upgrade guide](https://github.com/jackpocket/android_scratchoff/raw/master/upgrade_1.x-2.0.md).
+
+# Additional credits:
 + [scratchoff-test/src/res/drawable/ic_touch_indicator.xml](https://www.svgrepo.com/svg/9543/touch)

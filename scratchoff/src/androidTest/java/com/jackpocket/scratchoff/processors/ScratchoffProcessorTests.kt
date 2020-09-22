@@ -20,7 +20,7 @@ class ScratchoffProcessorTests {
                     collectedPaths.addAll(it)
                 },
                 object: ThresholdProcessor(0, 0.0, object: ThresholdProcessor.Delegate {
-                    override fun postScratchPercentChanged(percent: Double) { }
+                    override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
                     override fun getScratchableLayoutSize(): IntArray {
                         return intArrayOf()
@@ -67,7 +67,7 @@ class ScratchoffProcessorTests {
         val processor = ScratchoffProcessor(
                 null,
                 object: ThresholdProcessor(0, 0.0, object: ThresholdProcessor.Delegate {
-                    override fun postScratchPercentChanged(percent: Double) { }
+                    override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
                     override fun getScratchableLayoutSize(): IntArray {
                         return intArrayOf()

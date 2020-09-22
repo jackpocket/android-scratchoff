@@ -1,10 +1,8 @@
 package com.jackpocket.scratchoff.processors;
 
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
-import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 public class InvalidationProcessor extends Processor implements ScratchoffProcessor.Delegate {
@@ -13,11 +11,13 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
         public void postInvalidateScratchableLayout();
     }
 
-    private static final int SLEEP_DELAY = 15;
+    private static final int SLEEP_DELAY = 10;
     private static final int SLEEP_DELAY_RUNNING_NO_EVENTS = 50;
 
     private WeakReference<Delegate> delegate;
-    private final ScratchPathQueue queue = new ScratchPathQueue();
+    private boolean invalidationRequired = false;
+
+    private final Boolean lock = false;
 
     @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(Delegate delegate) {
@@ -26,24 +26,39 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
 
     @Override
     public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
-        queue.enqueue(events);
+        synchronized (lock) {
+            this.invalidationRequired = invalidationRequired || 0 < events.size();
+        }
     }
 
     @Override
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
-            Delegate delegate = this.delegate.get();
-            List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
+            performBackgroundInvalidationLoopSegment();
+        }
+    }
 
-            if (delegate == null || dequeuedEvents.size() < 1) {
-                Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
+    protected void performBackgroundInvalidationLoopSegment() throws InterruptedException {
+        Delegate delegate = this.delegate.get();
 
-                continue;
-            }
+        if (delegate == null || !isInvalidationRequired()) {
+            Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
 
-            delegate.postInvalidateScratchableLayout();
+            return;
+        }
 
-            Thread.sleep(SLEEP_DELAY);
+        synchronized (lock) {
+            this.invalidationRequired = false;
+        }
+
+        delegate.postInvalidateScratchableLayout();
+
+        Thread.sleep(SLEEP_DELAY);
+    }
+
+    protected boolean isInvalidationRequired() {
+        synchronized (lock) {
+            return invalidationRequired;
         }
     }
 }

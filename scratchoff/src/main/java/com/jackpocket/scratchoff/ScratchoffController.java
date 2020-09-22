@@ -26,13 +26,16 @@ public class ScratchoffController implements OnTouchListener,
         ThresholdProcessor.Delegate,
         InvalidationProcessor.Delegate {
 
+    public interface Delegate {
+        public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted);
+        public void onScratchThresholdReached(ScratchoffController controller);
+    }
+
     private WeakReference<View> scratchableLayout = new WeakReference<View>(null);
     private ScratchableLayoutDrawer layoutDrawer;
 
     private ScratchoffProcessor processor;
-    private ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener;
-
-    private Runnable completionCallback;
+    private WeakReference<Delegate> delegate = new WeakReference<Delegate>(null);
 
     private WeakReference<View> behindView = new WeakReference<View>(null);
 
@@ -57,8 +60,8 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ScratchoffController(Context context, Runnable completionCallback) {
-        this.completionCallback = completionCallback;
+    public ScratchoffController(Context context, Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
 
         this.touchRadiusPx = (int) context.getResources()
                 .getDimension(R.dimen.scratch__touch_radius);
@@ -170,8 +173,10 @@ public class ScratchoffController implements OnTouchListener,
         if (clearOnThresholdReached)
             clear();
 
-        if (completionCallback != null)
-            completionCallback.run();
+        Delegate delegate = this.delegate.get();
+
+        if (delegate != null)
+            delegate.onScratchThresholdReached(this);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -233,20 +238,15 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set a Runnable to be triggered when the percentage of scratched area exceeds the threshold.
+     * Set a callback to be triggered when the percentage of scratched area changes
+     * and the scratch threshold has been reached.
+     *
+     * Callback values for scratch percentages are in the range [0.0, 100.0].
+     *
+     * You must maintain a reference to the supplied ScratchControllerDelegate.
      */
-    public ScratchoffController setCompletionCallback(Runnable completionCallback) {
-        this.completionCallback = completionCallback;
-
-        return this;
-    }
-
-    /**
-     * Set a callback to be triggered when the percentage of scratched area changes.
-     * Callback values are in the range [0, 100]
-     */
-    public ScratchoffController setScratchValueChangedListener(ThresholdProcessor.ScratchValueChangedListener scratchValueChangedListener) {
-        this.scratchValueChangedListener = scratchValueChangedListener;
+    public ScratchoffController setDelegate(Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
 
         return this;
     }
@@ -347,15 +347,15 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     @Override
-    public void postScratchPercentChanged(final double percent) {
-        final ThresholdProcessor.ScratchValueChangedListener valueChangedListener = this.scratchValueChangedListener;
+    public void postScratchPercentChanged(final float percent) {
+        final Delegate delegate = this.delegate.get();
 
-        if (valueChangedListener == null)
+        if (delegate == null)
             return;
 
         post(new Runnable() {
             public void run() {
-                valueChangedListener.onScratchPercentChanged(percent);
+                delegate.onScratchPercentChanged(ScratchoffController.this, percent);
             }
         });
     }
