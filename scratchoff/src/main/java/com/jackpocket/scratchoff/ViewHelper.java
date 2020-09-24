@@ -16,7 +16,7 @@ public class ViewHelper {
             v.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
 
-    public static void addGlobalLayoutRequest(final View v, final Runnable runnable){
+    public static void addGlobalLayoutRequest(final View v, final Runnable runnable) {
         v.getViewTreeObserver()
                 .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     public void onGlobalLayout() {
@@ -47,18 +47,8 @@ public class ViewHelper {
         return (int) (dip * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
-    @SuppressLint("NewApi")
-    public static boolean isAttachedToWindow(View view) {
-        if (Build.VERSION.SDK_INT < 19) {
-            return view.getWindowToken() != null;
-        }
-
-        return view.isAttachedToWindow();
-    }
-
     public static Paint createBaseScratchoffPaint(int touchRadiusPx) {
         Paint markerPaint = new Paint();
-        markerPaint.setAntiAlias(true);
         markerPaint.setStyle(Paint.Style.STROKE);
         markerPaint.setStrokeCap(Paint.Cap.ROUND);
         markerPaint.setStrokeJoin(Paint.Join.ROUND);

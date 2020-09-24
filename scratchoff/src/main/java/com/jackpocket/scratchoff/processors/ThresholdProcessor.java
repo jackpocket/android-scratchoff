@@ -50,6 +50,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
         this.markerPaint = ViewHelper.createBaseScratchoffPaint(touchRadiusPx);
         this.markerPaint.setColor(MARKER_SCRATCHED);
+        this.markerPaint.setAntiAlias(false);
     }
 
     @Override
@@ -63,18 +64,11 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     @Override
     public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
-        synchronized (pathManager) {
-            if (currentBitmap == null)
-                return;
-
-            queue.enqueue(events);
-        }
+        queue.enqueue(events);
     }
 
     @Override
     protected void doInBackground(long id) throws Exception {
-        boolean initialProcessImagePerformed = false;
-
         while (isActive(id) && currentBitmap == null) {
             Thread.sleep(SLEEP_DELAY_START);
 
@@ -82,17 +76,13 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         }
 
         while (isActive(id)) {
-            if (!drawQueuedScratchMotionEvents() && initialProcessImagePerformed) {
+            if (!drawQueuedScratchMotionEvents()) {
                 Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
 
                 continue;
             }
 
-            synchronized (pathManager) {
-                processScratchedImagePercent();
-            }
-
-            initialProcessImagePerformed = true;
+            processScratchedImagePercent();
 
             Thread.sleep(SLEEP_DELAY_RUNNING);
         }
@@ -114,9 +104,16 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
 
-        synchronized (pathManager) {
-            pathManager.draw(canvas, markerPaint);
-        }
+        // The continuous drawing of incomplete Path elements affects the
+        // drawing at the pixel-level, and the result may differ from the single-redraw
+        // performed when restoring the Path elements from the history.
+        // Thus, we cannot expect the threshold calculated from a historical reload
+        // to be exactly equal to the original, without emulating the original drawing
+        // of the MotionEvents as they came in. Since that would be super-inefficient,
+        // I have no more tears to give this problem, the ThresholdProcessor instances are
+        // not re-used after resets, and the loss is limited to less than 0.001%,
+        // we can just pretend that doesn't really happen and move on with our lives...
+        pathManager.draw(canvas, markerPaint);
     }
 
     protected boolean drawQueuedScratchMotionEvents() {
@@ -140,7 +137,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
         float percentScratched = calculatePercentScratched(currentBitmap);
 
-        if (percentScratched != this.lastPercentScratched) {
+        if (this.lastPercentScratched < percentScratched) {
             delegate.postScratchPercentChanged(percentScratched);
         }
 
@@ -162,10 +159,11 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     private int getScratchedCount(Bitmap bitmap) {
-        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+        int pixelCount = bitmap.getWidth() * bitmap.getHeight();
+        int[] pixels = new int[pixelCount];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-        return countColorMatches(MARKER_SCRATCHED, pixels);
+        return pixelCount - countColorMatches(MARKER_UNTOUCHED, pixels);
     }
 
     static int countColorMatches(int color, int[] pixels) {

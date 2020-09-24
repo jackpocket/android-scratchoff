@@ -91,6 +91,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
             clearPaint = ViewHelper.createBaseScratchoffPaint(touchRadiusPx);
             clearPaint.setAlpha(0xFF);
+            clearPaint.setAntiAlias(true);
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
             enqueueViewInitializationOnGlobalLayout(scratchView, behindView);
@@ -164,12 +165,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     @Override
     public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
-        synchronized (pathManager) {
-            if (pathStrippedImage == null)
-                return;
-
-            queue.enqueue(events);
-        }
+        queue.enqueue(events);
     }
 
     @SuppressWarnings("WeakerAccess")
