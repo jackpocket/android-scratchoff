@@ -1,6 +1,7 @@
 package com.jackpocket.scratchoff.processors;
 
 import com.jackpocket.scratchoff.ScratchoffController;
+import com.jackpocket.scratchoff.tools.Sleeper;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 
@@ -13,7 +14,7 @@ public class ScratchoffProcessor extends Processor {
         public void enqueueScratchMotionEvents(List<ScratchPathPoint> events);
     }
 
-    private static final int SLEEP_DELAY = 10;
+    private final Sleeper sleeper = new Sleeper(10, 50, 3000);
 
     private WeakReference<Delegate> delegate;
 
@@ -53,13 +54,18 @@ public class ScratchoffProcessor extends Processor {
             Delegate delegate = this.delegate.get();
             List<ScratchPathPoint> events = queue.dequeue();
 
-            if (delegate != null && 0 < events.size()) {
-                delegate.enqueueScratchMotionEvents(events);
-                invalidationProcessor.enqueueScratchMotionEvents(events);
-                thresholdProcessor.enqueueScratchMotionEvents(events);
+            if (delegate == null || events.size() == 0) {
+                sleeper.sleep();
+
+                continue;
             }
 
-            Thread.sleep(SLEEP_DELAY);
+            delegate.enqueueScratchMotionEvents(events);
+            invalidationProcessor.enqueueScratchMotionEvents(events);
+            thresholdProcessor.enqueueScratchMotionEvents(events);
+
+            sleeper.notifyTriggered();
+            sleeper.sleep();
         }
     }
 
@@ -75,6 +81,8 @@ public class ScratchoffProcessor extends Processor {
     public void stop() {
         thresholdProcessor.stop();
         invalidationProcessor.stop();
+
+        sleeper.reset();
 
         super.stop();
     }

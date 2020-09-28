@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
+import com.jackpocket.scratchoff.tools.Sleeper;
 import com.jackpocket.scratchoff.ViewHelper;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
@@ -21,8 +22,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     private static final int SLEEP_DELAY_START = 100;
-    private static final int SLEEP_DELAY_RUNNING = 15;
-    private static final int SLEEP_DELAY_RUNNING_NO_EVENTS = 50;
+    private final Sleeper sleeper = new Sleeper(15, 50, 3000);
 
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
@@ -77,14 +77,15 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
         while (isActive(id)) {
             if (!drawQueuedScratchMotionEvents()) {
-                Thread.sleep(SLEEP_DELAY_RUNNING_NO_EVENTS);
+                sleeper.sleep();
 
                 continue;
             }
 
             processScratchedImagePercent();
 
-            Thread.sleep(SLEEP_DELAY_RUNNING);
+            sleeper.notifyTriggered();
+            sleeper.sleep();
         }
     }
 
@@ -182,6 +183,8 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         super.stop();
 
         safelyReleaseCurrentBitmap();
+
+        sleeper.reset();
     }
 
     protected void safelyReleaseCurrentBitmap() {

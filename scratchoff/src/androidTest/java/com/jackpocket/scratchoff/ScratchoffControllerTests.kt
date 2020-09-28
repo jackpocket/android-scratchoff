@@ -12,8 +12,6 @@ import java.lang.IllegalStateException
 @RunWith(AndroidJUnit4::class)
 class ScratchoffControllerTests {
 
-//    private val loggingDelegate = object:
-
     private val context: Context by lazy {
         InstrumentationRegistry.getInstrumentation().context
     }
