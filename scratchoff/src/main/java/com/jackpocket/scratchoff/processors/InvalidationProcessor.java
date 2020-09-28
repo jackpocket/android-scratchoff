@@ -34,11 +34,11 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
     @Override
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
-            performBackgroundInvalidationLoopSegment();
+            performBackgroundInvalidationLoopSegment(id);
         }
     }
 
-    protected void performBackgroundInvalidationLoopSegment() throws InterruptedException {
+    protected void performBackgroundInvalidationLoopSegment(long id) throws InterruptedException {
         Delegate delegate = this.delegate.get();
 
         if (delegate == null || !isInvalidationRequired()) {
@@ -52,6 +52,9 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
         }
 
         delegate.postInvalidateScratchableLayout();
+
+        if (!isActive(id))
+            return;
 
         sleeper.notifyTriggered();
         sleeper.sleep();

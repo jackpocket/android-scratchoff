@@ -64,6 +64,9 @@ public class ScratchoffProcessor extends Processor {
             invalidationProcessor.enqueueScratchMotionEvents(events);
             thresholdProcessor.enqueueScratchMotionEvents(events);
 
+            if (!isActive(id))
+                return;
+
             sleeper.notifyTriggered();
             sleeper.sleep();
         }

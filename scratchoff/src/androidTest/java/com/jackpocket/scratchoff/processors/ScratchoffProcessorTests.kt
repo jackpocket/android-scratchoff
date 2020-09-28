@@ -47,6 +47,7 @@ class ScratchoffProcessorTests {
                 ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
         )
 
+        processor.obtainNewThreadId()
         processor.enqueue(events)
         processor.run()
 

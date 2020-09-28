@@ -15,6 +15,8 @@ class InvalidationProcessorTests {
             invalidationCallCount += 1
         })
 
+        val processorThreadId = processor.obtainNewThreadId()
+
         assertEquals(0, invalidationCallCount)
         assertEquals(false, processor.isInvalidationRequired)
 
@@ -22,7 +24,7 @@ class InvalidationProcessorTests {
 
         assertEquals(true, processor.isInvalidationRequired)
 
-        processor.performBackgroundInvalidationLoopSegment()
+        processor.performBackgroundInvalidationLoopSegment(processorThreadId)
 
         assertEquals(1, invalidationCallCount)
 
@@ -30,9 +32,9 @@ class InvalidationProcessorTests {
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN)
         ))
-        processor.performBackgroundInvalidationLoopSegment()
-        processor.performBackgroundInvalidationLoopSegment()
-        processor.performBackgroundInvalidationLoopSegment()
+        processor.performBackgroundInvalidationLoopSegment(processorThreadId)
+        processor.performBackgroundInvalidationLoopSegment(processorThreadId)
+        processor.performBackgroundInvalidationLoopSegment(processorThreadId)
 
         assertEquals(2, invalidationCallCount)
         assertEquals(false, processor.isInvalidationRequired)

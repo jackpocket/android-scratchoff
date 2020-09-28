@@ -57,8 +57,6 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     public void start() {
         this.thresholdReached = false;
 
-        safelyReleaseCurrentBitmap();
-
         super.start();
     }
 
@@ -83,6 +81,9 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
             }
 
             processScratchedImagePercent();
+
+            if (!isActive(id))
+                return;
 
             sleeper.notifyTriggered();
             sleeper.sleep();
@@ -182,9 +183,9 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     public void stop() {
         super.stop();
 
-        safelyReleaseCurrentBitmap();
-
         sleeper.reset();
+
+        safelyReleaseCurrentBitmap();
     }
 
     protected void safelyReleaseCurrentBitmap() {
