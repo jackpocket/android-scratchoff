@@ -27,7 +27,18 @@ public class ScratchoffController implements OnTouchListener,
         InvalidationProcessor.Delegate {
 
     public interface Delegate {
+
+        /**
+         * Callback values for scratch percentages are in the range [0.0, 100.0] and will be
+         * continuously called on the main Thread as the threshold value changes.
+         * <br><br>
+         * Updates will cease once the threshold has been reached.
+         */
         public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted);
+
+        /**
+         * Called once the scratch threshold has been reached.
+         */
         public void onScratchThresholdReached(ScratchoffController controller);
     }
 
@@ -55,10 +66,21 @@ public class ScratchoffController implements OnTouchListener,
 
     private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
 
+    /**
+     * Create a {@link ScratchoffController} instance.
+     * <br><br>
+     * You must manually call {@link #setDelegate(Delegate)} to receive scratch threshold updates and
+     * completion events, or instantiate with {@link #ScratchoffController(Context,Delegate)}.
+     */
     public ScratchoffController(Context context) {
         this(context, null);
     }
 
+    /**
+     * Create a {@link ScratchoffController} instance.
+     * <br><br>
+     * You must maintain a reference to the supplied {@link Delegate} as it will be weakly held.
+     */
     @SuppressWarnings("WeakerAccess")
     public ScratchoffController(Context context, Delegate delegate) {
         this.delegate = new WeakReference<Delegate>(delegate);
@@ -73,8 +95,23 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
+     * Set a callback to be triggered when the percentage of scratched area changes
+     * and the scratch threshold has been reached.<br>
+     * <br><br>
+     * Callback values for scratch percentages are in the range [0.0, 100.0].
+     * <br><br>
+     * You must maintain a reference to the supplied {@link Delegate} as it will be weakly held.
+     */
+    public ScratchoffController setDelegate(Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
+
+        return this;
+    }
+
+    /**
      * Attach the controller to the specified Views
-     * @param scratchableLayout The View to scratch away. If not an instance of ScratchableLayout, you must handle the calls to ScratchoffController.draw(Canvas) manually.
+     *
+     * @param scratchableLayout The View to scratch away. If this View is not an instance of {@link ScratchableLayout}, you must handle the calls to {@link #draw(Canvas)} manually.
      * @param behindView The View to be revealed
      */
     public ScratchoffController attach(View scratchableLayout, View behindView) {
@@ -87,12 +124,15 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Reset the controller to its pre-scratched state. attach(View, View) must be called prior to resetting.
+     * Reset the controller to its pre-scratched state.
+     * <br><br>
+     * Note: {@link #attach(View, View)) must have been called at least once before resetting.
      */
     public ScratchoffController reset() {
-        View layout = scratchableLayout.get();
+        View scratchableLayout = this.scratchableLayout.get();
+        View behindView = this.behindView.get();
 
-        if (layout == null)
+        if (scratchableLayout == null || behindView == null)
             throw new IllegalStateException("Cannot attach to a null View! Ensure you call attach(View, View) with valid Views!");
 
         safelyStopProcessors();
@@ -100,14 +140,14 @@ public class ScratchoffController implements OnTouchListener,
         this.layoutDrawer = new ScratchableLayoutDrawer()
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
                 .setClearAnimationInterpolator(clearAnimationInterpolator)
-                .attach(this, layout, behindView.get());
+                .attach(this, scratchableLayout, behindView);
 
-        layout.setOnTouchListener(this);
+        scratchableLayout.setOnTouchListener(this);
 
         this.processor = new ScratchoffProcessor(this);
 
-        if (layout instanceof ScratchableLayout)
-            ((ScratchableLayout) layout).initialize(this);
+        if (scratchableLayout instanceof ScratchableLayout)
+            ((ScratchableLayout) scratchableLayout).initialize(this);
 
         return this;
     }
@@ -135,7 +175,7 @@ public class ScratchoffController implements OnTouchListener,
         List<ScratchPathPoint> events = ScratchPathPoint.create(event);
 
         enqueueLayoutDrawerEvents(events);
-        processor.enqueue(events);
+        enqueueProcessorEvents(events);
 
         return true;
     }
@@ -145,6 +185,13 @@ public class ScratchoffController implements OnTouchListener,
 
         if (layoutDrawer != null)
             layoutDrawer.enqueueScratchMotionEvents(events);
+    }
+
+    protected void enqueueProcessorEvents(List<ScratchPathPoint> events) {
+        ScratchoffProcessor processor = this.processor;
+
+        if (processor != null)
+            processor.enqueue(events);
     }
 
     public void draw(Canvas canvas) {
@@ -169,6 +216,8 @@ public class ScratchoffController implements OnTouchListener,
     public ScratchoffController onDestroy() {
         safelyStopProcessors();
 
+        ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
+
         if (layoutDrawer != null)
             layoutDrawer.destroy();
 
@@ -190,6 +239,8 @@ public class ScratchoffController implements OnTouchListener,
     @SuppressWarnings("WeakerAccess")
     public ScratchoffController clear() {
         this.scratchableLayoutAvailable = false;
+
+        ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
 
         if (layoutDrawer != null)
             layoutDrawer.clear(fadeOnClear);
@@ -245,20 +296,6 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    /**
-     * Set a callback to be triggered when the percentage of scratched area changes
-     * and the scratch threshold has been reached.
-     *
-     * Callback values for scratch percentages are in the range [0.0, 100.0].
-     *
-     * You must maintain a reference to the supplied ScratchControllerDelegate.
-     */
-    public ScratchoffController setDelegate(Delegate delegate) {
-        this.delegate = new WeakReference<Delegate>(delegate);
-
-        return this;
-    }
-
     public double getThresholdPercent() {
         return thresholdPercent;
     }
@@ -279,6 +316,8 @@ public class ScratchoffController implements OnTouchListener,
         if (!scratchableLayoutAvailable)
             return;
 
+        ScratchoffProcessor processor = this.processor;
+
         if (processor == null || processor.isActive())
             return;
 
@@ -286,6 +325,8 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     protected void safelyStopProcessors() {
+        ScratchoffProcessor processor = this.processor;
+
         if (processor == null)
             return;
 
@@ -298,11 +339,11 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Add an OnTouchListener to observe MotionEvents as they are passed
-     * into the ScratchoffController. Events will be forwarded regardless of
+     * into this ScratchoffController instance. Events will be forwarded regardless of
      * the ScratchoffController's enabled state, and all return values will be ignored.
-     *
+     * <br><br>
      * If adding observers (in Activity.onResume), you should also call
-     * ScratchoffController.removeTouchObservers (in Activity.onPause).
+     * {@link #removeTouchObservers} (in Activity.onPause).
      *
      * @param touchListener a non-null OnTouchListener
      */
@@ -313,7 +354,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Remove a OnTouchListener from the ScratchoffController.
+     * Remove a OnTouchListener from this ScratchoffController instance.
      *
      * @param touchListener a non-null OnTouchListener
      */
@@ -323,6 +364,9 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
+    /**
+     * Remove all touch observers from this ScratchoffController instance.
+     */
     public void removeTouchObservers() {
         this.touchObservers.clear();
     }
