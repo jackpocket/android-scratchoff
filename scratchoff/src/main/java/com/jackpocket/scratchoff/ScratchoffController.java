@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 public class ScratchoffController implements OnTouchListener,
         ScratchableLayoutDrawer.Delegate,
-        ScratchoffProcessor.Delegate,
         ThresholdProcessor.Delegate,
         InvalidationProcessor.Delegate {
 
@@ -133,12 +132,24 @@ public class ScratchoffController implements OnTouchListener,
         if (!scratchableLayoutAvailable)
             return false;
 
-        processor.enqueue(ScratchPathPoint.create(event));
+        List<ScratchPathPoint> events = ScratchPathPoint.create(event);
+
+        enqueueLayoutDrawerEvents(events);
+        processor.enqueue(events);
 
         return true;
     }
 
+    protected void enqueueLayoutDrawerEvents(List<ScratchPathPoint> events) {
+        ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
+
+        if (layoutDrawer != null)
+            layoutDrawer.enqueueScratchMotionEvents(events);
+    }
+
     public void draw(Canvas canvas) {
+        ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
+
         if (layoutDrawer != null)
             layoutDrawer.draw(canvas);
     }
@@ -314,20 +325,6 @@ public class ScratchoffController implements OnTouchListener,
 
     public void removeTouchObservers() {
         this.touchObservers.clear();
-    }
-
-    @Override
-    public void enqueueScratchMotionEvents(final List<ScratchPathPoint> events) {
-        final ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
-
-        if (layoutDrawer == null)
-            return;
-
-        post(new Runnable() {
-            public void run() {
-                layoutDrawer.enqueueScratchMotionEvents(events);
-            }
-        });
     }
 
     @Override

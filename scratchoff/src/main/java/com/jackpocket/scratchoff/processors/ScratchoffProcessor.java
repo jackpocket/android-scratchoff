@@ -14,8 +14,6 @@ public class ScratchoffProcessor extends Processor {
         public void enqueueScratchMotionEvents(List<ScratchPathPoint> events);
     }
 
-    private WeakReference<Delegate> delegate;
-
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
@@ -24,8 +22,6 @@ public class ScratchoffProcessor extends Processor {
     private final Sleeper sleeper = new Sleeper(10, 50, 3000);
 
     public ScratchoffProcessor(ScratchoffController controller) {
-        this.delegate = new WeakReference<Delegate>(controller);
-
         this.thresholdProcessor = new ThresholdProcessor(
                 controller.getTouchRadiusPx(),
                 controller.getThresholdPercent(),
@@ -35,11 +31,9 @@ public class ScratchoffProcessor extends Processor {
     }
 
     public ScratchoffProcessor(
-            Delegate delegate,
             ThresholdProcessor thresholdProcessor,
             InvalidationProcessor invalidationProcessor) {
 
-        this.delegate = new WeakReference<Delegate>(delegate);
         this.thresholdProcessor = thresholdProcessor;
         this.invalidationProcessor = invalidationProcessor;
     }
@@ -51,16 +45,14 @@ public class ScratchoffProcessor extends Processor {
     @Override
     protected void doInBackground(long id) throws Exception {
         while (isActive(id)) {
-            Delegate delegate = this.delegate.get();
             List<ScratchPathPoint> events = queue.dequeue();
 
-            if (delegate == null || events.size() == 0) {
+            if (events.size() == 0) {
                 sleeper.sleep();
 
                 continue;
             }
 
-            delegate.enqueueScratchMotionEvents(events);
             invalidationProcessor.enqueueScratchMotionEvents(events);
             thresholdProcessor.enqueueScratchMotionEvents(events);
 

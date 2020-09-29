@@ -12,13 +12,10 @@ import org.junit.runner.RunWith
 class ScratchoffProcessorTests {
 
     @Test
-    fun testScratchoffProcessorSendsPathsToSubProcessors() {
+    fun testSendsPathsToSubProcessors() {
         val collectedPaths = mutableListOf<ScratchPathPoint>()
 
         val processor = object: ScratchoffProcessor(
-                ScratchoffProcessor.Delegate {
-                    collectedPaths.addAll(it)
-                },
                 object: ThresholdProcessor(0, 0.0, object: ThresholdProcessor.Delegate {
                     override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
@@ -52,20 +49,19 @@ class ScratchoffProcessorTests {
         processor.run()
 
         assertEquals(0, processor.queue.size())
-        assertEquals(6, collectedPaths.size)
+        assertEquals(4, collectedPaths.size)
 
         collectedPaths.forEach({ point ->
-            assertEquals(3, collectedPaths.count({ point == it }))
+            assertEquals(2, collectedPaths.count({ point == it }))
         })
     }
 
     @Test
-    fun testScratchoffProcessorStartsAndStopsSubProcessors() {
+    fun testStartsAndStopsSubProcessors() {
         var startCalls: Int = 0
         var stopCalls: Int = 0
 
         val processor = ScratchoffProcessor(
-                null,
                 object: ThresholdProcessor(0, 0.0, object: ThresholdProcessor.Delegate {
                     override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
