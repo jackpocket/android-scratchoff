@@ -1,9 +1,9 @@
 package com.jackpocket.scratchoff.processors;
 
 import com.jackpocket.scratchoff.ScratchoffController;
-import com.jackpocket.scratchoff.tools.Sleeper;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
+import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -14,14 +14,14 @@ public class ScratchoffProcessor extends Processor {
         public void enqueueScratchMotionEvents(List<ScratchPathPoint> events);
     }
 
-    private final Sleeper sleeper = new Sleeper(10, 50, 3000);
-
     private WeakReference<Delegate> delegate;
 
     private ThresholdProcessor thresholdProcessor;
     private InvalidationProcessor invalidationProcessor;
 
     private final ScratchPathQueue queue = new ScratchPathQueue();
+
+    private final Sleeper sleeper = new Sleeper(10, 50, 3000);
 
     public ScratchoffProcessor(ScratchoffController controller) {
         this.delegate = new WeakReference<Delegate>(controller);

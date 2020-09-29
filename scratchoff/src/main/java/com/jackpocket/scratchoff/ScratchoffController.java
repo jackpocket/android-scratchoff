@@ -2,6 +2,7 @@ package com.jackpocket.scratchoff;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.view.MotionEvent;
 import android.view.View;
@@ -49,7 +50,7 @@ public class ScratchoffController implements OnTouchListener,
     private boolean fadeOnClear;
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
-    private long clearAnimationDurationMs = 1000;
+    private long clearAnimationDurationMs;
 
     private boolean scratchableLayoutAvailable = false;
 
@@ -63,17 +64,13 @@ public class ScratchoffController implements OnTouchListener,
     public ScratchoffController(Context context, Delegate delegate) {
         this.delegate = new WeakReference<Delegate>(delegate);
 
-        this.touchRadiusPx = (int) context.getResources()
-                .getDimension(R.dimen.scratch__touch_radius);
+        Resources resources = context.getResources();
 
-        this.thresholdPercent = context.getResources()
-                .getInteger(R.integer.scratch__threshold_percent) / 100d;
-
-        this.clearOnThresholdReached = context.getResources()
-                .getBoolean(R.bool.scratch__clear_on_threshold_reached);
-
-        this.fadeOnClear = context.getResources()
-                .getBoolean(R.bool.scratch__fade_on_clear);
+        this.touchRadiusPx = (int) resources.getDimension(R.dimen.scratch__touch_radius);
+        this.thresholdPercent = resources.getInteger(R.integer.scratch__threshold_percent) / 100d;
+        this.clearOnThresholdReached = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached);
+        this.clearAnimationDurationMs = resources.getInteger(R.integer.scratch__clear_animation_duration_ms);
+        this.fadeOnClear = resources.getBoolean(R.bool.scratch__fade_on_clear);
     }
 
     /**
@@ -232,7 +229,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
-        this.touchRadiusPx = ViewHelper.getPxFromDip(context, touchRadius);
+        this.touchRadiusPx = (int) ((touchRadius * context.getResources().getDisplayMetrics().density) + 0.5f);
 
         return this;
     }

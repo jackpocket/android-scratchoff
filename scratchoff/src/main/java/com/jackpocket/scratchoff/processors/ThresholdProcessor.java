@@ -4,11 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-import com.jackpocket.scratchoff.tools.Sleeper;
-import com.jackpocket.scratchoff.ViewHelper;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
+import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -22,7 +21,6 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     private static final int SLEEP_DELAY_START = 100;
-    private final Sleeper sleeper = new Sleeper(15, 50, 3000);
 
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
@@ -43,12 +41,14 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     private final ScratchPathManager pathManager = new ScratchPathManager();
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
+    private final Sleeper sleeper = new Sleeper(15, 50, 3000);
+
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(int touchRadiusPx, double completionThreshold, Delegate delegate) {
         this.delegate = new WeakReference<Delegate>(delegate);
         this.completionThreshold = completionThreshold;
 
-        this.markerPaint = ViewHelper.createBaseScratchoffPaint(touchRadiusPx);
+        this.markerPaint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
         this.markerPaint.setColor(MARKER_SCRATCHED);
         this.markerPaint.setAntiAlias(false);
     }

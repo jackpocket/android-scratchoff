@@ -83,9 +83,17 @@ public class ScratchPathManager {
         }
     }
 
-    public ArrayList<Path> getPaths() {
-        synchronized (paths) {
-            return paths;
-        }
+    protected ArrayList<Path> getPaths() {
+        return paths;
+    }
+
+    public static Paint createBaseScratchoffPaint(int touchRadiusPx) {
+        Paint markerPaint = new Paint();
+        markerPaint.setStyle(Paint.Style.STROKE);
+        markerPaint.setStrokeCap(Paint.Cap.ROUND);
+        markerPaint.setStrokeJoin(Paint.Join.ROUND);
+        markerPaint.setStrokeWidth(touchRadiusPx * 2);
+
+        return markerPaint;
     }
 }

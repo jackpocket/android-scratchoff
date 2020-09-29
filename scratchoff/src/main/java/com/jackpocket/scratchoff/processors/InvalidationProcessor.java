@@ -1,7 +1,7 @@
 package com.jackpocket.scratchoff.processors;
 
-import com.jackpocket.scratchoff.tools.Sleeper;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
+import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -12,12 +12,10 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
         public void postInvalidateScratchableLayout();
     }
 
-    private final Sleeper sleeper = new Sleeper(10, 50, 3000);
-
     private WeakReference<Delegate> delegate;
     private boolean invalidationRequired = false;
 
-    private final Boolean lock = false;
+    private final Sleeper sleeper = new Sleeper(10, 50, 3000);
 
     @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(Delegate delegate) {
@@ -26,7 +24,7 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
 
     @Override
     public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
-        synchronized (lock) {
+        synchronized (sleeper) {
             this.invalidationRequired = invalidationRequired || 0 < events.size();
         }
     }
@@ -47,7 +45,7 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
             return;
         }
 
-        synchronized (lock) {
+        synchronized (sleeper) {
             this.invalidationRequired = false;
         }
 
@@ -68,7 +66,7 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
     }
 
     protected boolean isInvalidationRequired() {
-        synchronized (lock) {
+        synchronized (sleeper) {
             return invalidationRequired;
         }
     }

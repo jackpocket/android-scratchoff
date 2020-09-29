@@ -1,13 +1,16 @@
 package com.jackpocket.scratchoff;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
@@ -87,9 +90,10 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
             scratchView.invalidate();
 
-            ViewHelper.disableHardwareAcceleration(scratchView);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+                scratchView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-            clearPaint = ViewHelper.createBaseScratchoffPaint(touchRadiusPx);
+            clearPaint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
             clearPaint.setAlpha(0xFF);
             clearPaint.setAntiAlias(true);
             clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
@@ -101,7 +105,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     protected void enqueueViewInitializationOnGlobalLayout(final View scratchView, final View behindView) {
-        ViewHelper.addGlobalLayoutRequest(
+        addGlobalLayoutRequest(
                 behindView,
                 new Runnable() {
                     public void run() {
@@ -120,7 +124,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     protected void enqueueScratchableViewInitializationOnGlobalLayout(final View scratchView) {
-        ViewHelper.addGlobalLayoutRequest(
+        addGlobalLayoutRequest(
                 scratchView,
                 new Runnable() {
                     public void run() {
@@ -300,6 +304,33 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
                 group.getChildAt(i)
                         .setVisibility(View.VISIBLE);
         }
+    }
+
+    private void addGlobalLayoutRequest(final View v, final Runnable runnable) {
+        v.getViewTreeObserver()
+                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    public void onGlobalLayout() {
+                        if(runnable != null)
+                            runnable.run();
+
+                        removeOnGlobalLayoutListener(v, this);
+                    }
+                });
+
+        v.requestLayout();
+    }
+
+    @SuppressLint("NewApi")
+    private void removeOnGlobalLayoutListener(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
+        if (Build.VERSION.SDK_INT < 16) {
+            v.getViewTreeObserver()
+                    .removeGlobalOnLayoutListener(listener);
+
+            return;
+        }
+
+        v.getViewTreeObserver()
+                .removeOnGlobalLayoutListener(listener);
     }
 
     @SuppressWarnings("WeakerAccess")
