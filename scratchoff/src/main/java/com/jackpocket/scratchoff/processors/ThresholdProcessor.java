@@ -113,7 +113,6 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
         float accuracyQuality = constrainAccuracyQuality(
                 this.originalTouchRadius,
-                layoutSize[0],
                 this.accuracyQuality);
 
         float width = layoutSize[0] * accuracyQuality;
@@ -146,10 +145,9 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     protected static float constrainAccuracyQuality(
             int touchRadius,
-            int width,
             float accuracyQuality) {
 
-        float minimumAccuracyQuality = touchRadius / (float) width;
+        float minimumAccuracyQuality = 1 / (float) touchRadius;
 
         return Math.min(1f, Math.max(minimumAccuracyQuality, accuracyQuality));
     }
@@ -179,7 +177,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
             delegate.postScratchPercentChanged(percentScratched);
         }
 
-        if (completionThreshold < percentScratched) {
+        if (completionThreshold <= percentScratched) {
             this.thresholdReached = true;
 
             delegate.postScratchThresholdReached();

@@ -409,15 +409,17 @@ class ThresholdProcessorTests {
 
     @Test
     fun constrainAccuracyQualityBoundedToMinMax() {
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 1, 10.0f))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 10, 10.0f))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 1, 0.0f))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 10.0f))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f))
 
-        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(1, 100, 0.0f))
-        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(1, 10, 0.0f))
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(5, 10, 0.0f))
-        assertEquals(0.7f, ThresholdProcessor.constrainAccuracyQuality(7, 10, 0.0f))
+        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(100, 0.0f))
+        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(10, 0.0f))
+        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f))
 
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(1, 100, 0.5f))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(100, 0.5f))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(10, 0.5f))
+        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.5f))
+
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(2, 0.5f))
     }
 }

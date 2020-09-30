@@ -313,7 +313,7 @@ public class ScratchoffController implements OnTouchListener,
      * the MotionEvent instances, and the touch radius. A lower quality value implies a
      * less accurate threshold calculation.
      * <br><br>
-     * If the supplied quality value is below the runtime-calculated minimum (touchRadius / width),
+     * If the supplied quality value is below the runtime-calculated minimum (1 / touchRadius),
      * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum.
      * <br><br>
      * If you always want it to use the lowest possible accuracy quality, simply set this to 0.01f.
