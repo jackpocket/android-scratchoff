@@ -16,6 +16,15 @@ public class ScratchPathManager {
     private int[] lastActiveActions = new int[POINTER_LIMIT];
 
     private final ArrayList<Path> paths = new ArrayList<>();
+    private float scale = 1f;
+
+    public ScratchPathManager() { }
+
+    public ScratchPathManager setScale(float scale) {
+        this.scale = scale;
+
+        return this;
+    }
 
     public void addMotionEvents(Collection<ScratchPathPoint> events) {
         for (ScratchPathPoint event : events)
@@ -34,11 +43,17 @@ public class ScratchPathManager {
                     break;
                 case MotionEvent.ACTION_DOWN:
                 case MotionEvent.ACTION_POINTER_DOWN:
-                    handleTouchDown(event.pointerIndex, event.x, event.y);
+                    handleTouchDown(
+                            event.pointerIndex,
+                            event.x * scale,
+                            event.y * scale);
 
                     break;
                 default:
-                    handleTouchMove(event.pointerIndex, event.x, event.y);
+                    handleTouchMove(
+                            event.pointerIndex,
+                            event.x * scale,
+                            event.y * scale);
 
                     break;
             }

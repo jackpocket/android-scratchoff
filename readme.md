@@ -98,7 +98,7 @@ Once we have a layout and delegate setup, we can attach the `ScratchoffControlle
 
 ScratchoffController controller = new ScratchoffController(context)
     .setDelegate(delegate)
-    .setThresholdPercent(0.40d)
+    .setThresholdPercent(0.40f)
     .setTouchRadiusDip(context, 30)
     .setFadeOnClear(true)
     .setClearOnThresholdReached(true)

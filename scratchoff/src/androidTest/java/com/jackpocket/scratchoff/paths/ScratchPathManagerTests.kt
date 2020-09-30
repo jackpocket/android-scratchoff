@@ -13,7 +13,7 @@ class ScratchPathManagerTests {
 
     @Test
     fun testActionDownAlwaysCreatesNewPath() {
-        val manager = ScratchPathManager();
+        val manager = ScratchPathManager()
 
         assertEquals(0, manager.paths.size)
 
@@ -26,7 +26,7 @@ class ScratchPathManagerTests {
 
     @Test
     fun testActionMoveChangesActivePathAndDoesNotCreateNewPath() {
-        val manager = ScratchPathManager();
+        val manager = ScratchPathManager()
         manager.handleTouchDown(0, 0f, 0f)
 
         assertEquals(1, manager.paths.size)
@@ -40,7 +40,7 @@ class ScratchPathManagerTests {
 
     @Test
     fun testPointerUpFollowedByMoveCreatesNewPath() {
-        val manager = ScratchPathManager();
+        val manager = ScratchPathManager()
 
         val events = listOf(
                 ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
@@ -59,5 +59,28 @@ class ScratchPathManagerTests {
         this.computeBounds(pathBounds, true)
 
         assertEquals(value, pathBounds.isEmpty)
+    }
+
+    @Test
+    fun testTouchDownAndMovePassthroughIncludesScalar() {
+        val manager = object: ScratchPathManager() {
+            override fun handleTouchDown(pointerIndex: Int, x: Float, y: Float) {
+                assertEquals(0.5f, x)
+                assertEquals(0.5f, y)
+            }
+
+            override fun handleTouchMove(pointerIndex: Int, x: Float, y: Float) {
+                assertEquals(1f, x)
+                assertEquals(1f, y)
+            }
+        }
+        manager.setScale(0.5f)
+
+        val events = listOf(
+                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
+        )
+
+        manager.addMotionEvents(events)
     }
 }

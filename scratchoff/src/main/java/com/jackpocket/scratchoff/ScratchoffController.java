@@ -51,8 +51,9 @@ public class ScratchoffController implements OnTouchListener,
     private WeakReference<View> behindView = new WeakReference<View>(null);
 
     private int touchRadiusPx;
+    private float thresholdAccuracyQuality = 1.0f;
     private boolean thresholdReached = false;
-    private double thresholdPercent;
+    private float thresholdPercent;
 
     private int[] gridSize;
 
@@ -88,7 +89,7 @@ public class ScratchoffController implements OnTouchListener,
         Resources resources = context.getResources();
 
         this.touchRadiusPx = (int) resources.getDimension(R.dimen.scratch__touch_radius);
-        this.thresholdPercent = resources.getInteger(R.integer.scratch__threshold_percent) / 100d;
+        this.thresholdPercent = resources.getInteger(R.integer.scratch__threshold_percent) / 100f;
         this.clearOnThresholdReached = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached);
         this.clearAnimationDurationMs = resources.getInteger(R.integer.scratch__clear_animation_duration_ms);
         this.fadeOnClear = resources.getBoolean(R.bool.scratch__fade_on_clear);
@@ -254,7 +255,7 @@ public class ScratchoffController implements OnTouchListener,
         return scratchableLayout.get();
     }
 
-    public ScratchoffController setThresholdPercent(double thresholdPercent) {
+    public ScratchoffController setThresholdPercent(float thresholdPercent) {
         this.thresholdPercent = thresholdPercent;
 
         return this;
@@ -296,12 +297,38 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public double getThresholdPercent() {
+    public float getThresholdPercent() {
         return thresholdPercent;
     }
 
     public int getTouchRadiusPx() {
         return touchRadiusPx;
+    }
+
+    /**
+     * Set the quality, between [0.01, 1.0f], for the underlying Threshold processor.
+     * The default is 1.0f, or 100%.
+     * <br><br>
+     * This scalar is applied to the size of the Bitmap backing the threshold processor,
+     * the MotionEvent instances, and the touch radius. A lower quality value implies a
+     * less accurate threshold calculation.
+     * <br><br>
+     * If the supplied quality value is below the runtime-calculated minimum (touchRadius / width),
+     * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum.
+     * <br><br>
+     * If you always want it to use the lowest possible accuracy quality, simply set this to 0.01f.
+     */
+    public ScratchoffController setThresholdAccuracyQuality(float thresholdAccuracyQuality) {
+        if (thresholdAccuracyQuality < 0.01f || 1.0f < thresholdAccuracyQuality)
+            throw new IllegalArgumentException("thresholdAccuracyQuality must be between 0.01 and 1.0");
+
+        this.thresholdAccuracyQuality = thresholdAccuracyQuality;
+
+        return this;
+    }
+
+    public float getThresholdAccuracyQuality() {
+        return thresholdAccuracyQuality;
     }
 
     public boolean isThresholdReached() {

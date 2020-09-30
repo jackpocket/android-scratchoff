@@ -25,6 +25,7 @@ public class ScratchoffProcessor extends Processor {
         this.thresholdProcessor = new ThresholdProcessor(
                 controller.getTouchRadiusPx(),
                 controller.getThresholdPercent(),
+                controller.getThresholdAccuracyQuality(),
                 controller);
 
         this.invalidationProcessor = new InvalidationProcessor(controller);

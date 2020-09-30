@@ -5,6 +5,7 @@ Version 1.x | Version 2.0.0
 `new ScratchoffController(Context, Runnable)` | `new ScratchoffController(Context, ScratchoffController.Delegate)`
 `ScratchoffController.setCompletionCallback(Runnable)` | `ScratchoffController.setDelegate(ScratchoffController.Delegate)`
 `ScratchoffController.setScratchValuedChangedListener(ScratchValueChangedListener)` | `ScratchoffController.setDelegate(ScratchoffController.Delegate)`
+`ScratchoffController.setThresholdPercent(double)` | `ScratchoffController.setThresholdPercent(float)`
 `ScratchoffController.addPaths(List<Path>`) | None
 `ScratchoffController.isProcessingAllowed()` | None
 `int ScratchoffController.getTotalGridItemsCount()` | `int[] ScratchoffController.getScratchableLayoutSize()`

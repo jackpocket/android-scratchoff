@@ -35,18 +35,28 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     private double lastPercentScratched = PERCENT_SCRATCHED_UNTOUCHED;
 
-    private final double completionThreshold;
+    private final float completionThreshold;
     private boolean thresholdReached = false;
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
+    private int originalTouchRadius;
+    private float accuracyQuality;
+
     private final Sleeper sleeper = new Sleeper(15, 50, 3000);
 
     @SuppressWarnings("WeakerAccess")
-    public ThresholdProcessor(int touchRadiusPx, double completionThreshold, Delegate delegate) {
-        this.delegate = new WeakReference<Delegate>(delegate);
+    public ThresholdProcessor(
+            int touchRadiusPx,
+            float completionThreshold,
+            float accuracyQuality,
+            Delegate delegate) {
+
+        this.originalTouchRadius = touchRadiusPx;
         this.completionThreshold = completionThreshold;
+        this.accuracyQuality = accuracyQuality;
+        this.delegate = new WeakReference<Delegate>(delegate);
 
         this.markerPaint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
         this.markerPaint.setColor(MARKER_SCRATCHED);
@@ -101,7 +111,23 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         if (layoutSize[0] < 1 || layoutSize[1] < 1)
             return;
 
-        this.currentBitmap = Bitmap.createBitmap(layoutSize[0], layoutSize[1], Bitmap.Config.RGB_565);
+        float accuracyQuality = constrainAccuracyQuality(
+                this.originalTouchRadius,
+                layoutSize[0],
+                this.accuracyQuality);
+
+        float width = layoutSize[0] * accuracyQuality;
+        float aspectRatio = layoutSize[1] / (float) layoutSize[0];
+        float height = width * aspectRatio;
+        float touchRadius = originalTouchRadius * accuracyQuality;
+
+        this.currentBitmap = Bitmap.createBitmap(
+                (int) width,
+                (int) height,
+                Bitmap.Config.RGB_565);
+
+        this.markerPaint.setStrokeWidth(touchRadius * 2);
+        this.pathManager.setScale(accuracyQuality);
 
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
@@ -116,6 +142,16 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         // not re-used after resets, and the loss is limited to less than 0.001%,
         // we can just pretend that doesn't really happen and move on with our lives...
         pathManager.draw(canvas, markerPaint);
+    }
+
+    protected static float constrainAccuracyQuality(
+            int touchRadius,
+            int width,
+            float accuracyQuality) {
+
+        float minimumAccuracyQuality = touchRadius / (float) width;
+
+        return Math.min(1f, Math.max(minimumAccuracyQuality, accuracyQuality));
     }
 
     protected boolean drawQueuedScratchMotionEvents() {
