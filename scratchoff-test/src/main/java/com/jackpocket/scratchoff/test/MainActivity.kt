@@ -29,7 +29,7 @@ class MainActivity: AppCompatActivity(), ScratchoffController.Delegate, View.OnT
                 // .setTouchRadiusPx(25)
                 // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
                 .setTouchRadiusDip(this, 25)
-                .setThresholdPercent(.4f)
+                .setThresholdCompletionPercent(.4f)
                 .setClearAnimationEnabled(true)
                 .setClearAnimationDuration(1, TimeUnit.SECONDS)
                 .setClearAnimationInterpolator(LinearInterpolator())

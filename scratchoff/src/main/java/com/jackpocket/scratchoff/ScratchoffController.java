@@ -43,23 +43,23 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     private WeakReference<View> scratchableLayout = new WeakReference<View>(null);
-    private ScratchableLayoutDrawer layoutDrawer;
-
-    private ScratchoffProcessor processor;
-    private WeakReference<Delegate> delegate = new WeakReference<Delegate>(null);
-
     private WeakReference<View> behindView = new WeakReference<View>(null);
 
+    private WeakReference<Delegate> delegate;
+
+    private ScratchoffProcessor processor;
+    private ScratchableLayoutDrawer layoutDrawer;
+
     private int touchRadiusPx;
+
     private ThresholdProcessor.Quality thresholdAccuracyQuality = ThresholdProcessor.Quality.HIGH;
+    private float thresholdCompletionPercent;
     private boolean thresholdReached = false;
-    private float thresholdPercent;
 
     private int[] gridSize;
 
-    private boolean clearOnThresholdReached;
+    private boolean clearOnThresholdReachedEnabled;
     private boolean clearAnimationEnabled;
-
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs;
 
@@ -89,14 +89,14 @@ public class ScratchoffController implements OnTouchListener,
         Resources resources = context.getResources();
 
         this.touchRadiusPx = (int) resources.getDimension(R.dimen.scratch__touch_radius);
-        this.thresholdPercent = resources.getInteger(R.integer.scratch__threshold_percent) / 100f;
-        this.clearOnThresholdReached = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached);
+        this.thresholdCompletionPercent = resources.getInteger(R.integer.scratch__threshold_completion_percent) / 100f;
+        this.clearOnThresholdReachedEnabled = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached_enabled);
         this.clearAnimationDurationMs = resources.getInteger(R.integer.scratch__clear_animation_duration_ms);
         this.clearAnimationEnabled = resources.getBoolean(R.bool.scratch__clear_animation_enabled);
     }
 
     /**
-     * Set a callback to be triggered when the percentage of scratched area changes
+     * Set callbacks to be triggered when the percentage of scratched area changes
      * and the scratch threshold has been reached.<br>
      * <br><br>
      * Callback values for scratch percentages are in the range [0.0, 100.0].
@@ -110,7 +110,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Attach the controller to the specified Views
+     * Attach the controller to the specified Views.
      *
      * @param scratchableLayout The View to scratch away. If this View is not an instance of {@link ScratchableLayout}, you must handle the calls to {@link #draw(Canvas)} manually.
      * @param behindView The View to be revealed
@@ -195,6 +195,13 @@ public class ScratchoffController implements OnTouchListener,
             processor.enqueue(events);
     }
 
+    /**
+     * Render the scratched paths to the supplied Canvas through the
+     * {@link ScratchableLayoutDrawer} instance.
+     * <br><br>
+     * If using one of the predefined {@link ScratchableLayout} instances,
+     * this will be called automatically on draw events.
+     */
     public void draw(Canvas canvas) {
         ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
 
@@ -229,7 +236,7 @@ public class ScratchoffController implements OnTouchListener,
     protected void onThresholdReached() {
         this.thresholdReached = true;
 
-        if (clearOnThresholdReached)
+        if (clearOnThresholdReachedEnabled)
             clear();
 
         Delegate delegate = this.delegate.get();
@@ -238,6 +245,14 @@ public class ScratchoffController implements OnTouchListener,
             delegate.onScratchThresholdReached(this);
     }
 
+    /**
+     * Call this to clear/hide the {@link #scratchableLayout} and reveal the
+     * {@link #behindView}. If {@link #clearAnimationEnabled} is true, the contents
+     * will be faded out before altering the View's visibility.
+     * <br><br>
+     * Calling this will stop all processors and prevent any further scratching until
+     * either {@link #attach(View,View)} or {@link #reset()} has been called.
+     */
     @SuppressWarnings("WeakerAccess")
     public ScratchoffController clear() {
         this.scratchableLayoutAvailable = false;
@@ -256,30 +271,58 @@ public class ScratchoffController implements OnTouchListener,
         return scratchableLayout.get();
     }
 
-    public ScratchoffController setThresholdPercent(float thresholdPercent) {
-        this.thresholdPercent = thresholdPercent;
+    /**
+     * Set the threshold percentage, between [0.0f, 1.0f], that should trigger the
+     * completion callback and clearing, if enabled.
+     * <br><br>
+     * Note: this must be called before {@link #attach(View,View)} or it will have no effect.
+     */
+    public ScratchoffController setThresholdCompletionPercent(float thresholdCompletionPercent) {
+        this.thresholdCompletionPercent = thresholdCompletionPercent;
 
         return this;
     }
 
-    public ScratchoffController setClearOnThresholdReached(boolean clearOnThresholdReached) {
-        this.clearOnThresholdReached = clearOnThresholdReached;
+    /**
+     * Set whether automatic clearing of the scratchable layout should be performed on reaching the
+     * {@link #thresholdCompletionPercent}. If false, no clearing or animations will be performed,
+     * and you must manually call {@link #clear()}.
+     */
+    public ScratchoffController setClearOnThresholdReachedEnabled(boolean clearOnThresholdReachedEnabled) {
+        this.clearOnThresholdReachedEnabled = clearOnThresholdReachedEnabled;
 
         return this;
     }
 
+    /**
+     * Set whether to use the fade-out AlphaAnimation, or immediately hide
+     * the scratchable layout, on clearing.
+     * <br><br>
+     * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
+     */
     public ScratchoffController setClearAnimationEnabled(boolean clearAnimationEnabled) {
         this.clearAnimationEnabled = clearAnimationEnabled;
 
         return this;
     }
 
+    /**
+     * Set the duration of the fade-out AlphaAnimation run on clearing.
+     * <br><br>
+     * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
+     */
     public ScratchoffController setClearAnimationDuration(long value, TimeUnit unit) {
         this.clearAnimationDurationMs = unit.toMillis(value);
 
         return this;
     }
 
+    /**
+     * Set the Interpolator for the fade-out AlphaAnimation run on clearing. The default
+     * is a LinearInterpolator.
+     * <br><br>
+     * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
+     */
     public ScratchoffController setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
         this.clearAnimationInterpolator = clearAnimationInterpolator;
 
@@ -289,6 +332,8 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the radius, in DIP, of the circle to be scratched away on MotionEvents.
      * Must be greater than 0, or throws an IllegalStateException.
+     * <br><br>
+     * Note: this must be called before {@link #attach(View,View)} or it will have no effect.
      */
     public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
         return setTouchRadiusPx((int) ((touchRadius * context.getResources().getDisplayMetrics().density) + 0.5f));
@@ -297,6 +342,8 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the radius, in pixels, of the circle to be scratched away on MotionEvents.
      * Must be greater than 0, or throws an IllegalStateException.
+     * <br><br>
+     * Note: this must be called before {@link #attach(View,View)} or it will have no effect.
      */
     public ScratchoffController setTouchRadiusPx(int touchRadius) {
         if (touchRadius < 1)
@@ -307,8 +354,8 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public float getThresholdPercent() {
-        return thresholdPercent;
+    public float getThresholdCompletionPercent() {
+        return thresholdCompletionPercent;
     }
 
     public int getTouchRadiusPx() {
@@ -328,6 +375,8 @@ public class ScratchoffController implements OnTouchListener,
      * <br><br>
      * If the supplied quality value is below the runtime-calculated minimum (1 / touchRadius),
      * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum values.
+     * <br><br>
+     * Note: this must be called before {@link #attach(View,View)} or it will have no effect.
      */
     public ScratchoffController setThresholdAccuracyQuality(ThresholdProcessor.Quality thresholdAccuracyQuality) {
         this.thresholdAccuracyQuality = thresholdAccuracyQuality;

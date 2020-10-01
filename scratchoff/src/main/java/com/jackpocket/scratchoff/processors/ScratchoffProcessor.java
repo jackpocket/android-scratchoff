@@ -5,7 +5,6 @@ import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 import com.jackpocket.scratchoff.tools.Sleeper;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class ScratchoffProcessor extends Processor {
@@ -24,7 +23,7 @@ public class ScratchoffProcessor extends Processor {
     public ScratchoffProcessor(ScratchoffController controller) {
         this.thresholdProcessor = new ThresholdProcessor(
                 controller.getTouchRadiusPx(),
-                controller.getThresholdPercent(),
+                controller.getThresholdCompletionPercent(),
                 controller.getThresholdAccuracyQuality(),
                 controller);
 

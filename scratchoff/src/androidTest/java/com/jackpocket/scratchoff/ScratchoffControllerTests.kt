@@ -58,7 +58,7 @@ class ScratchoffControllerTests {
                 return this
             }
         }
-        controller.setClearOnThresholdReached(false)
+        controller.setClearOnThresholdReachedEnabled(false)
         controller.onThresholdReached()
 
         assertEquals(1, loggingDelegate.completions)
@@ -78,7 +78,7 @@ class ScratchoffControllerTests {
                 return this
             }
         }
-        controller.setClearOnThresholdReached(true)
+        controller.setClearOnThresholdReachedEnabled(true)
         controller.onThresholdReached()
 
         assertEquals(1, loggingDelegate.completions)
