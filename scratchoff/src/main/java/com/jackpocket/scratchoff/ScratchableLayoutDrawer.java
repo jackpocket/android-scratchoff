@@ -46,6 +46,8 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     private WeakReference<Delegate> delegate = new WeakReference<Delegate>(null);
 
+    private boolean layoutDimensionMatchingEnabled = true;
+
     private Paint clearPaint;
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
@@ -56,6 +58,12 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer() { }
+
+    public ScratchableLayoutDrawer setLayoutDimensionMatchingEnabled(boolean layoutDimensionMatchingEnabled) {
+        this.layoutDimensionMatchingEnabled = layoutDimensionMatchingEnabled;
+
+        return this;
+    }
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
@@ -109,16 +117,19 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
                 behindView,
                 new Runnable() {
                     public void run() {
-                        forceLayoutParamWidthHeightMatch(scratchView, behindView);
+                        performLayoutDimensionMatching(scratchView, behindView);
                         enqueueScratchableViewInitializationOnGlobalLayout(scratchView);
                     }
                 });
     }
 
-    protected void forceLayoutParamWidthHeightMatch(final View scratchView, final View behindView) {
+    protected void performLayoutDimensionMatching(final View scratchView, final View behindView) {
         ViewGroup.LayoutParams params = scratchView.getLayoutParams();
-        params.width = behindView.getWidth();
-        params.height = behindView.getHeight();
+
+        if (layoutDimensionMatchingEnabled) {
+            params.width = behindView.getWidth();
+            params.height = behindView.getHeight();
+        }
 
         scratchView.setLayoutParams(params);
     }

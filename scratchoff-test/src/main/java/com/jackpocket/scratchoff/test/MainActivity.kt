@@ -28,6 +28,7 @@ class MainActivity: AppCompatActivity(), ScratchoffController.Delegate, View.OnT
                 // .setDelegate(this)
                 // .setTouchRadiusPx(25)
                 // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
+                // .setScratchableLayoutDimensionMatchingEnabled(false)
                 .setTouchRadiusDip(this, 25)
                 .setThresholdCompletionPercent(.4f)
                 .setClearAnimationEnabled(true)

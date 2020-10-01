@@ -1,5 +1,7 @@
 <resources>
 
+    <bool name="scratch__layout_dimension_matching_enabled">true</bool>
+
     <bool name="scratch__clear_on_threshold_reached_enabled">true</bool>
     <bool name="scratch__clear_animation_enabled">true</bool>
 

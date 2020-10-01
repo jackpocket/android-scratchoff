@@ -66,7 +66,7 @@ Here is a simple example using the `ScratchableLinearLayout`:
 </RelativeLayout>
 ```
 
-Note: be careful with the dimensions of both the behind-View and the foreground-View. The `ScratchableLayoutDrawer` will attempt to set the foreground-View's LayoutParam width and height attributes to match that of the behind-View so that their dimensions are equal.
+Note: be careful with the dimensions of both the behind-View and the foreground-View. By default, the `ScratchableLayoutDrawer` will attempt to set the foreground-View's LayoutParam width and height attributes to match that of the behind-View. If this is not the behavior you desire, it can be overridden globally with `R.bool.scratch__layout_dimension_matching_enabled`, or by calling `setScratchableLayoutDimensionMatchingEnabled(false)` on the `ScratchoffController` instance.
 
 ### Scratch Threshold Changed / Threshold Reached Callback Setup
 

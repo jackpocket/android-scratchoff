@@ -63,6 +63,7 @@ public class ScratchoffController implements OnTouchListener,
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs;
 
+    private boolean scratchableLayoutDimensionMatchingEnabled;
     private boolean scratchableLayoutAvailable = false;
 
     private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
@@ -93,6 +94,7 @@ public class ScratchoffController implements OnTouchListener,
         this.clearOnThresholdReachedEnabled = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached_enabled);
         this.clearAnimationDurationMs = resources.getInteger(R.integer.scratch__clear_animation_duration_ms);
         this.clearAnimationEnabled = resources.getBoolean(R.bool.scratch__clear_animation_enabled);
+        this.scratchableLayoutDimensionMatchingEnabled = resources.getBoolean(R.bool.scratch__layout_dimension_matching_enabled);
     }
 
     /**
@@ -139,6 +141,7 @@ public class ScratchoffController implements OnTouchListener,
         safelyStopProcessors();
 
         this.layoutDrawer = new ScratchableLayoutDrawer()
+                .setLayoutDimensionMatchingEnabled(scratchableLayoutDimensionMatchingEnabled)
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
                 .setClearAnimationInterpolator(clearAnimationInterpolator)
                 .attach(this, scratchableLayout, behindView);
@@ -269,6 +272,18 @@ public class ScratchoffController implements OnTouchListener,
 
     public View getScratchImageLayout() {
         return scratchableLayout.get();
+    }
+
+    /**
+     * Set whether the system should attempt to automatically match the
+     * width/height of the {@link #scratchableLayout} to that of the {@link #behindView}.
+     * <br><br>
+     * Note: this must be called before {@link #attach(View,View)} or it will have no effect.
+     */
+    public ScratchoffController setScratchableLayoutDimensionMatchingEnabled(boolean scratchableLayoutDimensionMatchingEnabled) {
+        this.scratchableLayoutDimensionMatchingEnabled = scratchableLayoutDimensionMatchingEnabled;
+
+        return this;
     }
 
     /**
