@@ -20,6 +20,12 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         public void postScratchThresholdReached();
     }
 
+    public enum Quality {
+        LOW,
+        MEDIUM,
+        HIGH
+    }
+
     private static final int SLEEP_DELAY_START = 100;
 
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
@@ -42,7 +48,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
     private int originalTouchRadius;
-    private float accuracyQuality;
+    private Quality accuracyQuality;
 
     private final Sleeper sleeper = new Sleeper(15, 50, 3000);
 
@@ -50,7 +56,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     public ThresholdProcessor(
             int touchRadiusPx,
             float completionThreshold,
-            float accuracyQuality,
+            Quality accuracyQuality,
             Delegate delegate) {
 
         this.originalTouchRadius = touchRadiusPx;
@@ -141,6 +147,20 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         // not re-used after resets, and the loss is limited to less than 0.001%,
         // we can just pretend that doesn't really happen and move on with our lives...
         pathManager.draw(canvas, markerPaint);
+    }
+
+    protected static float constrainAccuracyQuality(
+            int touchRadius,
+            Quality quality) {
+
+        switch (quality) {
+            case LOW:
+                return constrainAccuracyQuality(touchRadius, 0.01f);
+            case MEDIUM:
+                return constrainAccuracyQuality(touchRadius, 0.5f);
+            default:
+                return 1.0f;
+        }
     }
 
     protected static float constrainAccuracyQuality(

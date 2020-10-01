@@ -100,7 +100,7 @@ ScratchoffController controller = new ScratchoffController(context)
     .setDelegate(delegate)
     .setThresholdPercent(0.40f)
     .setTouchRadiusDip(context, 30)
-    .setFadeOnClear(true)
+    .setClearAnimationEnabled(true)
     .setClearOnThresholdReached(true)
     .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
 ```
@@ -179,7 +179,8 @@ public void onResume(){
 }
 ```
 
-Note: the return values of `onTouch` will be ignored, as the `ScratchoffController` must maintain control of the touch event collection.
+**Note 1**: the return values of `onTouch` will be ignored, as the `ScratchoffController` must maintain control of the touch event collection.
+**Note 2**: all touch observers will automatically be removed when calling `ScratchoffController.onDestroy()`
 
 # Upgrading from Version 1.x to Version 2.0.0
 

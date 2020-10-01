@@ -219,9 +219,9 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public void clear(boolean fade) {
+    public void clear(boolean animationEnabled) {
         synchronized (pathManager) {
-            if (fade) {
+            if (animationEnabled) {
                 performFadeOutClear();
 
                 return;

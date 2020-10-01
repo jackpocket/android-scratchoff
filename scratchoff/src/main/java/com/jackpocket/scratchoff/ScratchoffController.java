@@ -51,14 +51,14 @@ public class ScratchoffController implements OnTouchListener,
     private WeakReference<View> behindView = new WeakReference<View>(null);
 
     private int touchRadiusPx;
-    private float thresholdAccuracyQuality = 1.0f;
+    private ThresholdProcessor.Quality thresholdAccuracyQuality = ThresholdProcessor.Quality.HIGH;
     private boolean thresholdReached = false;
     private float thresholdPercent;
 
     private int[] gridSize;
 
     private boolean clearOnThresholdReached;
-    private boolean fadeOnClear;
+    private boolean clearAnimationEnabled;
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs;
@@ -92,7 +92,7 @@ public class ScratchoffController implements OnTouchListener,
         this.thresholdPercent = resources.getInteger(R.integer.scratch__threshold_percent) / 100f;
         this.clearOnThresholdReached = resources.getBoolean(R.bool.scratch__clear_on_threshold_reached);
         this.clearAnimationDurationMs = resources.getInteger(R.integer.scratch__clear_animation_duration_ms);
-        this.fadeOnClear = resources.getBoolean(R.bool.scratch__fade_on_clear);
+        this.clearAnimationEnabled = resources.getBoolean(R.bool.scratch__clear_animation_enabled);
     }
 
     /**
@@ -216,6 +216,7 @@ public class ScratchoffController implements OnTouchListener,
 
     public ScratchoffController onDestroy() {
         safelyStopProcessors();
+        removeTouchObservers();
 
         ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
 
@@ -244,7 +245,7 @@ public class ScratchoffController implements OnTouchListener,
         ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
 
         if (layoutDrawer != null)
-            layoutDrawer.clear(fadeOnClear);
+            layoutDrawer.clear(clearAnimationEnabled);
 
         safelyStopProcessors();
 
@@ -267,8 +268,8 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public ScratchoffController setFadeOnClear(boolean fadeOnClear) {
-        this.fadeOnClear = fadeOnClear;
+    public ScratchoffController setClearAnimationEnabled(boolean clearAnimationEnabled) {
+        this.clearAnimationEnabled = clearAnimationEnabled;
 
         return this;
     }
@@ -285,14 +286,23 @@ public class ScratchoffController implements OnTouchListener,
         return this;
     }
 
-    public ScratchoffController setTouchRadiusPx(int touchRadius) {
-        this.touchRadiusPx = touchRadius;
-
-        return this;
+    /**
+     * Set the radius, in DIP, of the circle to be scratched away on MotionEvents.
+     * Must be greater than 0, or throws an IllegalStateException.
+     */
+    public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
+        return setTouchRadiusPx((int) ((touchRadius * context.getResources().getDisplayMetrics().density) + 0.5f));
     }
 
-    public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
-        this.touchRadiusPx = (int) ((touchRadius * context.getResources().getDisplayMetrics().density) + 0.5f);
+    /**
+     * Set the radius, in pixels, of the circle to be scratched away on MotionEvents.
+     * Must be greater than 0, or throws an IllegalStateException.
+     */
+    public ScratchoffController setTouchRadiusPx(int touchRadius) {
+        if (touchRadius < 1)
+            throw new IllegalArgumentException("touchRadius must be greater than 0");
+
+        this.touchRadiusPx = touchRadius;
 
         return this;
     }
@@ -306,28 +316,26 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set the quality, between [0.01, 1.0f], for the underlying Threshold processor.
-     * The default is 1.0f, or 100%.
+     * Set the {@link ThresholdProcessor.Quality} for the underlying Threshold processor.
+     * The default is {@link ThresholdProcessor.Quality#HIGH}, which implies no reduction in quality.
      * <br><br>
-     * This scalar is applied to the size of the Bitmap backing the threshold processor,
-     * the MotionEvent instances, and the touch radius. A lower quality value implies a
-     * less accurate threshold calculation.
+     * {@link ThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
+     * {@link ThresholdProcessor.Quality#LOW} will use the lowest-supported quality value at runtime
+     * (1 / {@link #touchRadiusPx}).
+     * <br><br>
+     * This reduction is solely applied to elements of the {@link ThresholdProcessor}, and does not
+     * affect the drawing quality in any way.
      * <br><br>
      * If the supplied quality value is below the runtime-calculated minimum (1 / touchRadius),
-     * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum.
-     * <br><br>
-     * If you always want it to use the lowest possible accuracy quality, simply set this to 0.01f.
+     * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum values.
      */
-    public ScratchoffController setThresholdAccuracyQuality(float thresholdAccuracyQuality) {
-        if (thresholdAccuracyQuality < 0.01f || 1.0f < thresholdAccuracyQuality)
-            throw new IllegalArgumentException("thresholdAccuracyQuality must be between 0.01 and 1.0");
-
+    public ScratchoffController setThresholdAccuracyQuality(ThresholdProcessor.Quality thresholdAccuracyQuality) {
         this.thresholdAccuracyQuality = thresholdAccuracyQuality;
 
         return this;
     }
 
-    public float getThresholdAccuracyQuality() {
+    public ThresholdProcessor.Quality getThresholdAccuracyQuality() {
         return thresholdAccuracyQuality;
     }
 

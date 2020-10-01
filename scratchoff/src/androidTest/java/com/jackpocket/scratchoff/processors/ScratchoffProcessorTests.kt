@@ -16,7 +16,7 @@ class ScratchoffProcessorTests {
         val collectedPaths = mutableListOf<ScratchPathPoint>()
 
         val processor = object: ScratchoffProcessor(
-                object: ThresholdProcessor(0, 0f, 1f, object: ThresholdProcessor.Delegate {
+                object: ThresholdProcessor(0, 0f, Quality.HIGH, object: ThresholdProcessor.Delegate {
                     override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
                     override fun getScratchableLayoutSize(): IntArray {
@@ -62,7 +62,7 @@ class ScratchoffProcessorTests {
         var stopCalls: Int = 0
 
         val processor = ScratchoffProcessor(
-                object: ThresholdProcessor(0, 0f, 1f, object: ThresholdProcessor.Delegate {
+                object: ThresholdProcessor(0, 0f, Quality.HIGH, object: ThresholdProcessor.Delegate {
                     override fun postScratchPercentChanged(percent: Float) { }
                     override fun postScratchThresholdReached() { }
                     override fun getScratchableLayoutSize(): IntArray {
