@@ -552,6 +552,18 @@ public class ScratchoffController implements OnTouchListener,
         this.statePendingReload = (ScratchoffState) state;
     }
 
+    /**
+     * Remove any pending restoration data. Calling this will ensure
+     * that a subsequent call to {@link #attach()} will reset to a pre-scratched state.
+     * <br><br>
+     * If {@link #restore(Parcelable)} is called again, this call will have no effect.
+     */
+    public ScratchoffController removePendingStateRestoration() {
+        this.statePendingReload = null;
+
+        return this;
+    }
+
     protected void performStateRestoration() {
         ScratchoffState state = this.statePendingReload;
 
