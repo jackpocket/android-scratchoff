@@ -525,16 +525,12 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Stop the processors and create a {@link ScratchoffState} that
-     * can be used to restore the drawing history of this instance.
+     * Create a {@link ScratchoffState} that can be used to restore the
+     * drawing history of this instance.
      *
      * @return null if {@link #stateRestorationEnabled} is false
      */
     public Parcelable parcelize(Parcelable state) {
-        this.scratchableLayoutAvailable = false;
-
-        safelyStopProcessors();
-
         if (!stateRestorationEnabled)
             return null;
 
@@ -542,7 +538,7 @@ public class ScratchoffController implements OnTouchListener,
                 state,
                 getScratchableLayoutSize(),
                 thresholdReached,
-                history.dequeue());
+                history.copy());
     }
 
     public void restore(Parcelable state) {

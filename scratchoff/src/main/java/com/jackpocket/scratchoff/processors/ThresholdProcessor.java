@@ -70,13 +70,6 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     @Override
-    public void start() {
-        this.thresholdReached = false;
-
-        super.start();
-    }
-
-    @Override
     public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
         queue.enqueue(events);
     }
@@ -89,8 +82,10 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
             prepareBitmapAndCanvasForDrawing();
         }
 
+        boolean processedAnything = false;
+
         while (isActive(id)) {
-            if (!drawQueuedScratchMotionEvents()) {
+            if (processedAnything && drawQueuedScratchMotionEvents()) {
                 sleeper.sleep();
 
                 continue;
@@ -100,6 +95,8 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
             if (!isActive(id))
                 return;
+
+            processedAnything = true;
 
             sleeper.notifyTriggered();
             sleeper.sleep();

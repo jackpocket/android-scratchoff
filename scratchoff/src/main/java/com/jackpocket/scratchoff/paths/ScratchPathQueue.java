@@ -37,6 +37,12 @@ public class ScratchPathQueue {
         }
     }
 
+    public List<ScratchPathPoint> copy() {
+        synchronized (events) {
+            return new ArrayList<ScratchPathPoint>(events);
+        }
+    }
+
     public void clear() {
         synchronized (events) {
             events.clear();
