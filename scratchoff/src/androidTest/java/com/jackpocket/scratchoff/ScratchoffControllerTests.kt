@@ -4,10 +4,11 @@ import android.content.Context
 import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.jackpocket.scratchoff.processors.ScratchoffProcessor
+import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalStateException
 
 @RunWith(AndroidJUnit4::class)
 class ScratchoffControllerTests {
@@ -16,48 +17,59 @@ class ScratchoffControllerTests {
         InstrumentationRegistry.getInstrumentation().context
     }
 
-    private val loggingDelegate = LoggingDelegate()
-
-    @Test(expected = IllegalStateException::class)
-    fun testThrowsIllegalStateExceptionOnResetWithoutView() {
-        val controller = ScratchoffController(context)
-        controller.reset()
+    private val mockScratchableLayout: ScratchableLinearLayout by lazy {
+        ScratchableLinearLayout(context)
     }
 
+    private val loggingDelegate = LoggingThresholdChangedListener()
+
     @Test
-    fun testStopsProcessorsAndSetsViewsOnAttach() {
-        val mockBehindView = View(context)
-        val mockScratchableView = View(context)
+    fun testStopsProcessorsInstantiatesRequirementsOnAttach() {
         var stopCount: Int = 0
+        var createProcessorCount: Int = 0
+        var createLayoutDrawerCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
-            override fun reset(): ScratchoffController {
-                return this
-            }
-
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun safelyStopProcessors() {
                 stopCount += 1
             }
+
+            override fun createLayoutDrawer(): ScratchableLayoutDrawer {
+                createLayoutDrawerCount += 1
+
+                return super.createLayoutDrawer()
+            }
+
+            override fun createScratchoffProcessor(): ScratchoffProcessor {
+                createProcessorCount += 1
+
+                return super.createScratchoffProcessor()
+            }
         }
 
-        controller.attach(mockScratchableView, mockBehindView)
+        assertEquals(0, stopCount)
+        assertEquals(0, createProcessorCount)
+        assertEquals(0, createLayoutDrawerCount)
+
+        controller.attach()
 
         assertEquals(1, stopCount)
-        assertEquals(mockBehindView, controller.viewBehind)
-        assertEquals(mockScratchableView, controller.scratchImageLayout)
+        assertEquals(1, createProcessorCount)
+        assertEquals(1, createLayoutDrawerCount)
     }
 
     @Test
     fun testThresholdReachedTriggersCompletionCallbackWithoutClearingEnabled() {
         var clearCount: Int = 0
 
-        val controller = object: ScratchoffController(context, loggingDelegate) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun clear(): ScratchoffController {
                 clearCount += 1
 
                 return this
             }
         }
+        controller.setThresholdChangedListener(loggingDelegate)
         controller.setClearOnThresholdReachedEnabled(false)
         controller.onThresholdReached()
 
@@ -71,13 +83,14 @@ class ScratchoffControllerTests {
         var completionCount: Int = 0
         var clearCount: Int = 0
 
-        val controller = object: ScratchoffController(context, loggingDelegate) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun clear(): ScratchoffController {
                 clearCount += 1
 
                 return this
             }
         }
+        controller.setThresholdChangedListener(loggingDelegate)
         controller.setClearOnThresholdReachedEnabled(true)
         controller.onThresholdReached()
 
@@ -90,7 +103,7 @@ class ScratchoffControllerTests {
     fun testClearStopsProcessors() {
         var stopCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun safelyStopProcessors() {
                 stopCount += 1
             }
@@ -106,7 +119,7 @@ class ScratchoffControllerTests {
     fun testPauseCallsStopProcessors() {
         var stopCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun safelyStopProcessors() {
                 stopCount += 1
             }
@@ -120,7 +133,7 @@ class ScratchoffControllerTests {
     fun testDestroyCallsStopProcessors() {
         var stopCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun safelyStopProcessors() {
                 stopCount += 1
             }
@@ -134,7 +147,7 @@ class ScratchoffControllerTests {
     fun testResumeCallsStartProcessors() {
         var startCount: Int = 0
 
-        val controller = object: ScratchoffController(context) {
+        val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun safelyStartProcessors() {
                 startCount += 1
             }
@@ -144,7 +157,7 @@ class ScratchoffControllerTests {
         assertEquals(1, startCount)
     }
 
-    private class LoggingDelegate: ScratchoffController.Delegate {
+    private class LoggingThresholdChangedListener: ScratchoffController.ThresholdChangedListener {
 
         var threshold: Float = 0f
             private set

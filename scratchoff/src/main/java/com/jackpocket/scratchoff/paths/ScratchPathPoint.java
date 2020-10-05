@@ -1,12 +1,14 @@
 package com.jackpocket.scratchoff.paths;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ScratchPathPoint {
+public class ScratchPathPoint implements Parcelable {
 
     public final int pointerIndex;
     public final float x;
@@ -23,6 +25,26 @@ public class ScratchPathPoint {
         this.x = x;
         this.y = y;
         this.action = action;
+    }
+
+    protected ScratchPathPoint(Parcel in) {
+        this.pointerIndex = in.readInt();
+        this.x = in.readFloat();
+        this.y = in.readFloat();
+        this.action = in.readInt();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(pointerIndex);
+        dest.writeFloat(x);
+        dest.writeFloat(y);
+        dest.writeInt(action);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     @Override
@@ -70,4 +92,17 @@ public class ScratchPathPoint {
     public String toString() {
         return String.format(Locale.US, "%d: %f, %f - %d", pointerIndex, x, y, action);
     }
+
+    public static final Creator<ScratchPathPoint> CREATOR = new Creator<ScratchPathPoint>() {
+
+        @Override
+        public ScratchPathPoint createFromParcel(Parcel in) {
+            return new ScratchPathPoint(in);
+        }
+
+        @Override
+        public ScratchPathPoint[] newArray(int size) {
+            return new ScratchPathPoint[size];
+        }
+    };
 }

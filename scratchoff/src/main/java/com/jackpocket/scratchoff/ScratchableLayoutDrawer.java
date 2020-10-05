@@ -46,8 +46,6 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     private WeakReference<Delegate> delegate = new WeakReference<Delegate>(null);
 
-    private boolean layoutDimensionMatchingEnabled = true;
-
     private Paint clearPaint;
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
@@ -59,17 +57,11 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer() { }
 
-    public ScratchableLayoutDrawer setLayoutDimensionMatchingEnabled(boolean layoutDimensionMatchingEnabled) {
-        this.layoutDimensionMatchingEnabled = layoutDimensionMatchingEnabled;
-
-        return this;
-    }
-
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
             ScratchoffController controller,
             View scratchView,
-            final View behindView) {
+            View behindView) {
 
         return attach(
                 controller,
@@ -113,6 +105,12 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     protected void enqueueViewInitializationOnGlobalLayout(final View scratchView, final View behindView) {
+        if (behindView == null) {
+            enqueueScratchableViewInitializationOnGlobalLayout(scratchView);
+
+            return;
+        }
+
         addGlobalLayoutRequest(
                 behindView,
                 new Runnable() {
@@ -125,11 +123,8 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     protected void performLayoutDimensionMatching(final View scratchView, final View behindView) {
         ViewGroup.LayoutParams params = scratchView.getLayoutParams();
-
-        if (layoutDimensionMatchingEnabled) {
-            params.width = behindView.getWidth();
-            params.height = behindView.getHeight();
-        }
+        params.width = behindView.getWidth();
+        params.height = behindView.getHeight();
 
         scratchView.setLayoutParams(params);
     }

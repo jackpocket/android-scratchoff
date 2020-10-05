@@ -20,12 +20,12 @@ dependencies {
 
 ### Layout Setup
 
-First, you need a parent `ViewGroup` that supports vertical stacking, like a `RelativeLayout`. That parent `ViewGroup` should consist of 2 sub-layouts: 
+First, you need a parent `ViewGroup` that can vertically stack: 
 
 1. a behind-View to be revealed
 2. a foreground-View to be scratched away
 
-Here is a simple example using the `ScratchableLinearLayout`:
+Here is an example using the `ScratchableLinearLayout`:
 
 ```xml
 <RelativeLayout
@@ -66,14 +66,14 @@ Here is a simple example using the `ScratchableLinearLayout`:
 </RelativeLayout>
 ```
 
-Note: be careful with the dimensions of both the behind-View and the foreground-View. By default, the `ScratchableLayoutDrawer` will attempt to set the foreground-View's LayoutParam width and height attributes to match that of the behind-View. If this is not the behavior you desire, it can be overridden globally with `R.bool.scratch__layout_dimension_matching_enabled`, or by calling `setScratchableLayoutDimensionMatchingEnabled(false)` on the `ScratchoffController` instance.
+By default, the `ScratchoffController` will not adjust the width or height of the scratchable layout's `LayoutParams`. To enable this behavior, call `setMatchLayoutWithBehindView(View)` with the behind-View whose width/height should be matched with before `attach()`.
 
 ### Scratch Threshold Changed / Threshold Reached Callback Setup
 
-The `ScratchoffController` will call its delegate's methods when the scratched threshold has changed or has been reached, but you need to maintain a strong reference to the supplied `ScratchoffController.Delegate` instance.
+The `ScratchoffController` will call its listener's methods when the scratched threshold has changed or has been reached, but you need to maintain a strong reference to the supplied `ScratchoffController.ThresholdChangedListener` instance.
 
 ```java
-public class MainActivity extends Activity implements ScratchoffController.Delegate {
+public class MainActivity extends Activity implements ScratchoffController.ThresholdChangedListener {
 
     public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted) {
         // This will be called on the main thread any time the scratch threshold has changed.
@@ -90,30 +90,28 @@ public class MainActivity extends Activity implements ScratchoffController.Deleg
 
 ### Attaching the `ScratchoffController`
 
-Once we have a layout and delegate setup, we can attach the `ScratchoffController` to it:
+Once we have a layout and listeners setup, we can attach the `ScratchoffController` to it to start scratching away:
 
 ```java
-// context: android.content.Context
-// delegate: ScratchoffController.Delegate
+activity: android.app.Activity
+listener: ScratchoffController.ThresholdChangedListener
 
-ScratchoffController controller = new ScratchoffController(context)
-    .setDelegate(delegate)
+ScratchoffController.findByViewId(activity, R.id.scratch_view)
+    .setThresholdChangedListener(listener)
     .setThresholdPercent(0.40f)
     .setTouchRadiusDip(context, 30)
     .setClearAnimationEnabled(true)
     .setClearOnThresholdReached(true)
-    .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind));
+    .attach();
 ```
 
-In this example, only the constructor and the final `attach(View, View)` method are required to enable scratching. 
+In this example, only the final `attach()` method is required to enable scratching, but you must set a `ThresholdChangedListener` to receive updates. 
 
-Since the foreground `View` in our example is a `ScratchableLinearLayout` (which implements `ScratchableLayout`), the `ScratchoffController` will automatically attach itself to the `View` and drawing will work without any additional setup (the same goes for the `ScratchableRelativeLayout`).
-
-Note: If you're not using one of the supplied `ScratchableLayouts`, you must manually call `ScratchoffController.draw(Canvas)` from your custom View's `onDraw(Canvas)` method.
+If you choose not to utilize the `ScratchableLinearLayout` or the `ScratchableRelativeLayout`, you will need to manually handle delegation to `ScratchoffController.onDraw(Canvas)`.
 
 ### Re-using the `ScratchoffController`
 
-The `ScratchoffController` can be reset using `ScratchController.reset()`, but you **must** set the background color of your `ScratchableLayout` back to something opaque before calling it, as the `ScratchableLayoutDrawer` must set it to transparent afterwards in order to efficiently process scratched paths. e.g.
+The `ScratchoffController` can be reset with the same call that started it: `ScratchController.attach()`. However, you **must** manually set the background color of your scratchable layout back to something opaque before calling it, as the `ScratchableLayoutDrawer` will set it to transparent afterwards in order to efficiently process scratched paths. e.g.
 
 ```java
 public void onScratchThresholdReached(ScratchoffController controller) {
@@ -180,6 +178,7 @@ public void onResume(){
 ```
 
 **Note 1**: the return values of `onTouch` will be ignored, as the `ScratchoffController` must maintain control of the touch event collection.
+
 **Note 2**: all touch observers will automatically be removed when calling `ScratchoffController.onDestroy()`
 
 # Upgrading from Version 1.x to Version 2.0.0

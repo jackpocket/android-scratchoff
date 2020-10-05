@@ -36,4 +36,10 @@ public class ScratchPathQueue {
             return tempEvents;
         }
     }
+
+    public void clear() {
+        synchronized (events) {
+            events.clear();
+        }
+    }
 }

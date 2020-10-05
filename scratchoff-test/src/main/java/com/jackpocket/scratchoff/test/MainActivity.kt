@@ -12,7 +12,7 @@ import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
-class MainActivity: AppCompatActivity(), ScratchoffController.Delegate, View.OnTouchListener {
+class MainActivity: AppCompatActivity(), ScratchoffController.ThresholdChangedListener, View.OnTouchListener {
 
     private lateinit var controller: ScratchoffController
     private var scratchPercentTitleView = WeakReference<TextView>(null)
@@ -24,17 +24,18 @@ class MainActivity: AppCompatActivity(), ScratchoffController.Delegate, View.OnT
 
         this.scratchPercentTitleView = WeakReference(findViewById(R.id.scratch_value_title))
 
-        this.controller = ScratchoffController(this, this)
-                // .setDelegate(this)
-                // .setTouchRadiusPx(25)
-                // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
-                // .setScratchableLayoutDimensionMatchingEnabled(false)
+        this.controller = ScratchoffController.findByViewId(this, R.id.scratch_view)
+                .setThresholdChangedListener(this)
                 .setTouchRadiusDip(this, 25)
                 .setThresholdCompletionPercent(.4f)
                 .setClearAnimationEnabled(true)
                 .setClearAnimationDuration(1, TimeUnit.SECONDS)
                 .setClearAnimationInterpolator(LinearInterpolator())
-                .attach(findViewById(R.id.scratch_view), findViewById(R.id.scratch_view_behind))
+                // .setTouchRadiusPx(25)
+                // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
+                // .setMatchLayoutWithBehindView(findViewById(R.id.scratch_view_behind))
+                // .setStateRestorationEnabled(false)
+                .attach()
     }
 
     override fun onResume() {
@@ -81,7 +82,7 @@ class MainActivity: AppCompatActivity(), ScratchoffController.Delegate, View.OnT
         findViewById<ScratchableLinearLayout>(R.id.scratch_view)
                 .setBackgroundColor(-0xc36521)
 
-        controller.reset()
+        controller.attach()
     }
 
     companion object {
