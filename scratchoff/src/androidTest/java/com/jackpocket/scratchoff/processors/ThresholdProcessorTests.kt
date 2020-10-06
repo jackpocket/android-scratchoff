@@ -63,6 +63,34 @@ class ThresholdProcessorTests {
     }
 
     @Test
+    fun testDoInBackgroundNotifiesZeroPercentOnFirstRunWithoutEvents() {
+        var scratchPercent: Float = -1f
+        var loopCount: Int = 0
+
+        val processor = object: ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
+            override fun postScratchThresholdReached() { }
+
+            override fun postScratchPercentChanged(percent: Float) {
+                scratchPercent = percent
+            }
+
+            override fun getScratchableLayoutSize(): IntArray {
+                return intArrayOf(1, 1)
+            }
+        }) {
+            override fun isActive(id: Long): Boolean {
+                loopCount += 1
+
+                return loopCount < 4
+            }
+        }
+
+        processor.doInBackground(1)
+
+        assertEquals(0.0f, scratchPercent)
+    }
+
+    @Test
     fun testActionDownWithoutMoveDoesNotDraw() {
         var scratchPercent: Float = 0.0f
 

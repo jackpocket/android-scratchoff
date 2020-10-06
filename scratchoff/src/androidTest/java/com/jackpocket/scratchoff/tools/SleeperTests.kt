@@ -10,10 +10,12 @@ class SleeperTests {
         val sleeper = LoggingSleeper(1, 2, 0)
 
         assertEquals(0, sleeper.currentSleep)
+        assertEquals(1, sleeper.delayMs)
 
         sleeper.sleep()
 
         assertEquals(1, sleeper.currentSleep)
+        assertEquals(1, sleeper.delayMs)
 
         Thread.sleep(1)
 
@@ -21,6 +23,7 @@ class SleeperTests {
         sleeper.sleep()
 
         assertEquals(1, sleeper.currentSleep)
+        assertEquals(1, sleeper.delayMs)
     }
 
     @Test
@@ -34,6 +37,7 @@ class SleeperTests {
         sleeper.sleep()
 
         assertEquals(2, sleeper.currentSleep)
+        assertEquals(2, sleeper.delayMs)
     }
 
     @Test
@@ -47,6 +51,7 @@ class SleeperTests {
         sleeper.sleep()
 
         assertEquals(1, sleeper.currentSleep)
+        assertEquals(1, sleeper.delayMs)
     }
 
     private class LoggingSleeper(
