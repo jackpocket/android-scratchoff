@@ -372,13 +372,14 @@ public class ScratchoffController implements OnTouchListener,
      * <br><br>
      * {@link ThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
      * {@link ThresholdProcessor.Quality#LOW} will use the lowest-supported quality value at runtime
-     * (1 / {@link #touchRadiusPx}).
+     * (1 / min ({@link #touchRadiusPx}, width, height)).
      * <br><br>
      * This reduction is solely applied to elements of the {@link ThresholdProcessor}, and does not
      * affect the drawing quality in any way.
      * <br><br>
-     * If the supplied quality value is below the runtime-calculated minimum (1 / touchRadius),
-     * or above the maximum (1.0f), it will be ignored in favor of the minimum/maximum values.
+     * If the supplied quality value is below the runtime-calculated minimum of
+     * (1 / min ({@link #touchRadiusPx}, width, height)), or above the maximum (1.0f),
+     * it will be ignored in favor of the minimum/maximum values.
      * <br><br>
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */

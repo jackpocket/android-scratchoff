@@ -28,19 +28,7 @@ class ThresholdProcessorTests {
 
     @Test
     fun testThresholdCalculationMatchesFromHistoryLoad() {
-        var scratchPercent: Float = 0.0f
-
-        val processor = ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchThresholdReached() { }
-
-            override fun postScratchPercentChanged(percent: Float) {
-                scratchPercent = percent
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(2, 10)
-            }
-        })
+        val processor = ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(2, 10))
 
         val events = listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
@@ -53,31 +41,20 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.5f, scratchPercent)
+        assertEquals(0.5f, processor.loggingDelegate.scratchPercent)
 
         processor.safelyReleaseCurrentBitmap()
         processor.prepareBitmapAndCanvasForDrawing()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.5f, scratchPercent)
+        assertEquals(0.5f, processor.loggingDelegate.scratchPercent)
     }
 
     @Test
     fun testDoInBackgroundNotifiesZeroPercentOnFirstRunWithoutEvents() {
-        var scratchPercent: Float = -1f
         var loopCount: Int = 0
 
-        val processor = object: ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchThresholdReached() { }
-
-            override fun postScratchPercentChanged(percent: Float) {
-                scratchPercent = percent
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(1, 1)
-            }
-        }) {
+        val processor = object: ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1, 1)) {
             override fun isActive(id: Long): Boolean {
                 loopCount += 1
 
@@ -87,24 +64,12 @@ class ThresholdProcessorTests {
 
         processor.doInBackground(1)
 
-        assertEquals(0.0f, scratchPercent)
+        assertEquals(0.0f, processor.loggingDelegate.scratchPercent)
     }
 
     @Test
     fun testActionDownWithoutMoveDoesNotDraw() {
-        var scratchPercent: Float = 0.0f
-
-        val processor = ThresholdProcessor(5, 1f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchThresholdReached() { }
-
-            override fun postScratchPercentChanged(percent: Float) {
-                scratchPercent = percent
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(10, 10)
-            }
-        })
+        val processor = ThresholdProcessor(5, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(10, 10))
 
         val events = listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN)
@@ -116,24 +81,12 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.0f, scratchPercent)
+        assertEquals(0.0f, processor.loggingDelegate.scratchPercent)
     }
 
     @Test
     fun testProcessImageTriggersThresholdReachedOnlyOnce() {
-        var thresholdReachedCount: Int = 0
-
-        val processor = ThresholdProcessor(2, 0.5f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchPercentChanged(percent: Float) { }
-
-            override fun postScratchThresholdReached() {
-                thresholdReachedCount += 1
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(2, 10)
-            }
-        })
+        val processor = ThresholdProcessor(2, 0.5f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(2, 10))
 
         val events = listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
@@ -146,30 +99,18 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(1, thresholdReachedCount)
+        assertEquals(1, processor.loggingDelegate.thresholdReachedCount)
 
         processor.enqueueScratchMotionEvents(events)
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(1, thresholdReachedCount)
+        assertEquals(1, processor.loggingDelegate.thresholdReachedCount)
     }
 
     @Test
     fun testScratchPercentNotUpdatesAfterThresholdReachedTriggered() {
-        var scratchPercent: Float = 0.0f
-
-        val processor = ThresholdProcessor(1, 0.5f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchThresholdReached() { }
-
-            override fun postScratchPercentChanged(percent: Float) {
-                scratchPercent = percent
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(1, 10)
-            }
-        })
+        val processor = ThresholdProcessor(1, 0.5f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1, 10))
 
         processor.prepareBitmapAndCanvasForDrawing()
         processor.enqueueScratchMotionEvents(listOf(
@@ -179,7 +120,7 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.3f, scratchPercent)
+        assertEquals(0.3f, processor.loggingDelegate.scratchPercent)
 
         processor.enqueueScratchMotionEvents(listOf(
                 ScratchPathPoint(0, 0f, 2f, MotionEvent.ACTION_DOWN),
@@ -188,7 +129,7 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.6f, scratchPercent)
+        assertEquals(0.6f, processor.loggingDelegate.scratchPercent)
 
         processor.enqueueScratchMotionEvents(listOf(
                 ScratchPathPoint(0, 0f, 6f, MotionEvent.ACTION_DOWN),
@@ -197,25 +138,14 @@ class ThresholdProcessorTests {
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
-        assertEquals(0.6f, scratchPercent)
+        assertEquals(0.6f, processor.loggingDelegate.scratchPercent)
     }
 
     @Test
     fun testPathRedrawDoesNotAffectHistoricalScratchPercentRedraw() {
         val expectedResult = 0.047495205f
-        var scratchPercent: Float = 0.0f
 
-        val processor = ThresholdProcessor(30, 1f, ThresholdProcessor.Quality.HIGH, object: ThresholdProcessor.Delegate {
-            override fun postScratchThresholdReached() { }
-
-            override fun postScratchPercentChanged(percent: Float) {
-                scratchPercent = percent
-            }
-
-            override fun getScratchableLayoutSize(): IntArray {
-                return intArrayOf(1080, 1584)
-            }
-        })
+        val processor = ThresholdProcessor(30, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1080, 1584))
 
         val events: List<ScratchPathPoint> = listOf(
                 ScratchPathPoint(0, 130.979f, 198.98438f, 0),
@@ -416,7 +346,7 @@ class ThresholdProcessorTests {
             processor.processScratchedImagePercent()
         })
 
-        assertEquals(expectedResult, scratchPercent)
+        assertEquals(expectedResult, processor.loggingDelegate.scratchPercent)
 
         processor.safelyReleaseCurrentBitmap()
         processor.prepareBitmapAndCanvasForDrawing()
@@ -432,37 +362,89 @@ class ThresholdProcessorTests {
         // assert(scratchPercent <= expectedResult)
         // assert(expectedResult - scratchPercent < maximumLoss)
 
-        assertEquals(expectedResult, scratchPercent)
+        assertEquals(expectedResult, processor.loggingDelegate.scratchPercent)
     }
 
     @Test
     fun constrainAccuracyQualityBoundedToMinMax() {
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.HIGH))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.HIGH))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.HIGH))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.HIGH, intArrayOf(100, 100)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.HIGH, intArrayOf(100, 100)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.HIGH, intArrayOf(100, 100)))
 
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.MEDIUM))
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.MEDIUM))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.MEDIUM))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.MEDIUM, intArrayOf(100, 100)))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.MEDIUM, intArrayOf(100, 100)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.MEDIUM, intArrayOf(100, 100)))
 
-        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.LOW))
-        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.LOW))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.LOW))
+        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(100, ThresholdProcessor.Quality.LOW, intArrayOf(100, 100)))
+        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(10, ThresholdProcessor.Quality.LOW, intArrayOf(100, 100)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, ThresholdProcessor.Quality.LOW, intArrayOf(100, 100)))
     }
 
     @Test
     fun constrainAccuracyQualityValuesBoundedToMinMax() {
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 10.0f))
-        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 10.0f, intArrayOf(100, 100)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f, intArrayOf(100, 100)))
 
-        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(100, 0.0f))
-        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(10, 0.0f))
-        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(10, 10.0f, intArrayOf(1, 1)))
+        assertEquals(1f, ThresholdProcessor.constrainAccuracyQuality(10, 0.0f, intArrayOf(1, 1)))
 
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(100, 0.5f))
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(10, 0.5f))
-        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.5f))
+        assertEquals(0.01f, ThresholdProcessor.constrainAccuracyQuality(100, 0.0f, intArrayOf(100, 100)))
+        assertEquals(0.1f, ThresholdProcessor.constrainAccuracyQuality(10, 0.0f, intArrayOf(100, 100)))
+        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.0f, intArrayOf(100, 100)))
 
-        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(2, 0.5f))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(100, 0.5f, intArrayOf(100, 100)))
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(10, 0.5f, intArrayOf(100, 100)))
+        assertEquals(1.0f, ThresholdProcessor.constrainAccuracyQuality(1, 0.5f, intArrayOf(100, 100)))
+
+        assertEquals(0.5f, ThresholdProcessor.constrainAccuracyQuality(2, 0.5f, intArrayOf(100, 100)))
     }
+
+    @Test
+    fun testQualityLimitsDoNotAffectThresholdOfPerfectSquare() {
+        val processors = listOf(
+                ThresholdProcessor(10, 1f, ThresholdProcessor.Quality.LOW, LoggingDelegate(100, 100)),
+                ThresholdProcessor(10, 1f, ThresholdProcessor.Quality.MEDIUM, LoggingDelegate(100, 100)),
+                ThresholdProcessor(10, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(100, 100))
+        )
+
+        val events = listOf(
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 100f, MotionEvent.ACTION_MOVE)
+        )
+
+        processors.forEach({
+            it.prepareBitmapAndCanvasForDrawing()
+            it.enqueueScratchMotionEvents(events)
+            it.drawQueuedScratchMotionEvents()
+            it.processScratchedImagePercent()
+        })
+
+        processors.forEach({
+            assertEquals(.1f, it.loggingDelegate.scratchPercent)
+        })
+    }
+
+    private class LoggingDelegate(val width: Int, val height: Int): ThresholdProcessor.Delegate {
+
+        var scratchPercent: Float = -1F
+            private set
+
+        var thresholdReachedCount: Int = 0
+            private set
+
+        override fun postScratchThresholdReached() {
+            thresholdReachedCount += 1
+        }
+
+        override fun postScratchPercentChanged(percent: Float) {
+            scratchPercent = percent
+        }
+
+        override fun getScratchableLayoutSize(): IntArray {
+            return intArrayOf(width, height)
+        }
+    }
+
+    private val ThresholdProcessor.loggingDelegate: LoggingDelegate
+        get() = this.delegate as LoggingDelegate
 }

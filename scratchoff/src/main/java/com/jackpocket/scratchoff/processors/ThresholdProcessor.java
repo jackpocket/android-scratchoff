@@ -116,7 +116,8 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
         float accuracyQuality = constrainAccuracyQuality(
                 this.originalTouchRadius,
-                this.accuracyQuality);
+                this.accuracyQuality,
+                layoutSize);
 
         float width = layoutSize[0] * accuracyQuality;
         float aspectRatio = layoutSize[1] / (float) layoutSize[0];
@@ -148,13 +149,14 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     protected static float constrainAccuracyQuality(
             int touchRadius,
-            Quality quality) {
+            Quality quality,
+            int[] layoutSize) {
 
         switch (quality) {
             case LOW:
-                return constrainAccuracyQuality(touchRadius, 0.01f);
+                return constrainAccuracyQuality(touchRadius, 0.01f, layoutSize);
             case MEDIUM:
-                return constrainAccuracyQuality(touchRadius, 0.5f);
+                return constrainAccuracyQuality(touchRadius, 0.5f, layoutSize);
             default:
                 return 1.0f;
         }
@@ -162,9 +164,10 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     protected static float constrainAccuracyQuality(
             int touchRadius,
-            float accuracyQuality) {
+            float accuracyQuality,
+            int[] layoutSize) {
 
-        float minimumAccuracyQuality = 1 / (float) touchRadius;
+        float minimumAccuracyQuality = 1 / (float) Math.min(touchRadius, Math.min(layoutSize[0], layoutSize[1]));
 
         return Math.min(1f, Math.max(minimumAccuracyQuality, accuracyQuality));
     }
@@ -252,5 +255,9 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
             }
         }
         catch(Exception e){ e.printStackTrace(); }
+    }
+
+    protected Delegate getDelegate() {
+        return delegate.get();
     }
 }
