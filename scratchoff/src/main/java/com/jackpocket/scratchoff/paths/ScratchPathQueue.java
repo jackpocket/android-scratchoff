@@ -5,7 +5,7 @@ import java.util.List;
 
 public class ScratchPathQueue {
 
-    private final ArrayList<ScratchPathPoint> events = new ArrayList<ScratchPathPoint>();
+    private final ArrayList<ScratchPathPoint> events = new ArrayList<>();
 
     public ScratchPathQueue() { }
 
@@ -29,7 +29,7 @@ public class ScratchPathQueue {
 
     public List<ScratchPathPoint> dequeue() {
         synchronized (events) {
-            List<ScratchPathPoint> tempEvents = new ArrayList<ScratchPathPoint>(events);
+            List<ScratchPathPoint> tempEvents = new ArrayList<>(events);
 
             events.clear();
 
@@ -39,7 +39,7 @@ public class ScratchPathQueue {
 
     public List<ScratchPathPoint> copy() {
         synchronized (events) {
-            return new ArrayList<ScratchPathPoint>(events);
+            return new ArrayList<>(events);
         }
     }
 

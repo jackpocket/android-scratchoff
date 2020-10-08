@@ -64,7 +64,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         this.originalTouchRadius = touchRadiusPx;
         this.completionThreshold = completionThreshold;
         this.accuracyQuality = accuracyQuality;
-        this.delegate = new WeakReference<Delegate>(delegate);
+        this.delegate = new WeakReference<>(delegate);
 
         this.markerPaint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
         this.markerPaint.setColor(MARKER_SCRATCHED);

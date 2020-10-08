@@ -19,7 +19,6 @@ import com.jackpocket.scratchoff.processors.InvalidationProcessor;
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
-import com.jackpocket.scratchoff.views.ScratchableLinearLayout;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -48,9 +47,9 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     private WeakReference<View> scratchableLayout;
-    private WeakReference<View> behindView = new WeakReference<View>(null);
+    private WeakReference<View> behindView = new WeakReference<>(null);
 
-    private WeakReference<ThresholdChangedListener> thresholdChangedListener = new WeakReference<ThresholdChangedListener>(null);
+    private WeakReference<ThresholdChangedListener> thresholdChangedListener = new WeakReference<>(null);
 
     private ScratchoffProcessor processor;
     private ScratchableLayoutDrawer layoutDrawer;
@@ -70,7 +69,7 @@ public class ScratchoffController implements OnTouchListener,
 
     private boolean scratchableLayoutAvailable = false;
 
-    private List<OnTouchListener> touchObservers = new ArrayList<OnTouchListener>();
+    private List<OnTouchListener> touchObservers = new ArrayList<>();
 
     private ScratchoffState statePendingReload;
     private final ScratchPathQueue history = new ScratchPathQueue();
@@ -80,7 +79,7 @@ public class ScratchoffController implements OnTouchListener,
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
      */
     public ScratchoffController(View scratchableLayout) {
-        this.scratchableLayout = new WeakReference<View>(scratchableLayout);
+        this.scratchableLayout = new WeakReference<>(scratchableLayout);
 
         Resources resources = scratchableLayout
                 .getContext()
@@ -103,7 +102,7 @@ public class ScratchoffController implements OnTouchListener,
      * You must maintain a reference to the supplied {@link ThresholdChangedListener} as it will be weakly held.
      */
     public ScratchoffController setThresholdChangedListener(ThresholdChangedListener thresholdChangedListener) {
-        this.thresholdChangedListener = new WeakReference<ThresholdChangedListener>(thresholdChangedListener);
+        this.thresholdChangedListener = new WeakReference<>(thresholdChangedListener);
 
         return this;
     }
@@ -114,7 +113,7 @@ public class ScratchoffController implements OnTouchListener,
      * performed.
      */
     public ScratchoffController setMatchLayoutWithBehindView(View behindView) {
-        this.behindView = new WeakReference<View>(behindView);
+        this.behindView = new WeakReference<>(behindView);
 
         return this;
     }

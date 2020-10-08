@@ -39,7 +39,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         public void onScratchableLayoutAvailable(int width, int height);
     }
 
-    private WeakReference<View> scratchView = new WeakReference<View>(null);
+    private WeakReference<View> scratchView = new WeakReference<>(null);
 
     private State state = State.UNATTACHED;
     private Canvas pathStrippedCanvas;
@@ -57,9 +57,8 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     private final ScratchPathManager pathManager = new ScratchPathManager();
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
-    @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer(Delegate delegate) {
-        this.delegate = new WeakReference<Delegate>(delegate);
+        this.delegate = new WeakReference<>(delegate);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -74,14 +73,13 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
                 behindView);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
             int touchRadiusPx,
             final View scratchView,
             final View behindView) {
 
         synchronized (pathManager) {
-            this.scratchView = new WeakReference<View>(scratchView);
+            this.scratchView = new WeakReference<>(scratchView);
             this.state = State.PREPARING;
             this.clearPaint = createClearPaint(touchRadiusPx);
 
@@ -129,6 +127,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
                 });
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void performLayoutDimensionMatching(final View scratchView, final View behindView) {
         ViewGroup.LayoutParams params = scratchView.getLayoutParams();
         params.width = behindView.getWidth();
@@ -137,6 +136,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         scratchView.setLayoutParams(params);
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void enqueueScratchableViewInitializationOnGlobalLayout(final View scratchView) {
         addGlobalLayoutRequest(
                 scratchView,
@@ -168,6 +168,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected Bitmap createBitmapFromScratchableView(final View scratchView) {
         Bitmap bitmap = Bitmap.createBitmap(
                 scratchView.getWidth(),
@@ -186,7 +187,6 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         queue.enqueue(events);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void draw(Canvas canvas) {
         synchronized (pathManager) {
             Bitmap pathStrippedImage = this.pathStrippedImage;
@@ -207,6 +207,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void drawQueuedScratchMotionEvents() {
         List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
 
@@ -217,7 +218,6 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         pathManager.draw(pathStrippedCanvas, clearPaint);
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void destroy() {
         synchronized (pathManager) {
             this.state = State.UNATTACHED;
@@ -234,7 +234,6 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
     public void clear(boolean animationEnabled) {
         synchronized (pathManager) {
             if (animationEnabled) {
@@ -310,7 +309,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         v.requestLayout();
     }
 
-    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
     private void removeGlobalLayoutListener(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
         if (Build.VERSION.SDK_INT < 16) {
             v.getViewTreeObserver()

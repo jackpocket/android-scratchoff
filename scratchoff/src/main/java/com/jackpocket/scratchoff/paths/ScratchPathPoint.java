@@ -63,7 +63,7 @@ public class ScratchPathPoint implements Parcelable {
         final int historySize = event.getHistorySize();
         final int pointersCount = event.getPointerCount();
 
-        ArrayList<ScratchPathPoint> events = new ArrayList<ScratchPathPoint>();
+        ArrayList<ScratchPathPoint> events = new ArrayList<>();
 
         for (int historyIndex = 0; historyIndex < historySize; historyIndex++) {
             for (int pointerIndex = 0; pointerIndex < pointersCount; pointerIndex++) {
@@ -86,11 +86,6 @@ public class ScratchPathPoint implements Parcelable {
         }
 
         return events;
-    }
-
-    @Override
-    public String toString() {
-        return String.format(Locale.US, "%d: %f, %f - %d", pointerIndex, x, y, action);
     }
 
     public static final Creator<ScratchPathPoint> CREATOR = new Creator<ScratchPathPoint>() {
