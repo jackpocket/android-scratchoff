@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
+import com.jackpocket.scratchoff.tools.ThresholdCalculator;
 import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
@@ -49,6 +50,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
 
     private int originalTouchRadius;
     private Quality accuracyQuality;
+    private ThresholdCalculator calculator = new ThresholdCalculator(MARKER_UNTOUCHED);
 
     private final Sleeper sleeper = new Sleeper(15, 50, 3000);
 
@@ -191,7 +193,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         if (delegate == null || currentBitmap == null || thresholdReached)
             return;
 
-        float percentScratched = calculatePercentScratched(currentBitmap);
+        float percentScratched = calculator.calculate(currentBitmap);
 
         if (this.lastPercentScratched < percentScratched) {
             delegate.postScratchPercentChanged(percentScratched);
@@ -204,33 +206,6 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         }
 
         this.lastPercentScratched = percentScratched;
-    }
-
-    private float calculatePercentScratched(Bitmap bitmap) {
-        return calculatePercentScratched(getScratchedCount(bitmap), bitmap.getWidth(), bitmap.getHeight());
-    }
-
-    public static float calculatePercentScratched(int scratchedCount, int width, int height) {
-        return Math.min(1, Math.max(0, ((float) scratchedCount) / (width * height)));
-    }
-
-    private int getScratchedCount(Bitmap bitmap) {
-        int pixelCount = bitmap.getWidth() * bitmap.getHeight();
-        int[] pixels = new int[pixelCount];
-        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-
-        return pixelCount - countColorMatches(MARKER_UNTOUCHED, pixels);
-    }
-
-    static int countColorMatches(int color, int[] pixels) {
-        int scratched = 0;
-
-        for (int pixel : pixels) {
-            if (pixel == color)
-                scratched++;
-        }
-
-        return scratched;
     }
 
     @Override

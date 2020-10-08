@@ -11,22 +11,6 @@ import org.junit.runner.RunWith
 class ThresholdProcessorTests {
 
     @Test
-    fun testCalculatePercentScratchCompletedAlwaysBetweenZeroAndOne() {
-        val acceptedRange = 0.0..1.0
-
-        assert(ThresholdProcessor.calculatePercentScratched(-10, 1, 1) in acceptedRange)
-        assert(ThresholdProcessor.calculatePercentScratched(10, 1, 1) in acceptedRange)
-    }
-
-    @Test
-    fun testCountColorMatches() {
-        val subject = intArrayOf(0, 0, 1, 1, 1)
-
-        assertEquals(2, ThresholdProcessor.countColorMatches(0, subject))
-        assertEquals(3, ThresholdProcessor.countColorMatches(1, subject))
-    }
-
-    @Test
     fun testThresholdCalculationMatchesFromHistoryLoad() {
         val processor = ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(2, 10))
 
