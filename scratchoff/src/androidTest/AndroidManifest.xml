@@ -3,9 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.jackpocket.scratchoff" >
 
+    <!--  Tests should be run against API 14 or higher  -->
     <uses-sdk
         tools:overrideLibrary="
             androidx.test.ext.junit,
             androidx.test,
-            androidx.test.core"/>
+            androidx.test.core,
+            androidx.test.runner,
+            androidx.test.monitor" />
 </manifest>

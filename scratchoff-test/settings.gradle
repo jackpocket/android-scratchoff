@@ -1,1 +1,1 @@
-include ':payment-gateway'
+include ':scratchoff'

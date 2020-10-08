@@ -86,7 +86,6 @@ class ScratchoffControllerTests {
 
     @Test
     fun testThresholdReachedTriggersCompletionCallbackWithClearingEnabled() {
-        var completionCount: Int = 0
         var clearCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
