@@ -5,14 +5,14 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.2'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
@@ -49,17 +49,44 @@ ext {
     bintrayRepo = 'maven'
     bintrayName = 'scratchoff'
 
-    publishedGroupId = 'com.jackpocket'
-    libraryName = 'scratchoff'
-    artifact = 'scratchoff'
-
     libraryDescription = 'A Scratchoff View system.'
     libraryVersion = '2.0.0'
-
-    developerId = 'jackpocket'
-    developerName = 'Jackpocket'
-    developerEmail = 'services@jackpocket.com'
 }
 
-apply from: 'https://raw.githubusercontent.com/attwellBrian/JCenter/master/installv1.gradle'
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.jackpocket'
+                artifactId = 'scratchoff'
+                version = libraryVersion
+
+                pom {
+                    name = 'scratchoff'
+                    description = libraryDescription
+                    url = 'https://github.com/jackpocket/android_scratchoff'
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'jackpocket'
+                            name = 'Jackpocket'
+                            email = 'services@jackpocket.com'
+                        }
+                    }
+                    scm {
+
+                    }
+                }
+            }
+        }
+    }
+}
+
 apply from: 'https://raw.githubusercontent.com/attwellBrian/JCenter/master/bintrayv1.gradle'
