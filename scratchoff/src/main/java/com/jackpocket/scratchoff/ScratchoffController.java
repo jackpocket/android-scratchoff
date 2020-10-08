@@ -261,14 +261,17 @@ public class ScratchoffController implements OnTouchListener,
     public ScratchoffController clear() {
         this.scratchableLayoutAvailable = false;
 
+        clearLayoutDrawer(clearAnimationEnabled);
+        safelyStopProcessors();
+
+        return this;
+    }
+
+    protected void clearLayoutDrawer(boolean clearAnimationEnabled) {
         ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
 
         if (layoutDrawer != null)
             layoutDrawer.clear(clearAnimationEnabled);
-
-        safelyStopProcessors();
-
-        return this;
     }
 
     public View getScratchImageLayout() {
@@ -569,6 +572,10 @@ public class ScratchoffController implements OnTouchListener,
 
         this.statePendingReload = null;
 
+        performStateRestoration(state);
+    }
+
+    protected void performStateRestoration(ScratchoffState state) {
         int[] historicalSize = state.getLayoutSize();
         int[] currentSize = getScratchableLayoutSize();
 

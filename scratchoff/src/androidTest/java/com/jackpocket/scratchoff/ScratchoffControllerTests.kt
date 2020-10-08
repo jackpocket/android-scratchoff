@@ -1,11 +1,17 @@
 package com.jackpocket.scratchoff
 
 import android.content.Context
+import android.view.AbsSavedState
+import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor
+import com.jackpocket.scratchoff.views.ScratchableLayout
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
+import com.jackpocket.scratchoff.views.ScratchableRelativeLayout
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -155,6 +161,160 @@ class ScratchoffControllerTests {
         controller.onResume()
 
         assertEquals(1, startCount)
+    }
+
+    @Test
+    fun testMotionEventsNotEnqueuedBeforeLayoutAvailable() {
+        var enqueueProcessorsCount: Int = 0
+        var enqueueDrawerCount: Int = 0
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun enqueueLayoutDrawerEvents(events: MutableList<ScratchPathPoint>?) {
+                enqueueDrawerCount += 1
+            }
+
+            override fun enqueueProcessorEvents(events: MutableList<ScratchPathPoint>?) {
+                enqueueProcessorsCount += 1
+            }
+        }
+        controller.onTouch(View(context), MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0))
+
+        assertEquals(0, enqueueDrawerCount)
+        assertEquals(0, enqueueProcessorsCount)
+    }
+
+    @Test
+    fun testMotionEventsEnqueuedWhenReady() {
+        var enqueueProcessorsCount: Int = 0
+        var enqueueDrawerCount: Int = 0
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun enqueueLayoutDrawerEvents(events: MutableList<ScratchPathPoint>?) {
+                enqueueDrawerCount += 1
+            }
+
+            override fun enqueueProcessorEvents(events: MutableList<ScratchPathPoint>?) {
+                enqueueProcessorsCount += 1
+            }
+        }
+        controller.onScratchableLayoutAvailable(10, 20)
+        controller.onTouch(View(context), MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0))
+
+        assertEquals(1, enqueueDrawerCount)
+        assertEquals(1, enqueueProcessorsCount)
+    }
+
+    @Test
+    fun testLayoutAvailableStartsProcessorsAndAttemptsRestore() {
+        var startCount: Int = 0
+        var restoreAttemptCount: Int = 0
+        var restoreCount: Int = 0
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun safelyStartProcessors() {
+                startCount += 1
+            }
+
+            override fun performStateRestoration() {
+                restoreAttemptCount += 1
+
+                super.performStateRestoration()
+            }
+
+            override fun performStateRestoration(state: ScratchoffState) {
+                restoreCount += 1
+            }
+        }
+        controller.restore(
+                ScratchoffState(
+                        AbsSavedState.EMPTY_STATE,
+                        intArrayOf(10, 20),
+                        false,
+                        listOf()))
+        controller.onScratchableLayoutAvailable(10, 20)
+
+        assertEquals(1, startCount)
+        assertEquals(1, restoreAttemptCount)
+        assertEquals(1, restoreCount)
+    }
+
+    @Test
+    fun testRestoreNotAttemptedWhenPendingStateRemoved() {
+        var startCount: Int = 0
+        var restoreAttemptCount: Int = 0
+        var restoreCount: Int = 0
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun safelyStartProcessors() {
+                startCount += 1
+            }
+
+            override fun performStateRestoration() {
+                restoreAttemptCount += 1
+
+                super.performStateRestoration()
+            }
+
+            override fun performStateRestoration(state: ScratchoffState) {
+                restoreCount += 1
+            }
+        }
+        controller.removePendingStateRestoration()
+        controller.onScratchableLayoutAvailable(10, 20)
+
+        assertEquals(1, startCount)
+        assertEquals(1, restoreAttemptCount)
+        assertEquals(0, restoreCount)
+    }
+
+    @Test
+    fun testRestoreWithThresholdReachedClearsWithoutAnimation() {
+        var startCount: Int = 0
+        var clearCount: Int = 0
+        var animationEnabled: Boolean? = null
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun safelyStartProcessors() {
+                startCount += 1
+            }
+
+            override fun clearLayoutDrawer(clearAnimationEnabled: Boolean) {
+                clearCount += 1
+                animationEnabled = clearAnimationEnabled
+            }
+        }
+        controller.setClearAnimationEnabled(true)
+        controller.restore(
+                ScratchoffState(
+                        AbsSavedState.EMPTY_STATE,
+                        intArrayOf(10, 20),
+                        true,
+                        listOf()))
+        controller.onScratchableLayoutAvailable(10, 20)
+
+        assertEquals(1, startCount)
+        assertEquals(1, clearCount)
+        assertEquals(false, animationEnabled)
+    }
+
+    @Test
+    fun testFindHelperFunctionSearchesParentView() {
+        testFindHelperFunctionSearchesParentView(ScratchableLinearLayout(context))
+        testFindHelperFunctionSearchesParentView(ScratchableRelativeLayout(context))
+    }
+
+    private fun testFindHelperFunctionSearchesParentView(layout: ScratchableLayout) {
+        val view = layout as View
+        view.id = 100
+
+        val expectedController = layout.scratchoffController
+
+        val parent = FrameLayout(context)
+        parent.addView(View(context))
+        parent.addView(View(context))
+        parent.addView(view)
+
+        assertEquals(expectedController, ScratchoffController.findByViewId(parent, 100))
     }
 
     private class LoggingThresholdChangedListener: ScratchoffController.ThresholdChangedListener {
