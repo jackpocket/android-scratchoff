@@ -148,7 +148,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     protected ScratchableLayoutDrawer createLayoutDrawer() {
-        return new ScratchableLayoutDrawer()
+        return new ScratchableLayoutDrawer(this)
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
                 .setClearAnimationInterpolator(clearAnimationInterpolator);
     }

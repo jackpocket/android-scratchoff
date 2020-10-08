@@ -20,6 +20,7 @@ import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
 import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
+import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -38,24 +39,28 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         public void onScratchableLayoutAvailable(int width, int height);
     }
 
-    private WeakReference<View> scratchView;
+    private WeakReference<View> scratchView = new WeakReference<View>(null);
 
     private State state = State.UNATTACHED;
     private Canvas pathStrippedCanvas;
     private Bitmap pathStrippedImage;
 
-    private WeakReference<Delegate> delegate = new WeakReference<Delegate>(null);
+    private WeakReference<Delegate> delegate;
 
-    private Paint clearPaint;
+    private Paint clearPaint = new Paint();
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
+
+    private ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
     @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer() { }
+    public ScratchableLayoutDrawer(Delegate delegate) {
+        this.delegate = new WeakReference<Delegate>(delegate);
+    }
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
@@ -64,7 +69,6 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
             View behindView) {
 
         return attach(
-                controller,
                 controller.getTouchRadiusPx(),
                 scratchView,
                 behindView);
@@ -72,36 +76,40 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
-            Delegate delegate,
             int touchRadiusPx,
             final View scratchView,
             final View behindView) {
 
         synchronized (pathManager) {
             this.scratchView = new WeakReference<View>(scratchView);
-            this.delegate = new WeakReference<Delegate>(delegate);
             this.state = State.PREPARING;
+            this.clearPaint = createClearPaint(touchRadiusPx);
 
+            scratchView.setTag(R.id.scratch__clear_animation_tag, 0L);
             scratchView.clearAnimation();
             scratchView.setVisibility(View.VISIBLE);
             scratchView.setWillNotDraw(false);
 
-            showScratchableViewChildren();
+            visibilityController.showChildren(scratchView);
 
             scratchView.invalidate();
 
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
                 scratchView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-            clearPaint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
-            clearPaint.setAlpha(0xFF);
-            clearPaint.setAntiAlias(true);
-            clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-
             enqueueViewInitializationOnGlobalLayout(scratchView, behindView);
 
             return this;
         }
+    }
+
+    protected Paint createClearPaint(int touchRadiusPx) {
+        Paint paint = ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx);
+        paint.setAlpha(0xFF);
+        paint.setAntiAlias(true);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+
+        return paint;
     }
 
     protected void enqueueViewInitializationOnGlobalLayout(final View scratchView, final View behindView) {
@@ -146,7 +154,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
 
             scratchView.setBackgroundColor(Color.TRANSPARENT);
 
-            hideScratchableViewChildren();
+            visibilityController.hideChildren(scratchView);
 
             Delegate delegate = this.delegate.get();
 
@@ -181,6 +189,8 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     @SuppressWarnings("WeakerAccess")
     public void draw(Canvas canvas) {
         synchronized (pathManager) {
+            Bitmap pathStrippedImage = this.pathStrippedImage;
+
             if (pathStrippedImage == null)
                 return;
 
@@ -237,11 +247,15 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         }
     }
 
-    private void performFadeOutClear() {
+    protected void performFadeOutClear() {
         final View v = scratchView.get();
 
         if (v == null)
             return;
+
+        this.state = State.CLEARING;
+
+        final Long activeClearTag = System.currentTimeMillis();
 
         AlphaAnimation anim = new AlphaAnimation(1f, 0f);
         anim.setDuration(clearAnimationDurationMs);
@@ -253,10 +267,14 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
             public void onAnimationRepeat(Animation animation) { }
 
             public void onAnimationEnd(Animation animation) {
+                if (!activeClearTag.equals(v.getTag(R.id.scratch__clear_animation_tag)))
+                    return;
+
                 fadeOutClearAnimationCompleted();
             }
         });
 
+        v.setTag(R.id.scratch__clear_animation_tag, activeClearTag);
         v.startAnimation(anim);
     }
 
@@ -269,47 +287,13 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         }
     }
 
-    private void hideAndMarkScratchableSurfaceViewCleared() {
+    protected void hideAndMarkScratchableSurfaceViewCleared() {
         this.state = State.CLEARED;
 
-        final View view = scratchView.get();
+        View view = scratchView.get();
 
-        if (view == null)
-            return;
-
-        view.setVisibility(View.GONE);
-
-        showScratchableViewChildren();
-    }
-
-    private void hideScratchableViewChildren() {
-        final View v = scratchView.get();
-
-        if (v == null)
-            return;
-
-        if (v instanceof ViewGroup){
-            ViewGroup group = (ViewGroup) v;
-
-            for (int i = 0; i < group.getChildCount(); i++)
-                group.getChildAt(i)
-                        .setVisibility(View.GONE);
-        }
-    }
-
-    private void showScratchableViewChildren() {
-        final View v = scratchView.get();
-
-        if (v == null)
-            return;
-
-        if (v instanceof ViewGroup){
-            ViewGroup group = (ViewGroup) v;
-
-            for(int i = 0; i < group.getChildCount(); i++)
-                group.getChildAt(i)
-                        .setVisibility(View.VISIBLE);
-        }
+        visibilityController.hide(view);
+        visibilityController.showChildren(view);
     }
 
     private void addGlobalLayoutRequest(final View v, final Runnable runnable) {
@@ -319,7 +303,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
                         if(runnable != null)
                             runnable.run();
 
-                        removeOnGlobalLayoutListener(v, this);
+                        removeGlobalLayoutListener(v, this);
                     }
                 });
 
@@ -327,7 +311,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     @SuppressLint("NewApi")
-    private void removeOnGlobalLayoutListener(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
+    private void removeGlobalLayoutListener(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
         if (Build.VERSION.SDK_INT < 16) {
             v.getViewTreeObserver()
                     .removeGlobalOnLayoutListener(listener);
