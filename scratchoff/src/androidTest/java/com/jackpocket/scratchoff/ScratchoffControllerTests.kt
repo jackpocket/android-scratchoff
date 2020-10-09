@@ -167,19 +167,31 @@ class ScratchoffControllerTests {
         var enqueueProcessorsCount: Int = 0
         var enqueueDrawerCount: Int = 0
 
+        val event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
+
         val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun enqueueLayoutDrawerEvents(events: MutableList<ScratchPathPoint>?) {
                 enqueueDrawerCount += 1
+
+                super.enqueueLayoutDrawerEvents(events)
             }
 
             override fun enqueueProcessorEvents(events: MutableList<ScratchPathPoint>?) {
                 enqueueProcessorsCount += 1
+
+                super.enqueueProcessorEvents(events)
             }
         }
-        controller.onTouch(View(context), MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0))
+        controller.onTouch(View(context), event)
 
         assertEquals(0, enqueueDrawerCount)
         assertEquals(0, enqueueProcessorsCount)
+
+        controller.onScratchableLayoutAvailable(1, 1)
+        controller.onTouch(View(context), event)
+
+        assertEquals(1, enqueueDrawerCount)
+        assertEquals(1, enqueueProcessorsCount)
     }
 
     @Test
@@ -235,6 +247,43 @@ class ScratchoffControllerTests {
         assertEquals(1, startCount)
         assertEquals(1, restoreAttemptCount)
         assertEquals(1, restoreCount)
+    }
+
+    @Test
+    fun testParcelizedDataCanBeRestored() {
+        var restoredState: ScratchoffState? = null
+        var expectedPoint = ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN)
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun performStateRestoration(state: ScratchoffState) {
+                restoredState = state
+
+                super.performStateRestoration(state)
+            }
+        }
+        controller.restore(
+                ScratchoffState(
+                        AbsSavedState.EMPTY_STATE,
+                        intArrayOf(10, 20),
+                        false,
+                        listOf(expectedPoint)))
+        controller.onScratchableLayoutAvailable(10, 20)
+
+        val state = controller.parcelize(AbsSavedState.EMPTY_STATE)
+
+        assertEquals(10, state.layoutSize[0])
+        assertEquals(20, state.layoutSize[1])
+        assertEquals(false, state.isThresholdReached)
+
+        controller.clear()
+        controller.restore(state)
+        controller.onScratchableLayoutAvailable(10, 20)
+
+        assertEquals(10, restoredState!!.layoutSize[0])
+        assertEquals(20, restoredState!!.layoutSize[1])
+        assertEquals(false, restoredState!!.isThresholdReached)
+
+        assertEquals(expectedPoint, controller.clonedHistory[0])
     }
 
     @Test
@@ -314,6 +363,48 @@ class ScratchoffControllerTests {
         parent.addView(view)
 
         assertEquals(expectedController, ScratchoffController.findByViewId(parent, 100))
+    }
+
+    @Test
+    fun testTouchObserversAreAddedAndRemoved() {
+        val observer1 = View.OnTouchListener({ _, _ -> true })
+        val observer2 = View.OnTouchListener({ _, _ -> true })
+
+        val controller = ScratchoffController(mockScratchableLayout)
+        controller.addTouchObserver(observer1)
+        controller.addTouchObserver(observer2)
+
+        assertEquals(2, controller.touchObservers.size)
+
+        controller.removeTouchObserver(observer2)
+
+        assertEquals(1, controller.touchObservers.size)
+        assertEquals(observer1, controller.touchObservers[0])
+
+        controller.addTouchObserver(observer2)
+
+        assertEquals(2, controller.touchObservers.size)
+
+        controller.removeTouchObservers()
+
+        assertEquals(0, controller.touchObservers.size)
+    }
+
+    @Test
+    fun testDelegateCallbacksPostRunnable() {
+        var postCount: Int = 0
+
+        val controller = object: ScratchoffController(mockScratchableLayout) {
+            override fun post(runnable: Runnable?) {
+                postCount += 1
+            }
+        }
+
+        controller.setThresholdChangedListener(loggingDelegate)
+        controller.postScratchPercentChanged(0f)
+        controller.postScratchThresholdReached()
+
+        assertEquals(2, postCount)
     }
 
     private class LoggingThresholdChangedListener: ScratchoffController.ThresholdChangedListener {

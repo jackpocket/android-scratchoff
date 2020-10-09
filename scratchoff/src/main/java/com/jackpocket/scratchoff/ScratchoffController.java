@@ -478,6 +478,10 @@ public class ScratchoffController implements OnTouchListener,
         this.touchObservers.clear();
     }
 
+    protected List<OnTouchListener> getTouchObservers() {
+        return touchObservers;
+    }
+
     @Override
     public int[] getScratchableLayoutSize() {
         final int[] gridSize = this.gridSize;
@@ -493,14 +497,14 @@ public class ScratchoffController implements OnTouchListener,
 
     @Override
     public void postScratchPercentChanged(final float percent) {
-        final ThresholdChangedListener delegate = this.thresholdChangedListener.get();
+        final ThresholdChangedListener thresholdChangedListener = this.thresholdChangedListener.get();
 
-        if (delegate == null)
+        if (thresholdChangedListener == null)
             return;
 
         post(new Runnable() {
             public void run() {
-                delegate.onScratchPercentChanged(ScratchoffController.this, percent);
+                thresholdChangedListener.onScratchPercentChanged(ScratchoffController.this, percent);
             }
         });
     }
@@ -533,7 +537,7 @@ public class ScratchoffController implements OnTouchListener,
      *
      * @return null if {@link #stateRestorationEnabled} is false
      */
-    public Parcelable parcelize(Parcelable state) {
+    public ScratchoffState parcelize(Parcelable state) {
         if (!stateRestorationEnabled)
             return null;
 
@@ -542,6 +546,10 @@ public class ScratchoffController implements OnTouchListener,
                 getScratchableLayoutSize(),
                 thresholdReached,
                 history.copy());
+    }
+
+    protected List<ScratchPathPoint> getClonedHistory() {
+        return history.copy();
     }
 
     public void restore(Parcelable state) {

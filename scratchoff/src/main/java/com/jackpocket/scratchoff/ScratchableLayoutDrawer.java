@@ -25,7 +25,7 @@ import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
+public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate, Animation.AnimationListener {
 
     enum State {
         UNATTACHED,
@@ -57,6 +57,8 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     private final ScratchPathManager pathManager = new ScratchPathManager();
     private final ScratchPathQueue queue = new ScratchPathQueue();
 
+    private Long activeClearTag = 0L;
+
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
     }
@@ -82,6 +84,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
             this.scratchView = new WeakReference<>(scratchView);
             this.state = State.PREPARING;
             this.clearPaint = createClearPaint(touchRadiusPx);
+            this.activeClearTag = System.currentTimeMillis();
 
             scratchView.setTag(R.id.scratch__clear_animation_tag, 0L);
             scratchView.clearAnimation();
@@ -247,37 +250,50 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
     }
 
     protected void performFadeOutClear() {
-        final View v = scratchView.get();
+        final View view = scratchView.get();
 
-        if (v == null)
+        if (view == null)
             return;
 
         this.state = State.CLEARING;
 
-        final Long activeClearTag = System.currentTimeMillis();
+        claimClearAnimation(view, System.currentTimeMillis());
+        performFadeOutClear(view);
+    }
 
+    protected void claimClearAnimation(View view, long id) {
+        this.activeClearTag = id;
+
+        view.setTag(R.id.scratch__clear_animation_tag, activeClearTag);
+    }
+
+    protected void performFadeOutClear(View view) {
         AlphaAnimation anim = new AlphaAnimation(1f, 0f);
         anim.setDuration(clearAnimationDurationMs);
         anim.setInterpolator(clearAnimationInterpolator);
         anim.setFillAfter(true);
-        anim.setAnimationListener(new Animation.AnimationListener() {
-            public void onAnimationStart(Animation animation) { }
+        anim.setAnimationListener(this);
 
-            public void onAnimationRepeat(Animation animation) { }
-
-            public void onAnimationEnd(Animation animation) {
-                if (!activeClearTag.equals(v.getTag(R.id.scratch__clear_animation_tag)))
-                    return;
-
-                fadeOutClearAnimationCompleted();
-            }
-        });
-
-        v.setTag(R.id.scratch__clear_animation_tag, activeClearTag);
-        v.startAnimation(anim);
+        view.startAnimation(anim);
     }
 
-    private void fadeOutClearAnimationCompleted() {
+    public void onAnimationStart(Animation animation) {
+
+    }
+
+    public void onAnimationRepeat(Animation animation) {
+
+    }
+
+    public void onAnimationEnd(Animation animation) {
+        final View view = scratchView.get();
+
+        if (view == null)
+            return;
+
+        if (!activeClearTag.equals(view.getTag(R.id.scratch__clear_animation_tag)))
+            return;
+
         synchronized (pathManager) {
             if (ScratchableLayoutDrawer.this.state != State.CLEARING)
                 return;
@@ -295,30 +311,30 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate {
         visibilityController.showChildren(view);
     }
 
-    private void addGlobalLayoutRequest(final View v, final Runnable runnable) {
-        v.getViewTreeObserver()
+    private void addGlobalLayoutRequest(final View view, final Runnable runnable) {
+        view.getViewTreeObserver()
                 .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     public void onGlobalLayout() {
                         if(runnable != null)
                             runnable.run();
 
-                        removeGlobalLayoutListener(v, this);
+                        removeGlobalLayoutListener(view, this);
                     }
                 });
 
-        v.requestLayout();
+        view.requestLayout();
     }
 
     @SuppressWarnings("deprecation")
-    private void removeGlobalLayoutListener(View v, ViewTreeObserver.OnGlobalLayoutListener listener) {
+    private void removeGlobalLayoutListener(View view, ViewTreeObserver.OnGlobalLayoutListener listener) {
         if (Build.VERSION.SDK_INT < 16) {
-            v.getViewTreeObserver()
+            view.getViewTreeObserver()
                     .removeGlobalOnLayoutListener(listener);
 
             return;
         }
 
-        v.getViewTreeObserver()
+        view.getViewTreeObserver()
                 .removeOnGlobalLayoutListener(listener);
     }
 
