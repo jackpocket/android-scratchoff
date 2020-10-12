@@ -5,7 +5,7 @@
 .DS_Store
 /build
 /scratchoff/build
-/scratchoff-test/build
+/scratchoff-sample/build
 /captures
 .idea/*
 gradle/*

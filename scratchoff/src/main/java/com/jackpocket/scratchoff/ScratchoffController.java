@@ -590,7 +590,7 @@ public class ScratchoffController implements OnTouchListener,
             return;
 
         if (state.isThresholdReached()) {
-            final Boolean clearAnimationEnabled = this.clearAnimationEnabled;
+            final boolean clearAnimationEnabled = this.clearAnimationEnabled;
 
             this.clearAnimationEnabled = false;
             this.clear();

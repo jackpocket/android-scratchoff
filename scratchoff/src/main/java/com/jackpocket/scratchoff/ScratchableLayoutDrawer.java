@@ -1,6 +1,5 @@
 package com.jackpocket.scratchoff;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -325,7 +324,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate, An
         view.requestLayout();
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private void removeGlobalLayoutListener(View view, ViewTreeObserver.OnGlobalLayoutListener listener) {
         if (Build.VERSION.SDK_INT < 16) {
             view.getViewTreeObserver()

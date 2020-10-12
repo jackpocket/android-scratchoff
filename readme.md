@@ -34,15 +34,15 @@ Here is an example using the `ScratchableLinearLayout`:
 
     <RelativeLayout
         android:id="@+id/scratch_view_behind"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:background="#818B8D" >
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#818B8D"
+        android:padding="25dip" >
 
         <ImageView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:layout_margin="25dip"
             android:adjustViewBounds="true"
             android:src="@drawable/some_drawable_to_be_revealed" />
 
@@ -50,12 +50,13 @@ Here is an example using the `ScratchableLinearLayout`:
 
     <com.jackpocket.scratchoff.views.ScratchableLinearLayout
         android:id="@+id/scratch_view"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:background="#3C9ADF" >
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#3C9ADF"
+        android:padding="25dip" >
 
         <ImageView
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:adjustViewBounds="true"
@@ -75,11 +76,13 @@ The `ScratchoffController` will call its listener's methods when the scratched t
 ```java
 public class MainActivity extends Activity implements ScratchoffController.ThresholdChangedListener {
 
+    @Override
     public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted) {
         // This will be called on the main thread any time the scratch threshold has changed.
         // The values will be between [0.0, 100.0]
     }
 
+    @Override
     public void onScratchThresholdReached(ScratchoffController controller) {
         // This is called on the main thread the moment we know the scratched threshold has been reached.
         // If the fade-on-clear animation is enabled, it will already have been started, but not completed.
@@ -93,8 +96,8 @@ public class MainActivity extends Activity implements ScratchoffController.Thres
 Once we have a layout and listeners setup, we can attach the `ScratchoffController` to it to start scratching away:
 
 ```java
-activity: android.app.Activity
-listener: ScratchoffController.ThresholdChangedListener
+// activity: android.app.Activity
+// listener: ScratchoffController.ThresholdChangedListener
 
 ScratchoffController.findByViewId(activity, R.id.scratch_view)
     .setThresholdChangedListener(listener)

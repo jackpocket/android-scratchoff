@@ -6,7 +6,6 @@ import android.view.MotionEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class ScratchPathPoint implements Parcelable {
 
