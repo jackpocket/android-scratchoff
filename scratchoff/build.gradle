@@ -6,13 +6,13 @@ buildscript {
 
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 30
@@ -43,14 +43,25 @@ dependencies {
     androidTestImplementation "androidx.test:core:1.3.0"
 }
 
-group = 'com.jackpocket'
-
 ext {
-    bintrayRepo = 'maven'
-    bintrayName = 'scratchoff'
-
-    libraryDescription = 'A Scratchoff View system.'
     libraryVersion = '2.0.0'
+    libraryDescription = 'A Scratchoff View system.'
+    libraryUrl = 'https://github.com/jackpocket/android_scratchoff'
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 afterEvaluate {
@@ -59,6 +70,9 @@ afterEvaluate {
             release(MavenPublication) {
                 from components.release
 
+                artifact sourcesJar
+                artifact javadocJar
+
                 groupId = 'com.jackpocket'
                 artifactId = 'scratchoff'
                 version = libraryVersion
@@ -66,7 +80,7 @@ afterEvaluate {
                 pom {
                     name = 'scratchoff'
                     description = libraryDescription
-                    url = 'https://github.com/jackpocket/android_scratchoff'
+                    url = libraryUrl
                     licenses {
                         license {
                             name = 'The Apache License, Version 2.0'
@@ -81,7 +95,7 @@ afterEvaluate {
                         }
                     }
                     scm {
-
+                        url = libraryUrl
                     }
                 }
             }
@@ -89,4 +103,23 @@ afterEvaluate {
     }
 }
 
-apply from: 'https://raw.githubusercontent.com/attwellBrian/JCenter/master/bintrayv1.gradle'
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    publications = ['release']
+
+    pkg {
+        repo = 'maven'
+        name = 'scratchoff'
+        desc = libraryDescription
+        publish = true
+        publicDownloadNumbers = true
+        version {
+            desc = libraryDescription
+        }
+    }
+}
