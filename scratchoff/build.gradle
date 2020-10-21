@@ -51,7 +51,7 @@ ext {
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    archiveClassifier = 'sources'
+    setArchiveClassifier('sources')
 }
 
 task javadoc(type: Javadoc) {
@@ -60,8 +60,8 @@ task javadoc(type: Javadoc) {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
+    setArchiveClassifier('javadoc')
 }
 
 afterEvaluate {
