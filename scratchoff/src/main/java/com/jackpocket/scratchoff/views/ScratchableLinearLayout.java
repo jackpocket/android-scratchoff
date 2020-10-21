@@ -16,20 +16,24 @@ public class ScratchableLinearLayout extends LinearLayout implements Scratchable
     public ScratchableLinearLayout(Context context) {
         super(context);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
     }
 
     public ScratchableLinearLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
     }
 
     @SuppressLint("NewApi")
     public ScratchableLinearLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
+    }
+
+    protected ScratchoffController createScratchoffController() {
+        return new ScratchoffController(this);
     }
 
     @Override

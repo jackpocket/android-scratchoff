@@ -16,20 +16,24 @@ public class ScratchableRelativeLayout extends RelativeLayout implements Scratch
     public ScratchableRelativeLayout(Context context) {
         super(context);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
     }
 
     public ScratchableRelativeLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
     }
 
     @SuppressLint("NewApi")
     public ScratchableRelativeLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        this.controller = new ScratchoffController(this);
+        this.controller = createScratchoffController();
+    }
+
+    protected ScratchoffController createScratchoffController() {
+        return new ScratchoffController(this);
     }
 
     @Override
