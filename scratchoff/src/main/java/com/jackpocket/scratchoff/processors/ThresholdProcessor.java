@@ -52,7 +52,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     private Quality accuracyQuality;
     private ThresholdCalculator calculator = new ThresholdCalculator(MARKER_UNTOUCHED);
 
-    private final Sleeper sleeper = new Sleeper(15, 50, 3000);
+    private final Sleeper sleeper = new Sleeper(30, 100, 3000);
 
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(
@@ -87,7 +87,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         boolean processedAnything = false;
 
         while (isActive(id)) {
-            if (processedAnything && drawQueuedScratchMotionEvents()) {
+            if (processedAnything && !drawQueuedScratchMotionEvents()) {
                 sleeper.sleep();
 
                 continue;
