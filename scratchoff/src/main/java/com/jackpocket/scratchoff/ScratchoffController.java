@@ -15,8 +15,8 @@ import android.view.animation.LinearInterpolator;
 
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
-import com.jackpocket.scratchoff.processors.InvalidationProcessor;
-import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
+import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
+import com.jackpocket.scratchoff.processors.Processor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
@@ -27,8 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ScratchoffController implements OnTouchListener,
         ScratchableLayoutDrawer.Delegate,
-        ThresholdProcessor.Delegate,
-        InvalidationProcessor.Delegate {
+        ThresholdProcessor.Delegate {
 
     public interface ThresholdChangedListener {
 
@@ -51,11 +50,11 @@ public class ScratchoffController implements OnTouchListener,
 
     private WeakReference<ThresholdChangedListener> thresholdChangedListener = new WeakReference<>(null);
 
-    private ScratchoffProcessor processor;
     private ScratchableLayoutDrawer layoutDrawer;
 
     private int touchRadiusPx;
 
+    private ThresholdProcessor thresholdProcessor;
     private ThresholdProcessor.Quality thresholdAccuracyQuality = ThresholdProcessor.Quality.HIGH;
     private float thresholdCompletionPercent;
     private boolean thresholdReached = false;
@@ -139,7 +138,7 @@ public class ScratchoffController implements OnTouchListener,
         this.layoutDrawer = createLayoutDrawer()
                 .attach(this, scratchableLayout, behindView.get());
 
-        this.processor = createScratchoffProcessor();
+        this.thresholdProcessor = createThresholdProcessor();
 
         scratchableLayout.setOnTouchListener(this);
 
@@ -152,8 +151,12 @@ public class ScratchoffController implements OnTouchListener,
                 .setClearAnimationInterpolator(clearAnimationInterpolator);
     }
 
-    protected ScratchoffProcessor createScratchoffProcessor() {
-        return new ScratchoffProcessor(this);
+    protected ThresholdProcessor createThresholdProcessor() {
+        return new ThresholdProcessor(
+                getTouchRadiusPx(),
+                getThresholdCompletionPercent(),
+                getThresholdAccuracyQuality(),
+                this);
     }
 
     @Override
@@ -179,26 +182,23 @@ public class ScratchoffController implements OnTouchListener,
 
         List<ScratchPathPoint> events = ScratchPathPoint.create(event);
 
-        enqueueLayoutDrawerEvents(events);
-        enqueueProcessorEvents(events);
-
-        history.enqueue(events);
+        enqueue(events);
 
         return true;
     }
 
-    protected void enqueueLayoutDrawerEvents(List<ScratchPathPoint> events) {
-        ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
+    protected void enqueue(List<ScratchPathPoint> events) {
+        enqueueEvents(events, layoutDrawer);
+        enqueueEvents(events, thresholdProcessor);
 
-        if (layoutDrawer != null)
-            layoutDrawer.enqueueScratchMotionEvents(events);
+        history.enqueue(events);
+
+        postInvalidateScratchableLayout();
     }
 
-    protected void enqueueProcessorEvents(List<ScratchPathPoint> events) {
-        ScratchoffProcessor processor = this.processor;
-
-        if (processor != null)
-            processor.enqueue(events);
+    protected void enqueueEvents(List<ScratchPathPoint> events, ScratchPathUpdateListener listener) {
+        if (listener != null)
+            listener.enqueuePathUpdates(events);
     }
 
     /**
@@ -423,21 +423,11 @@ public class ScratchoffController implements OnTouchListener,
         if (!scratchableLayoutAvailable)
             return;
 
-        ScratchoffProcessor processor = this.processor;
-
-        if (processor == null || processor.isActive())
-            return;
-
-        processor.start();
+        Processor.startNotActive(thresholdProcessor);
     }
 
     protected void safelyStopProcessors() {
-        ScratchoffProcessor processor = this.processor;
-
-        if (processor == null)
-            return;
-
-        processor.stop();
+        Processor.stop(thresholdProcessor);
     }
 
     public ScratchableLayoutDrawer getLayoutDrawer(){
@@ -518,14 +508,15 @@ public class ScratchoffController implements OnTouchListener,
         });
     }
 
-    @Override
     public void postInvalidateScratchableLayout() {
-        getScratchImageLayout()
-                .postInvalidate();
+        View layout = getScratchImageLayout();
+
+        if (layout != null)
+            layout.postInvalidate();
     }
 
     protected void post(Runnable runnable) {
-        View layout = scratchableLayout.get();
+        View layout = getScratchImageLayout();
 
         if (layout != null)
             layout.post(runnable);
@@ -601,10 +592,7 @@ public class ScratchoffController implements OnTouchListener,
 
         List<ScratchPathPoint> history = state.getPathHistory();
 
-        enqueueProcessorEvents(history);
-        enqueueLayoutDrawerEvents(history);
-
-        this.history.enqueue(history);
+        enqueue(history);
     }
 
     /**

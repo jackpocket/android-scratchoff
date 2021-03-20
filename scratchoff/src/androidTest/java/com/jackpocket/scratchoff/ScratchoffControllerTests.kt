@@ -8,7 +8,8 @@ import android.widget.FrameLayout
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
-import com.jackpocket.scratchoff.processors.ScratchoffProcessor
+import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener
+import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLayout
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import com.jackpocket.scratchoff.views.ScratchableRelativeLayout
@@ -46,10 +47,10 @@ class ScratchoffControllerTests {
                 return super.createLayoutDrawer()
             }
 
-            override fun createScratchoffProcessor(): ScratchoffProcessor {
+            override fun createThresholdProcessor(): ThresholdProcessor {
                 createProcessorCount += 1
 
-                return super.createScratchoffProcessor()
+                return super.createThresholdProcessor()
             }
         }
 
@@ -164,55 +165,38 @@ class ScratchoffControllerTests {
 
     @Test
     fun testMotionEventsNotEnqueuedBeforeLayoutAvailable() {
-        var enqueueProcessorsCount: Int = 0
-        var enqueueDrawerCount: Int = 0
+        var enqueueCallCount: Int = 0
 
         val event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun enqueueLayoutDrawerEvents(events: MutableList<ScratchPathPoint>?) {
-                enqueueDrawerCount += 1
-
-                super.enqueueLayoutDrawerEvents(events)
-            }
-
-            override fun enqueueProcessorEvents(events: MutableList<ScratchPathPoint>?) {
-                enqueueProcessorsCount += 1
-
-                super.enqueueProcessorEvents(events)
+            override fun enqueue(events: MutableList<ScratchPathPoint>?) {
+                enqueueCallCount += 1
             }
         }
         controller.onTouch(View(context), event)
 
-        assertEquals(0, enqueueDrawerCount)
-        assertEquals(0, enqueueProcessorsCount)
+        assertEquals(0, enqueueCallCount)
 
         controller.onScratchableLayoutAvailable(1, 1)
         controller.onTouch(View(context), event)
 
-        assertEquals(1, enqueueDrawerCount)
-        assertEquals(1, enqueueProcessorsCount)
+        assertEquals(1, enqueueCallCount)
     }
 
     @Test
     fun testMotionEventsEnqueuedWhenReady() {
-        var enqueueProcessorsCount: Int = 0
-        var enqueueDrawerCount: Int = 0
+        var enqueueCallCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun enqueueLayoutDrawerEvents(events: MutableList<ScratchPathPoint>?) {
-                enqueueDrawerCount += 1
-            }
-
-            override fun enqueueProcessorEvents(events: MutableList<ScratchPathPoint>?) {
-                enqueueProcessorsCount += 1
+            override fun enqueue(events: MutableList<ScratchPathPoint>?) {
+                enqueueCallCount += 1
             }
         }
         controller.onScratchableLayoutAvailable(10, 20)
         controller.onTouch(View(context), MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0))
 
-        assertEquals(1, enqueueDrawerCount)
-        assertEquals(1, enqueueProcessorsCount)
+        assertEquals(1, enqueueCallCount)
     }
 
     @Test

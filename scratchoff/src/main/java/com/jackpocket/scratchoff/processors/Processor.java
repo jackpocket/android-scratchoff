@@ -82,4 +82,18 @@ public abstract class Processor implements Runnable {
     public boolean isActive() {
         return THREAD_ID_INACTIVE != activeThreadId.get();
     }
+
+    public static void startNotActive(Processor processor) {
+        if (processor == null || processor.isActive())
+            return;
+
+        processor.start();
+    }
+
+    public static void stop(Processor processor) {
+        if (processor == null)
+            return;
+
+        processor.stop();
+    }
 }

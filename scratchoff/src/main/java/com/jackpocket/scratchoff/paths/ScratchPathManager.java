@@ -3,6 +3,7 @@ package com.jackpocket.scratchoff.paths;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -73,20 +74,37 @@ public class ScratchPathManager {
         if (MotionEvent.ACTION_POINTER_UP == lastActiveActions[pointerIndex])
             createPath(pointerIndex, x, y);
 
-        this.activePaths[pointerIndex].lineTo(x, y);
+        Path activePath = this.activePaths[pointerIndex];
+
+        // If the active Path has been drawn, it would have been reset to an empty state
+        if (activePath.isEmpty())
+            activePath.moveTo(x, y);
+
+        activePath.lineTo(x, y);
     }
 
     protected void createPath(int pointerIndex, float x, float y) {
-        this.activePaths[pointerIndex] = new Path();
-        this.activePaths[pointerIndex].moveTo(x, y);
+        Path activePath = new Path();
+        activePath.moveTo(x, y);
 
-        this.paths.add(activePaths[pointerIndex]);
+        this.activePaths[pointerIndex] = activePath;
+
+        this.paths.add(activePath);
     }
 
-    public void draw(Canvas canvas, Paint paint) {
+    /**
+     * Draw the current Path segments and reset them to an empty state.
+     *
+     * @param canvas The Canvas to draw the un-rendered path segments to
+     * @param paint The paint to draw the un-rendered paths segments with
+     */
+    public void drawAndReset(Canvas canvas, Paint paint) {
         synchronized (paths) {
-            for (Path path : paths)
+            for (Path path : paths) {
                 canvas.drawPath(path, paint);
+
+                path.reset();
+            }
         }
     }
 

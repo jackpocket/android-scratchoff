@@ -7,13 +7,14 @@ import android.graphics.Paint;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
+import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
 import com.jackpocket.scratchoff.tools.ThresholdCalculator;
 import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ThresholdProcessor extends Processor implements ScratchoffProcessor.Delegate {
+public class ThresholdProcessor extends Processor implements ScratchPathUpdateListener {
 
     public interface Delegate {
         public int[] getScratchableLayoutSize();
@@ -72,7 +73,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
     }
 
     @Override
-    public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
+    public void enqueuePathUpdates(List<ScratchPathPoint> events) {
         queue.enqueue(events);
     }
 
@@ -146,7 +147,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
         // I have no more tears to give this problem, the ThresholdProcessor instances are
         // not re-used after resets, and the loss is limited to less than 0.001%,
         // we can just pretend that doesn't really happen and move on with our lives...
-        pathManager.draw(canvas, markerPaint);
+        pathManager.drawAndReset(canvas, markerPaint);
     }
 
     protected static float constrainAccuracyQuality(
@@ -181,7 +182,7 @@ public class ThresholdProcessor extends Processor implements ScratchoffProcessor
             return false;
 
         pathManager.addMotionEvents(dequeuedEvents);
-        pathManager.draw(canvas, markerPaint);
+        pathManager.drawAndReset(canvas, markerPaint);
 
         return true;
     }

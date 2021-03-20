@@ -20,7 +20,7 @@ class ThresholdProcessorTests {
         )
 
         processor.prepareBitmapAndCanvasForDrawing()
-        processor.enqueueScratchMotionEvents(events)
+        processor.enqueuePathUpdates(events)
         processor.prepareBitmapAndCanvasForDrawing()
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
@@ -60,7 +60,7 @@ class ThresholdProcessorTests {
         )
 
         processor.prepareBitmapAndCanvasForDrawing()
-        processor.enqueueScratchMotionEvents(events)
+        processor.enqueuePathUpdates(events)
         processor.prepareBitmapAndCanvasForDrawing()
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
@@ -79,13 +79,13 @@ class ThresholdProcessorTests {
 
         processor.prepareBitmapAndCanvasForDrawing()
 
-        processor.enqueueScratchMotionEvents(events)
+        processor.enqueuePathUpdates(events)
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
         assertEquals(1, processor.loggingDelegate.thresholdReachedCount)
 
-        processor.enqueueScratchMotionEvents(events)
+        processor.enqueuePathUpdates(events)
         processor.drawQueuedScratchMotionEvents()
         processor.processScratchedImagePercent()
 
@@ -97,7 +97,7 @@ class ThresholdProcessorTests {
         val processor = ThresholdProcessor(1, 0.5f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1, 10))
 
         processor.prepareBitmapAndCanvasForDrawing()
-        processor.enqueueScratchMotionEvents(listOf(
+        processor.enqueuePathUpdates(listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 2f, MotionEvent.ACTION_MOVE)
         ))
@@ -106,7 +106,7 @@ class ThresholdProcessorTests {
 
         assertEquals(0.3f, processor.loggingDelegate.scratchPercent)
 
-        processor.enqueueScratchMotionEvents(listOf(
+        processor.enqueuePathUpdates(listOf(
                 ScratchPathPoint(0, 0f, 2f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 5f, MotionEvent.ACTION_MOVE)
         ))
@@ -115,7 +115,7 @@ class ThresholdProcessorTests {
 
         assertEquals(0.6f, processor.loggingDelegate.scratchPercent)
 
-        processor.enqueueScratchMotionEvents(listOf(
+        processor.enqueuePathUpdates(listOf(
                 ScratchPathPoint(0, 0f, 6f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 9f, MotionEvent.ACTION_MOVE)
         ))
@@ -127,7 +127,7 @@ class ThresholdProcessorTests {
 
     @Test
     fun testPathRedrawDoesNotAffectHistoricalScratchPercentRedraw() {
-        val expectedResult = 0.047495205f
+        val expectedResult = 0.04654122F
 
         val processor = ThresholdProcessor(30, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1080, 1584))
 
@@ -325,7 +325,7 @@ class ThresholdProcessorTests {
         processor.prepareBitmapAndCanvasForDrawing()
 
         events.forEach({
-            processor.enqueueScratchMotionEvents(listOf(it))
+            processor.enqueuePathUpdates(listOf(it))
             processor.drawQueuedScratchMotionEvents()
             processor.processScratchedImagePercent()
         })
@@ -398,7 +398,7 @@ class ThresholdProcessorTests {
 
         processors.forEach({
             it.prepareBitmapAndCanvasForDrawing()
-            it.enqueueScratchMotionEvents(events)
+            it.enqueuePathUpdates(events)
             it.drawQueuedScratchMotionEvents()
             it.processScratchedImagePercent()
         })

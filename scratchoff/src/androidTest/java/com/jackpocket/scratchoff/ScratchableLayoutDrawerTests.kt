@@ -46,7 +46,7 @@ class ScratchableLayoutDrawerTests {
             }
         }
         drawer.attach(1, view, null)
-        drawer.enqueueScratchMotionEvents(listOf(
+        drawer.enqueuePathUpdates(listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         ))
@@ -57,7 +57,7 @@ class ScratchableLayoutDrawerTests {
 
         drawer.destroy()
 
-        drawer.enqueueScratchMotionEvents(listOf(
+        drawer.enqueuePathUpdates(listOf(
                 ScratchPathPoint(0, 10f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 10f, 10f, MotionEvent.ACTION_MOVE)
         ))

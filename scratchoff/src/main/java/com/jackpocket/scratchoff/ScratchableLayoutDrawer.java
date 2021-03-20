@@ -18,13 +18,13 @@ import android.view.animation.LinearInterpolator;
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathQueue;
-import com.jackpocket.scratchoff.processors.ScratchoffProcessor;
+import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
 import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate, Animation.AnimationListener {
+public class ScratchableLayoutDrawer implements ScratchPathUpdateListener, Animation.AnimationListener {
 
     enum State {
         UNATTACHED,
@@ -185,7 +185,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate, An
     }
 
     @Override
-    public void enqueueScratchMotionEvents(List<ScratchPathPoint> events) {
+    public void enqueuePathUpdates(List<ScratchPathPoint> events) {
         queue.enqueue(events);
     }
 
@@ -217,7 +217,7 @@ public class ScratchableLayoutDrawer implements ScratchoffProcessor.Delegate, An
             return;
 
         pathManager.addMotionEvents(dequeuedEvents);
-        pathManager.draw(pathStrippedCanvas, clearPaint);
+        pathManager.drawAndReset(pathStrippedCanvas, clearPaint);
     }
 
     public void destroy() {
