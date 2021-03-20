@@ -7,7 +7,7 @@ public abstract class Processor implements Runnable {
     private long activeThreadId = THREAD_ID_INACTIVE;
     private long claimedRunningThreadId = THREAD_ID_INACTIVE;
 
-    private final Boolean lock = false;
+    private final Object lock = new Object();
 
     public void start() {
         stop();

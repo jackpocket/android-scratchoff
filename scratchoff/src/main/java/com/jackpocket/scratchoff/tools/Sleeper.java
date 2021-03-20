@@ -8,7 +8,7 @@ public class Sleeper {
 
     private long lastTrigger = 0;
 
-    private final Boolean lock = false;
+    private final Object lock = new Object();
 
     public Sleeper(long delayRunning, long delaySleeping, long sleepThresholdMs) {
         this.delayRunning = delayRunning;
