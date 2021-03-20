@@ -28,6 +28,7 @@ public class ScratchoffProcessor extends Processor {
                 controller);
 
         this.invalidationProcessor = new InvalidationProcessor(controller);
+        this.threadPriority = Thread.MAX_PRIORITY - 1;
     }
 
     public ScratchoffProcessor(
@@ -36,6 +37,7 @@ public class ScratchoffProcessor extends Processor {
 
         this.thresholdProcessor = thresholdProcessor;
         this.invalidationProcessor = invalidationProcessor;
+        this.threadPriority = Thread.MAX_PRIORITY - 1;
     }
 
     public void enqueue(List<ScratchPathPoint> events) {

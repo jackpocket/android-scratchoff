@@ -20,6 +20,7 @@ public class InvalidationProcessor extends Processor implements ScratchoffProces
     @SuppressWarnings("WeakerAccess")
     public InvalidationProcessor(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
+        this.threadPriority = Thread.MAX_PRIORITY;
     }
 
     @Override

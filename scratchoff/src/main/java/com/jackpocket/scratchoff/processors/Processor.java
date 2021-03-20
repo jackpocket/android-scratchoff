@@ -9,6 +9,8 @@ public abstract class Processor implements Runnable {
     private final AtomicLong activeThreadId = new AtomicLong(THREAD_ID_INACTIVE);
     private final AtomicLong claimedRunningThreadId = new AtomicLong(THREAD_ID_INACTIVE);
 
+    protected int threadPriority = Thread.NORM_PRIORITY;
+
     public void start() {
         stop();
         obtainNewThreadId();
@@ -24,8 +26,9 @@ public abstract class Processor implements Runnable {
     }
 
     protected void startProcessorThread() {
-        new Thread(this)
-                .start();
+        Thread processorThread = new Thread(this);
+        processorThread.setPriority(threadPriority);
+        processorThread.start();
     }
 
     @Override
