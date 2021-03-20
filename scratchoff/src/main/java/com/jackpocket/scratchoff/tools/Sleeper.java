@@ -1,14 +1,14 @@
 package com.jackpocket.scratchoff.tools;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class Sleeper {
 
-    private long delayRunning;
-    private long delaySleeping;
-    private long sleepThresholdMs;
+    private final long delayRunning;
+    private final long delaySleeping;
+    private final long sleepThresholdMs;
 
-    private long lastTrigger = 0;
-
-    private final Object lock = new Object();
+    private final AtomicLong lastTrigger = new AtomicLong(0L);
 
     public Sleeper(long delayRunning, long delaySleeping, long sleepThresholdMs) {
         this.delayRunning = delayRunning;
@@ -21,12 +21,12 @@ public class Sleeper {
     }
 
     protected long getDelayMs() {
-        synchronized (lock) {
-            boolean beyondSleepThreshold = 0 < lastTrigger
-                    && sleepThresholdMs < System.currentTimeMillis() - lastTrigger;
+        long last = lastTrigger.get();
 
-            return beyondSleepThreshold ? delaySleeping : delayRunning;
-        }
+        boolean beyondSleepThreshold = 0 < last
+                && sleepThresholdMs < System.currentTimeMillis() - last;
+
+        return beyondSleepThreshold ? delaySleeping : delayRunning;
     }
 
     protected void sleep(long delay) throws InterruptedException {
@@ -34,14 +34,10 @@ public class Sleeper {
     }
 
     public void notifyTriggered() {
-        synchronized (lock) {
-            this.lastTrigger = System.currentTimeMillis();
-        }
+        this.lastTrigger.set(System.currentTimeMillis());
     }
 
     public void reset() {
-        synchronized (lock) {
-            this.lastTrigger = 0;
-        }
+        this.lastTrigger.set(0L);
     }
 }

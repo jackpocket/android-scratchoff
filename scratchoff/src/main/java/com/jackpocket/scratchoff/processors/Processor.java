@@ -1,13 +1,13 @@
 package com.jackpocket.scratchoff.processors;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public abstract class Processor implements Runnable {
 
     protected static long THREAD_ID_INACTIVE = -1;
 
-    private long activeThreadId = THREAD_ID_INACTIVE;
-    private long claimedRunningThreadId = THREAD_ID_INACTIVE;
-
-    private final Object lock = new Object();
+    private final AtomicLong activeThreadId = new AtomicLong(THREAD_ID_INACTIVE);
+    private final AtomicLong claimedRunningThreadId = new AtomicLong(THREAD_ID_INACTIVE);
 
     public void start() {
         stop();
@@ -15,12 +15,12 @@ public abstract class Processor implements Runnable {
         startProcessorThread();
     }
 
-    protected long obtainNewThreadId() {
-        synchronized (lock) {
-            this.activeThreadId = System.nanoTime();
+    protected synchronized long obtainNewThreadId() {
+        long id = System.nanoTime();
 
-            return Long.valueOf(activeThreadId);
-        }
+        this.activeThreadId.set(id);
+
+        return id;
     }
 
     protected void startProcessorThread() {
@@ -41,51 +41,42 @@ public abstract class Processor implements Runnable {
             if (isActive(threadId))
                 doInBackground(threadId);
         }
-        catch(Throwable e) { e.printStackTrace(); }
+        catch (IllegalThreadStateException e) { e.printStackTrace(); }
+        catch (Throwable e) { e.printStackTrace(); }
 
         if (claimed && isActive(threadId))
             stop();
     }
 
-    protected void claimActiveThread(long id) {
-        synchronized (lock) {
-            if (claimedRunningThreadId == id)
-                throw new RuntimeException("Active processor thread ID already claimed!");
+    protected synchronized void claimActiveThread(long id) {
+        if (claimedRunningThreadId.get() == id)
+            throw new IllegalThreadStateException("Active processor thread ID already claimed!");
 
-            if (id == THREAD_ID_INACTIVE)
-                throw new RuntimeException("Processor cannot claim the inactive thread ID!");
+        if (id == THREAD_ID_INACTIVE)
+            throw new IllegalThreadStateException("Processor cannot claim the inactive thread ID!");
 
-            this.claimedRunningThreadId = id;
-        }
+        this.claimedRunningThreadId.set(id);
     }
 
     protected Long getCurrentThreadId() {
-        synchronized (lock) {
-            return Long.valueOf(this.activeThreadId);
-        }
+        return this.activeThreadId.get();
     }
 
     protected abstract void doInBackground(long id) throws Exception;
 
     @SuppressWarnings("WeakerAccess")
     public void stop() {
-        synchronized (lock) {
-            this.activeThreadId = THREAD_ID_INACTIVE;
-        }
+        this.activeThreadId.set(THREAD_ID_INACTIVE);
     }
 
     protected boolean isActive(long id) {
-        synchronized (lock) {
-            if (id != activeThreadId)
-                return false;
-        }
+        if (activeThreadId.get() != id)
+            return false;
 
         return isActive();
     }
 
     public boolean isActive() {
-        synchronized (lock) {
-            return activeThreadId != THREAD_ID_INACTIVE;
-        }
+        return THREAD_ID_INACTIVE != activeThreadId.get();
     }
 }
