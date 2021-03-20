@@ -372,7 +372,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set the {@link ThresholdProcessor.Quality} for the underlying Threshold processor.
+     * Set the {@link ThresholdProcessor.Quality} for the underlying {@link ThresholdProcessor}.
      * The default is {@link ThresholdProcessor.Quality#HIGH}, which implies no reduction in quality.
      * <br><br>
      * {@link ThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
@@ -399,10 +399,20 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Override the default {@link ThresholdProcessor.TargetRegionsProvider} for the underlying Threshold processor
-     * to define specific regions of the Bitmap that should be used to calculate the scratched percentage.
+     * Override the default {@link ThresholdProcessor.TargetRegionsProvider} for the underlying
+     * {@link ThresholdProcessor} to define specific regions of the {@link Bitmap} that should
+     * be used to calculate the scratched percentage.
      * <br><br>
-     * Warning: If any of the regions returned by the call to {@link ThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
+     * The size the Bitmap used by the {@link ThresholdProcessor} is determined by the
+     * {@link ThresholdProcessor.Quality} and runtime conditions of the scratchable layout. If
+     * the quality is not set to {@link ThresholdProcessor.Quality#HIGH}, the Bitmap will likely be
+     * much smaller than the size on screen.
+     * <br><br>
+     * It is recommended that you calculate the positions of the desired areas by their relative
+     * positioning from the edges of the original Bitmap. e.g. left = 0.25 * bitmap.width
+     * <br><br>
+     * Warning: If any of the regions returned by the call to
+     * {@link ThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
      * exceed the boundaries of the supplied Bitmap, the Threshold processor will break.
      */
     public ScratchoffController setThresholdTargetRegionsProvider(ThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider) {

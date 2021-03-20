@@ -166,6 +166,24 @@ class ScratchoffControllerTests {
     }
 
     @Test
+    fun testMotionEventsAreAlwaysPassedToObservers() {
+        val event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
+        val touchLogger = LoggingOnTouchListener()
+
+        val controller = ScratchoffController(mockScratchableLayout)
+        controller.addTouchObserver(touchLogger)
+
+        val expectedCallCount = 3
+
+        0.until(3)
+                .forEach({
+                    controller.onTouch(mockScratchableLayout, event)
+                })
+
+        assertEquals(expectedCallCount, touchLogger.touchCallCount)
+    }
+
+    @Test
     fun testMotionEventsNotEnqueuedBeforeLayoutAvailable() {
         var enqueueCallCount: Int = 0
 
@@ -446,6 +464,20 @@ class ScratchoffControllerTests {
 
         override fun onScratchThresholdReached(controller: ScratchoffController) {
             completions += 1
+        }
+    }
+
+    private class LoggingOnTouchListener: View.OnTouchListener {
+
+        var touchCallCount: Int = 0
+            private set
+
+        var touchReturnValue: Boolean = true
+
+        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+            touchCallCount += 1
+
+            return touchReturnValue
         }
     }
 }

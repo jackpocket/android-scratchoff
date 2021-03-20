@@ -38,6 +38,32 @@ class ThresholdProcessorTests {
     }
 
     @Test
+    fun testDoInBackgroundDoesNothingWhenNotActiveOrImageNull() {
+        var calls: Int = 0
+
+        val processor = object: ThresholdProcessor(1, 1f, ThresholdProcessor.Quality.HIGH, LoggingDelegate(1, 1)) {
+            override fun prepareBitmapAndCanvasForDrawing() {
+                calls += 1
+            }
+
+            override fun drawQueuedScratchMotionEvents(): Boolean {
+                calls += 1
+
+                return false
+            }
+
+            override fun processScratchedImagePercent() {
+                calls += 1
+            }
+        }
+
+        processor.doInBackground(Processor.THREAD_ID_INACTIVE)
+
+        assertEquals(0, calls)
+        assertEquals(-1.0f, processor.loggingDelegate.scratchPercent)
+    }
+
+    @Test
     fun testDoInBackgroundNotifiesZeroPercentOnFirstRunWithoutEvents() {
         var loopCount: Int = 0
 

@@ -4,7 +4,7 @@ import android.view.MotionEvent
 import androidx.test.core.view.PointerCoordsBuilder
 import androidx.test.core.view.PointerPropertiesBuilder
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -56,5 +56,28 @@ class ScratchPathPointTests {
                         assertEquals(expectedActions[actionIndex], event.action)
                     })
         })
+    }
+
+    @Test
+    fun testEqualsWithNonScratchPathPointReturnsFalse() {
+        val point = ScratchPathPoint(0, 1F, 2F, 0)
+
+        assertFalse(point.equals(Object()))
+    }
+
+    @Test
+    fun testEqualsReturnsTrueForMatchingPoints() {
+        val point1 = ScratchPathPoint(0, 1F, 2F, 0)
+        val point2 = ScratchPathPoint(0, 1F, 2F, 0)
+
+        assertEquals(point1, point2)
+    }
+
+    @Test
+    fun testEqualsReturnsFalseForPointsThatDoNotMatch() {
+        val point1 = ScratchPathPoint(0, 1F, 2F, 0)
+        val point2 = ScratchPathPoint(1, 2F, 1F, 0)
+
+        assertNotEquals(point1, point2)
     }
 }
