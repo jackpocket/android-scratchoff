@@ -1,8 +1,11 @@
 package com.jackpocket.scratchoff.processors
 
+import android.graphics.Bitmap
+import android.graphics.Rect
 import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
+import com.jackpocket.scratchoff.tools.ThresholdCalculator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -415,6 +418,10 @@ class ThresholdProcessorTests {
 
         var thresholdReachedCount: Int = 0
             private set
+
+        override fun createScratchableRegions(source: Bitmap): MutableList<Rect> {
+            return ThresholdCalculator.createFullSizeThresholdRegion(source)
+        }
 
         override fun postScratchThresholdReached() {
             thresholdReachedCount += 1

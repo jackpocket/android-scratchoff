@@ -3,6 +3,7 @@ package com.jackpocket.scratchoff.processors;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
@@ -12,11 +13,16 @@ import com.jackpocket.scratchoff.tools.ThresholdCalculator;
 import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ThresholdProcessor extends Processor implements ScratchPathUpdateListener {
 
-    public interface Delegate {
+    public interface TargetRegionsProvider {
+        public List<Rect> createScratchableRegions(Bitmap source);
+    }
+
+    public interface Delegate extends TargetRegionsProvider {
         public int[] getScratchableLayoutSize();
         public void postScratchPercentChanged(float percent);
         public void postScratchThresholdReached();
@@ -52,6 +58,7 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
     private int originalTouchRadius;
     private Quality accuracyQuality;
     private ThresholdCalculator calculator = new ThresholdCalculator(MARKER_UNTOUCHED);
+    private List<Rect> thresholdRegions = new ArrayList<Rect>();
 
     private final Sleeper sleeper = new Sleeper(30, 100, 3000);
 
@@ -135,6 +142,8 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
         this.markerPaint.setStrokeWidth(touchRadius * 2);
         this.pathManager.setScale(accuracyQuality);
 
+        this.thresholdRegions = delegate.createScratchableRegions(currentBitmap);
+
         this.canvas = new Canvas(currentBitmap);
         this.canvas.drawColor(MARKER_UNTOUCHED);
 
@@ -194,7 +203,7 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
         if (delegate == null || currentBitmap == null || thresholdReached)
             return;
 
-        float percentScratched = calculator.calculate(currentBitmap);
+        float percentScratched = calculator.calculate(currentBitmap, thresholdRegions);
 
         if (this.lastPercentScratched < percentScratched) {
             delegate.postScratchPercentChanged(percentScratched);
@@ -235,5 +244,13 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
 
     protected Delegate getDelegate() {
         return delegate.get();
+    }
+
+    public static class SimpleTargetRegionsProvider implements TargetRegionsProvider {
+
+        @Override
+        public List<Rect> createScratchableRegions(Bitmap source) {
+            return ThresholdCalculator.createFullSizeThresholdRegion(source);
+        }
     }
 }

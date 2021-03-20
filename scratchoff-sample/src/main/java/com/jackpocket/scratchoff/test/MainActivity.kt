@@ -33,6 +33,13 @@ class MainActivity: AppCompatActivity(), ScratchoffController.ThresholdChangedLi
                 .setClearAnimationInterpolator(LinearInterpolator())
                 // .setTouchRadiusPx(25)
                 // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
+                // .setThresholdTargetRegionsProvider({
+                //     val inset = (min(it.width, it.height) * 0.15F).toInt()
+                //
+                //     listOf(
+                //             Rect(inset, inset, it.width - inset, it.height - inset)
+                //     )
+                // })
                 // .setMatchLayoutWithBehindView(findViewById(R.id.scratch_view_behind))
                 // .setStateRestorationEnabled(false)
                 .attach()

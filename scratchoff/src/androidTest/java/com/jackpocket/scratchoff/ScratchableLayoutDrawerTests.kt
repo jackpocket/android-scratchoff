@@ -30,6 +30,7 @@ class ScratchableLayoutDrawerTests {
     fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy() {
         val result = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         val resultCanvas = Canvas(result)
+        val fullSizeRegion = ThresholdCalculator.createFullSizeThresholdRegion(result)
 
         val view = View(context)
         view.layout(0, 0, 10, 10)
@@ -53,7 +54,7 @@ class ScratchableLayoutDrawerTests {
         drawer.initializeLaidOutScratchableView(view)
         drawer.draw(resultCanvas)
 
-        assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result))
+        assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
 
         drawer.destroy()
 
@@ -63,7 +64,7 @@ class ScratchableLayoutDrawerTests {
         ))
         drawer.draw(resultCanvas)
 
-        assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result))
+        assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
     }
 
     @Test

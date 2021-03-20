@@ -4,7 +4,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.os.Parcelable;
 import android.view.MotionEvent;
 import android.view.View;
@@ -56,6 +58,7 @@ public class ScratchoffController implements OnTouchListener,
 
     private ThresholdProcessor thresholdProcessor;
     private ThresholdProcessor.Quality thresholdAccuracyQuality = ThresholdProcessor.Quality.HIGH;
+    private ThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider = new ThresholdProcessor.SimpleTargetRegionsProvider();
     private float thresholdCompletionPercent;
     private boolean thresholdReached = false;
 
@@ -395,6 +398,19 @@ public class ScratchoffController implements OnTouchListener,
         return thresholdAccuracyQuality;
     }
 
+    /**
+     * Override the default {@link ThresholdProcessor.TargetRegionsProvider} for the underlying Threshold processor
+     * to define specific regions of the Bitmap that should be used to calculate the scratched percentage.
+     * <br><br>
+     * Warning: If any of the regions returned by the call to {@link ThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
+     * exceed the boundaries of the supplied Bitmap, the Threshold processor will break.
+     */
+    public ScratchoffController setThresholdTargetRegionsProvider(ThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider) {
+        this.thresholdTargetRegionsProvider = thresholdTargetRegionsProvider;
+
+        return this;
+    }
+
     public boolean isThresholdReached() {
         return thresholdReached;
     }
@@ -470,6 +486,11 @@ public class ScratchoffController implements OnTouchListener,
 
     protected List<OnTouchListener> getTouchObservers() {
         return touchObservers;
+    }
+
+    @Override
+    public List<Rect> createScratchableRegions(Bitmap source) {
+        return thresholdTargetRegionsProvider.createScratchableRegions(source);
     }
 
     @Override
