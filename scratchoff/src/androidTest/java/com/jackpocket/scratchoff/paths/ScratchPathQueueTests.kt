@@ -18,7 +18,24 @@ class ScratchPathQueueTests {
     )
 
     @Test
-    fun testEnqueueDequeue() {
+    fun testEnqueueDequeueIndividualPoints() {
+        val queue = ScratchPathQueue()
+
+        Assert.assertEquals(0, queue.size())
+
+        events.forEach({
+            queue.enqueue(it)
+        })
+
+        Assert.assertEquals(5, queue.size())
+
+        events.assertMatches(queue.dequeue())
+
+        Assert.assertEquals(0, queue.size())
+    }
+
+    @Test
+    fun testEnqueueDequeueMultiplePoints() {
         val queue = ScratchPathQueue()
 
         Assert.assertEquals(0, queue.size())
@@ -33,7 +50,7 @@ class ScratchPathQueueTests {
     }
 
     @Test
-    fun testEnqueueCopy() {
+    fun testEnqueueCopiesElementsWithoutDequeue() {
         val queue = ScratchPathQueue()
 
         Assert.assertEquals(0, queue.size())

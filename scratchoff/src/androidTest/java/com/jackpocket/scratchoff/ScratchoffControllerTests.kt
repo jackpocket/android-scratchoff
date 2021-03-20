@@ -1,6 +1,8 @@
 package com.jackpocket.scratchoff
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Rect
 import android.view.AbsSavedState
 import android.view.MotionEvent
 import android.view.View
@@ -187,16 +189,33 @@ class ScratchoffControllerTests {
     @Test
     fun testMotionEventsEnqueuedWhenReady() {
         var enqueueCallCount: Int = 0
+        var enqueueSpecificListenerCallCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
             override fun enqueue(events: MutableList<ScratchPathPoint>?) {
                 enqueueCallCount += 1
+
+                super.enqueue(events)
+            }
+
+            override fun enqueueEvents(events: MutableList<ScratchPathPoint>?, listener: ScratchPathUpdateListener?) {
+                // This should be called twice; once with the ScratchableLayoutDrawer, and once
+                // with the ThresholdProcessor
+                enqueueSpecificListenerCallCount += 1
             }
         }
         controller.onScratchableLayoutAvailable(10, 20)
         controller.onTouch(View(context), MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0))
 
         assertEquals(1, enqueueCallCount)
+        assertEquals(2, enqueueSpecificListenerCallCount)
+    }
+
+    @Test
+    fun testLayoutSizeIsZeroWhenLayoutIsUnavailable() {
+        val controller = ScratchoffController(mockScratchableLayout)
+
+        assertEquals(intArrayOf(0, 0).toList(), controller.scratchableLayoutSize.toList())
     }
 
     @Test
@@ -389,6 +408,28 @@ class ScratchoffControllerTests {
         controller.postScratchThresholdReached()
 
         assertEquals(2, postCount)
+    }
+
+    @Test
+    fun testReturnsCustomRegionProviders() {
+        val controller = ScratchoffController(mockScratchableLayout)
+        val bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+
+        assertEquals(Rect(0, 0, 10, 10), controller.createScratchableRegions(bitmap).first())
+
+        controller.setThresholdTargetRegionsProvider({
+            listOf(
+                    Rect(0, 0, 5, 5)
+            )
+        })
+
+        assertEquals(Rect(0, 0, 5, 5), controller.createScratchableRegions(bitmap).first())
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testSettingATouchRadiusLessThan1PxThrowsAnException() {
+        val controller = ScratchoffController(mockScratchableLayout)
+        controller.setTouchRadiusPx(0)
     }
 
     private class LoggingThresholdChangedListener: ScratchoffController.ThresholdChangedListener {

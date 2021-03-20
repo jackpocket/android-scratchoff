@@ -77,6 +77,35 @@ class ProcessorTests {
         assertEquals(Processor.THREAD_ID_INACTIVE, processor.currentThreadId)
     }
 
+    @Test
+    fun testStartCallsCreateProcessorThread() {
+        val processor = LoggingProcessor()
+
+        assertEquals(0, processor.startProcessorThreadCalls)
+
+        processor.start()
+
+        assertEquals(1, processor.startProcessorThreadCalls)
+
+        Processor.stop(processor)
+        Processor.startNotActive(processor)
+
+        assertEquals(2, processor.startProcessorThreadCalls)
+    }
+
+    @Test
+    fun testStartNotActiveDoesNotCallsCreateProcessorThreadWhenNullOrActive() {
+        val processor = LoggingProcessor()
+        processor.obtainNewThreadId()
+
+        assertEquals(0, processor.startProcessorThreadCalls)
+
+        Processor.startNotActive(null)
+        Processor.startNotActive(processor)
+
+        assertEquals(0, processor.startProcessorThreadCalls)
+    }
+
     private class LoggingProcessor: Processor() {
 
         var doInBackgroundCalls: Int = 0
