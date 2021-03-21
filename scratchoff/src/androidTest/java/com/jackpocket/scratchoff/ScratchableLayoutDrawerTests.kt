@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jackpocket.scratchoff.paths.ScratchPathManager
@@ -47,7 +46,7 @@ class ScratchableLayoutDrawerTests {
             }
         }
         drawer.attach(1, view, null)
-        drawer.enqueuePathUpdates(listOf(
+        drawer.addScratchPathPoints(listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         ))
@@ -58,7 +57,7 @@ class ScratchableLayoutDrawerTests {
 
         drawer.destroy()
 
-        drawer.enqueuePathUpdates(listOf(
+        drawer.addScratchPathPoints(listOf(
                 ScratchPathPoint(0, 10f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 10f, 10f, MotionEvent.ACTION_MOVE)
         ))

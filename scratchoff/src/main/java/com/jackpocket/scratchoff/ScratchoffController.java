@@ -16,27 +16,30 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
-import com.jackpocket.scratchoff.paths.ScratchPathQueue;
-import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
+import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
 import com.jackpocket.scratchoff.processors.Processor;
 import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class ScratchoffController implements OnTouchListener,
         ScratchableLayoutDrawer.Delegate,
-        ThresholdProcessor.Delegate {
+        ThresholdProcessor.Delegate,
+        ScratchPathPointsAggregator {
 
     public interface ThresholdChangedListener {
 
         /**
          * Callback values for scratch percentages are in the range [0.0, 100.0] and will be
          * continuously called on the main Thread as the threshold value changes.
-         * <br><br>
+         * <br /><br />
          * Updates will cease once the threshold has been reached.
          */
         public void onScratchPercentChanged(ScratchoffController controller, float percentCompleted);
@@ -74,7 +77,7 @@ public class ScratchoffController implements OnTouchListener,
     private List<OnTouchListener> touchObservers = new ArrayList<>();
 
     private ScratchoffState statePendingReload;
-    private final ScratchPathQueue history = new ScratchPathQueue();
+    private final LinkedBlockingQueue<ScratchPathPoint> history = new LinkedBlockingQueue<ScratchPathPoint>();
     private boolean stateRestorationEnabled;
 
     /**
@@ -98,9 +101,9 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set callbacks to be triggered when the percentage of scratched area changes
      * and the scratch threshold has been reached.<br>
-     * <br><br>
+     * <br /><br />
      * Callback values for scratch percentages are in the range [0.0, 100.0].
-     * <br><br>
+     * <br /><br />
      * You must maintain a reference to the supplied {@link ThresholdChangedListener} as it will be weakly held.
      */
     public ScratchoffController setThresholdChangedListener(ThresholdChangedListener thresholdChangedListener) {
@@ -122,7 +125,7 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Attach (or reset) to the pre-scratched state.
-     * <br><br>
+     * <br /><br />
      * If the backing scratchable layout's state is available, and
      * {@link #stateRestorationEnabled} is true, the history will be
      * automatically restored on the condition that the layout is the
@@ -185,23 +188,24 @@ public class ScratchoffController implements OnTouchListener,
 
         List<ScratchPathPoint> events = ScratchPathPoint.create(event);
 
-        enqueue(events);
+        addScratchPathPoints(events);
 
         return true;
     }
 
-    protected void enqueue(List<ScratchPathPoint> events) {
-        enqueueEvents(events, layoutDrawer);
-        enqueueEvents(events, thresholdProcessor);
+    @Override
+    public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
+        addScratchPathPoints(events, layoutDrawer);
+        addScratchPathPoints(events, thresholdProcessor);
 
-        history.enqueue(events);
+        history.addAll(events);
 
         postInvalidateScratchableLayout();
     }
 
-    protected void enqueueEvents(List<ScratchPathPoint> events, ScratchPathUpdateListener listener) {
+    protected void addScratchPathPoints(Collection<ScratchPathPoint> events, ScratchPathPointsAggregator listener) {
         if (listener != null)
-            listener.enqueuePathUpdates(events);
+            listener.addScratchPathPoints(events);
     }
 
     /**
@@ -255,7 +259,7 @@ public class ScratchoffController implements OnTouchListener,
      * Call this to clear/hide the {@link #scratchableLayout} and reveal the
      * {@link #behindView}. If {@link #clearAnimationEnabled} is true, the contents
      * will be faded out before altering the View's visibility.
-     * <br><br>
+     * <br /><br />
      * Calling this will stop all processors and prevent any further scratching until
      * {@link #attach()} has been called again.
      */
@@ -283,7 +287,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the threshold percentage, between [0.0f, 1.0f], that should trigger the
      * completion callback and clearing, if enabled.
-     * <br><br>
+     * <br /><br />
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */
     public ScratchoffController setThresholdCompletionPercent(float thresholdCompletionPercent) {
@@ -306,7 +310,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set whether to use the fade-out AlphaAnimation, or immediately hide
      * the scratchable layout, on clearing.
-     * <br><br>
+     * <br /><br />
      * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
      */
     public ScratchoffController setClearAnimationEnabled(boolean clearAnimationEnabled) {
@@ -317,7 +321,7 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Set the duration of the fade-out AlphaAnimation run on clearing.
-     * <br><br>
+     * <br /><br />
      * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
      */
     public ScratchoffController setClearAnimationDuration(long value, TimeUnit unit) {
@@ -329,7 +333,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the Interpolator for the fade-out AlphaAnimation run on clearing. The default
      * is a LinearInterpolator.
-     * <br><br>
+     * <br /><br />
      * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
      */
     public ScratchoffController setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
@@ -341,7 +345,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the radius, in DIP, of the circle to be scratched away on MotionEvents.
      * Must be greater than 0, or throws an IllegalStateException.
-     * <br><br>
+     * <br /><br />
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */
     public ScratchoffController setTouchRadiusDip(Context context, int touchRadius) {
@@ -351,7 +355,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the radius, in pixels, of the circle to be scratched away on MotionEvents.
      * Must be greater than 0, or throws an IllegalStateException.
-     * <br><br>
+     * <br /><br />
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */
     public ScratchoffController setTouchRadiusPx(int touchRadius) {
@@ -374,18 +378,18 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set the {@link ThresholdProcessor.Quality} for the underlying {@link ThresholdProcessor}.
      * The default is {@link ThresholdProcessor.Quality#HIGH}, which implies no reduction in quality.
-     * <br><br>
+     * <br /><br />
      * {@link ThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
      * {@link ThresholdProcessor.Quality#LOW} will use the lowest-supported quality value at runtime
      * (1 / min ({@link #touchRadiusPx}, width, height)).
-     * <br><br>
+     * <br /><br />
      * This reduction is solely applied to elements of the {@link ThresholdProcessor}, and does not
      * affect the drawing quality in any way.
-     * <br><br>
+     * <br /><br />
      * If the supplied quality value is below the runtime-calculated minimum of
      * (1 / min ({@link #touchRadiusPx}, width, height)), or above the maximum (1.0f),
      * it will be ignored in favor of the minimum/maximum values.
-     * <br><br>
+     * <br /><br />
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */
     public ScratchoffController setThresholdAccuracyQuality(ThresholdProcessor.Quality thresholdAccuracyQuality) {
@@ -402,15 +406,15 @@ public class ScratchoffController implements OnTouchListener,
      * Override the default {@link ThresholdProcessor.TargetRegionsProvider} for the underlying
      * {@link ThresholdProcessor} to define specific regions of the {@link Bitmap} that should
      * be used to calculate the scratched percentage.
-     * <br><br>
+     * <br /><br />
      * The size the Bitmap used by the {@link ThresholdProcessor} is determined by the
      * {@link ThresholdProcessor.Quality} and runtime conditions of the scratchable layout. If
      * the quality is not set to {@link ThresholdProcessor.Quality#HIGH}, the Bitmap will likely be
      * much smaller than the size on screen.
-     * <br><br>
+     * <br /><br />
      * It is recommended that you calculate the positions of the desired areas by their relative
      * positioning from the edges of the original Bitmap. e.g. left = 0.25 * bitmap.width
-     * <br><br>
+     * <br /><br />
      * Warning: If any of the regions returned by the call to
      * {@link ThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
      * exceed the boundaries of the supplied Bitmap, the Threshold processor will break.
@@ -428,10 +432,10 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Set whether or not the history can be restored from the scratchable View's state.
      * This restoration will occur after the call to {@link #attach()}
-     * <br><br>
+     * <br /><br />
      * If the threshold has already been reached, the restoration will automatically
      * clear the scratchable View to review the behind View, regardless of clearing settings.
-     * <br><br>
+     * <br /><br />
      * If the scratchable View is restored with a different layout size, no restoration
      * will be performed.
      */
@@ -464,7 +468,7 @@ public class ScratchoffController implements OnTouchListener,
      * Add an OnTouchListener to observe MotionEvents as they are passed
      * into this ScratchoffController instance. Events will be forwarded regardless of
      * the ScratchoffController's enabled state, and all return values will be ignored.
-     * <br><br>
+     * <br /><br />
      * If adding observers (in Activity.onResume), you should also call
      * {@link #removeTouchObservers} (in Activity.onPause).
      *
@@ -567,11 +571,11 @@ public class ScratchoffController implements OnTouchListener,
                 state,
                 getScratchableLayoutSize(),
                 thresholdReached,
-                history.copy());
+                getClonedHistory());
     }
 
     protected List<ScratchPathPoint> getClonedHistory() {
-        return history.copy();
+        return Arrays.asList(history.toArray(new ScratchPathPoint[0]));
     }
 
     public void restore(Parcelable state) {
@@ -584,7 +588,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Remove any pending restoration data. Calling this will ensure
      * that a subsequent call to {@link #attach()} will reset to a pre-scratched state.
-     * <br><br>
+     * <br /><br />
      * If {@link #restore(Parcelable)} is called again, this call will have no effect.
      */
     public ScratchoffController removePendingStateRestoration() {
@@ -623,12 +627,12 @@ public class ScratchoffController implements OnTouchListener,
 
         List<ScratchPathPoint> history = state.getPathHistory();
 
-        enqueue(history);
+        addScratchPathPoints(history);
     }
 
     /**
      * Find the ScratchoffController instance by the View's ID in the Activity layout hierarchy.
-     * <br><br>
+     * <br /><br />
      * This is equivalent to calling {@link com.jackpocket.scratchoff.views.ScratchableLinearLayout#getScratchoffController()}
      * or {@link com.jackpocket.scratchoff.views.ScratchableRelativeLayout#getScratchoffController()}.
      *
@@ -647,7 +651,7 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Find the ScratchoffController instance by the View's ID in the parent's layout hierarchy.
-     * <br><br>
+     * <br /><br />
      * This is equivalent to calling {@link com.jackpocket.scratchoff.views.ScratchableLayout#getScratchoffController()}.
      *
      * @param resourceId the identifier assigned to the {@link com.jackpocket.scratchoff.views.ScratchableLayout}

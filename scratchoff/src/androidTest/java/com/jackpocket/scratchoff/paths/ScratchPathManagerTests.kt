@@ -48,7 +48,7 @@ class ScratchPathManagerTests {
                 ScratchPathPoint(0, 3f, 3f, MotionEvent.ACTION_MOVE)
         )
 
-        manager.addMotionEvents(events)
+        manager.addScratchPathPoints(events)
 
         assertEquals(2, manager.paths.size)
     }
@@ -81,6 +81,6 @@ class ScratchPathManagerTests {
                 ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
         )
 
-        manager.addMotionEvents(events)
+        manager.addScratchPathPoints(events)
     }
 }

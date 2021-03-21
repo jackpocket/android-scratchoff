@@ -17,14 +17,16 @@ import android.view.animation.LinearInterpolator;
 
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
-import com.jackpocket.scratchoff.paths.ScratchPathQueue;
-import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
+import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
 import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class ScratchableLayoutDrawer implements ScratchPathUpdateListener, Animation.AnimationListener {
+public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Animation.AnimationListener {
 
     enum State {
         UNATTACHED,
@@ -54,7 +56,7 @@ public class ScratchableLayoutDrawer implements ScratchPathUpdateListener, Anima
     private ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
-    private final ScratchPathQueue queue = new ScratchPathQueue();
+    private final LinkedBlockingQueue<ScratchPathPoint> queue = new LinkedBlockingQueue<ScratchPathPoint>();
 
     private Long activeClearTag = 0L;
 
@@ -185,8 +187,8 @@ public class ScratchableLayoutDrawer implements ScratchPathUpdateListener, Anima
     }
 
     @Override
-    public void enqueuePathUpdates(List<ScratchPathPoint> events) {
-        queue.enqueue(events);
+    public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
+        queue.addAll(events);
     }
 
     public void draw(Canvas canvas) {
@@ -211,12 +213,14 @@ public class ScratchableLayoutDrawer implements ScratchPathUpdateListener, Anima
 
     @SuppressWarnings("WeakerAccess")
     protected void drawQueuedScratchMotionEvents() {
-        List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
+        List<ScratchPathPoint> dequeuedEvents = new ArrayList<ScratchPathPoint>();
+
+        queue.drainTo(dequeuedEvents);
 
         if (dequeuedEvents.size() < 1)
             return;
 
-        pathManager.addMotionEvents(dequeuedEvents);
+        pathManager.addScratchPathPoints(dequeuedEvents);
         pathManager.drawAndReset(pathStrippedCanvas, clearPaint);
     }
 

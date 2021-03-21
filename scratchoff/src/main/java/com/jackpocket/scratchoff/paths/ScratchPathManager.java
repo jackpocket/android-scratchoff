@@ -3,13 +3,12 @@ package com.jackpocket.scratchoff.paths;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ScratchPathManager {
+public class ScratchPathManager implements ScratchPathPointsAggregator {
 
     private static final int POINTER_LIMIT = 10;
 
@@ -27,12 +26,13 @@ public class ScratchPathManager {
         return this;
     }
 
-    public void addMotionEvents(Collection<ScratchPathPoint> events) {
+    @Override
+    public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
         for (ScratchPathPoint event : events)
-            addMotionEvent(event);
+            addScratchPathPoint(event);
     }
 
-    public void addMotionEvent(ScratchPathPoint event) {
+    public void addScratchPathPoint(ScratchPathPoint event) {
         if (POINTER_LIMIT <= event.pointerIndex)
             return;
 

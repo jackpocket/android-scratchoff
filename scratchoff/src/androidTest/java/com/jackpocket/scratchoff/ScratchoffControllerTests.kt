@@ -10,7 +10,7 @@ import android.widget.FrameLayout
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
-import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener
+import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator
 import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLayout
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
@@ -190,7 +190,7 @@ class ScratchoffControllerTests {
         val event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun enqueue(events: MutableList<ScratchPathPoint>?) {
+            override fun addScratchPathPoints(events: MutableCollection<ScratchPathPoint>?) {
                 enqueueCallCount += 1
             }
         }
@@ -210,13 +210,13 @@ class ScratchoffControllerTests {
         var enqueueSpecificListenerCallCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun enqueue(events: MutableList<ScratchPathPoint>?) {
+            override fun addScratchPathPoints(events: MutableCollection<ScratchPathPoint>?) {
                 enqueueCallCount += 1
 
-                super.enqueue(events)
+                super.addScratchPathPoints(events)
             }
 
-            override fun enqueueEvents(events: MutableList<ScratchPathPoint>?, listener: ScratchPathUpdateListener?) {
+            override fun addScratchPathPoints(events: MutableCollection<ScratchPathPoint>?, listener: ScratchPathPointsAggregator?) {
                 // This should be called twice; once with the ScratchableLayoutDrawer, and once
                 // with the ThresholdProcessor
                 enqueueSpecificListenerCallCount += 1

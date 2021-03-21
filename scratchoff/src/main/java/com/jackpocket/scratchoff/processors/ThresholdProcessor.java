@@ -7,16 +7,17 @@ import android.graphics.Rect;
 
 import com.jackpocket.scratchoff.paths.ScratchPathManager;
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
-import com.jackpocket.scratchoff.paths.ScratchPathQueue;
-import com.jackpocket.scratchoff.paths.ScratchPathUpdateListener;
+import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
 import com.jackpocket.scratchoff.tools.ThresholdCalculator;
-import com.jackpocket.scratchoff.tools.Sleeper;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ThresholdProcessor extends Processor implements ScratchPathUpdateListener {
+public class ThresholdProcessor extends Processor implements ScratchPathPointsAggregator {
 
     public interface TargetRegionsProvider {
         public List<Rect> createScratchableRegions(Bitmap source);
@@ -53,14 +54,14 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
     private boolean thresholdReached = false;
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
-    private final ScratchPathQueue queue = new ScratchPathQueue();
+    private final LinkedBlockingQueue<ScratchPathPoint> queue = new LinkedBlockingQueue<ScratchPathPoint>();
 
     private int originalTouchRadius;
     private Quality accuracyQuality;
     private ThresholdCalculator calculator = new ThresholdCalculator(MARKER_UNTOUCHED);
     private List<Rect> thresholdRegions = new ArrayList<Rect>();
 
-    private final Sleeper sleeper = new Sleeper(30, 100, 3000);
+    private final AtomicLong lastPathUpdate = new AtomicLong(0L);
 
     @SuppressWarnings("WeakerAccess")
     public ThresholdProcessor(
@@ -80,8 +81,10 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
     }
 
     @Override
-    public void enqueuePathUpdates(List<ScratchPathPoint> events) {
-        queue.enqueue(events);
+    public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
+        queue.addAll(events);
+
+        lastPathUpdate.set(System.currentTimeMillis());
     }
 
     @Override
@@ -96,7 +99,7 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
 
         while (isActive(id)) {
             if (processedAnything && !drawQueuedScratchMotionEvents()) {
-                sleeper.sleep();
+                sleepForNextProcessCycle();
 
                 continue;
             }
@@ -108,9 +111,20 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
 
             processedAnything = true;
 
-            sleeper.notifyTriggered();
-            sleeper.sleep();
+            sleepForNextProcessCycle();
         }
+    }
+
+    protected void sleepForNextProcessCycle() throws InterruptedException {
+        long timeSinceLastPathUpdateMs = System.currentTimeMillis() - lastPathUpdate.get();
+        long sleepDurationMs = 30L;
+
+        if (10_000L < timeSinceLastPathUpdateMs)
+            sleepDurationMs = 500L;
+        else if (3_000L < timeSinceLastPathUpdateMs)
+            sleepDurationMs = 100L;
+
+        Thread.sleep(sleepDurationMs);
     }
 
     protected void prepareBitmapAndCanvasForDrawing() {
@@ -185,12 +199,14 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
     }
 
     protected boolean drawQueuedScratchMotionEvents() {
-        List<ScratchPathPoint> dequeuedEvents = queue.dequeue();
+        List<ScratchPathPoint> dequeuedEvents = new ArrayList<ScratchPathPoint>();
+
+        queue.drainTo(dequeuedEvents);
 
         if (dequeuedEvents.size() < 1)
             return false;
 
-        pathManager.addMotionEvents(dequeuedEvents);
+        pathManager.addScratchPathPoints(dequeuedEvents);
         pathManager.drawAndReset(canvas, markerPaint);
 
         return true;
@@ -222,7 +238,7 @@ public class ThresholdProcessor extends Processor implements ScratchPathUpdateLi
     public void stop() {
         super.stop();
 
-        sleeper.reset();
+        lastPathUpdate.set(0L);
 
         safelyReleaseCurrentBitmap();
     }
