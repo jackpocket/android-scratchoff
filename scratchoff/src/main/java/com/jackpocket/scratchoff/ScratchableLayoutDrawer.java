@@ -21,10 +21,7 @@ import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
 import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Animation.AnimationListener {
 
@@ -56,7 +53,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
 
     private final ScratchPathManager pathManager = new ScratchPathManager();
-    private final LinkedBlockingQueue<ScratchPathPoint> queue = new LinkedBlockingQueue<ScratchPathPoint>();
 
     private Long activeClearTag = 0L;
 
@@ -188,40 +184,52 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     @Override
     public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
-        queue.addAll(events);
-    }
+        final State state;
+        final Bitmap pathStrippedImage;
+        final Canvas pathStrippedCanvas;
 
-    public void draw(Canvas canvas) {
         synchronized (pathManager) {
-            Bitmap pathStrippedImage = this.pathStrippedImage;
+            state = this.state;
+            pathStrippedImage = this.pathStrippedImage;
+            pathStrippedCanvas = this.pathStrippedCanvas;
+        }
 
-            if (pathStrippedImage == null)
+        if (pathStrippedImage == null || pathStrippedCanvas == null)
+            return;
+
+        switch (state) {
+            case UNATTACHED:
+            case PREPARING:
+            case CLEARED:
                 return;
+            default:
+                pathManager.addScratchPathPoints(events);
+                pathManager.drawAndReset(pathStrippedCanvas, clearPaint);
 
-            switch (state) {
-                case UNATTACHED:
-                case PREPARING:
-                case CLEARED:
-                    return;
-                default:
-                    drawQueuedScratchMotionEvents();
-
-                    canvas.drawBitmap(pathStrippedImage, 0, 0, null);
-            }
+                pathStrippedImage.prepareToDraw();
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected void drawQueuedScratchMotionEvents() {
-        List<ScratchPathPoint> dequeuedEvents = new ArrayList<ScratchPathPoint>();
+    public void draw(Canvas canvas) {
+        final State state;
+        final Bitmap pathStrippedImage;
 
-        queue.drainTo(dequeuedEvents);
+        synchronized (pathManager) {
+            state = this.state;
+            pathStrippedImage = this.pathStrippedImage;
+        }
 
-        if (dequeuedEvents.size() < 1)
+        if (pathStrippedImage == null)
             return;
 
-        pathManager.addScratchPathPoints(dequeuedEvents);
-        pathManager.drawAndReset(pathStrippedCanvas, clearPaint);
+        switch (state) {
+            case UNATTACHED:
+            case PREPARING:
+            case CLEARED:
+                return;
+            default:
+                canvas.drawBitmap(pathStrippedImage, 0, 0, null);
+        }
     }
 
     public void destroy() {

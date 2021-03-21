@@ -46,11 +46,11 @@ class ScratchableLayoutDrawerTests {
             }
         }
         drawer.attach(1, view, null)
+        drawer.initializeLaidOutScratchableView(view)
         drawer.addScratchPathPoints(listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
         ))
-        drawer.initializeLaidOutScratchableView(view)
         drawer.draw(resultCanvas)
 
         assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
