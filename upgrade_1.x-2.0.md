@@ -3,15 +3,14 @@
 Version 1.x | Version 2.0.0
 --- | --- 
 `new ScratchoffController(Context, Runnable)` | `new ScratchoffController(View)` 
-`ScratchoffController.setCompletionCallback(Runnable)` | `ScratchoffController.setTresholdChangedListener(ScratchoffController.ThresholdChangedListener)`
-`ScratchoffController.setScratchValuedChangedListener(ScratchValueChangedListener)` | `ScratchoffController.setTresholdChangedListener(ScratchoffController.ThresholdChangedListener)`
-`ScratchoffController.setThresholdPercent(double)` | `ScratchoffController.setThresholdPercent(float)`
+`ScratchoffController.setCompletionCallback(Runnable)` | `ScratchoffController.setThresholdChangedListener(ScratchoffController.ThresholdChangedListener)`
+`ScratchoffController.setScratchValuedChangedListener(ScratchValueChangedListener)` | `ScratchoffController.setThresholdChangedListener(ScratchoffController.ThresholdChangedListener)`
+`ScratchoffController.setThresholdPercent(double)` | `ScratchoffController.setThresholdCompletionPercent(float)`
 `ScratchoffController.setFadeOnClear(boolean)` | `ScratchoffController.setClearAnimationEnabled(float)`
-`ScratchoffController.setThresholdPercent(boolean)` | `ScratchoffController.setThresholdCompletionPercent(float)`
 `ScratchoffController.setClearOnThresholdReached(boolean)` | `ScratchoffController.setClearOnThresholdReachedEnabled(float)`
 `ScratchoffController.attach(View, View)` | `ScratchoffController.attach()`
 `ScratchoffController.reset()` | `ScratchoffController.attach()`
-`ScratchoffController.addPaths(List<Path>`) | None
+`ScratchoffController.addPaths(List<Path>`) | `ScratchoffController.addScratchPathPoints(Collection<ScratchPathPoint>)`
 `ScratchoffController.isProcessingAllowed()` | None
 `int ScratchoffController.getTotalGridItemsCount()` | `int[] ScratchoffController.getScratchableLayoutSize()`
 `ScratchValueChangedListener.onScratchPercentChanged(double)` | `ScratchoffController.Delegate.onScratchPercentChanged(ScratchoffController, float)`
