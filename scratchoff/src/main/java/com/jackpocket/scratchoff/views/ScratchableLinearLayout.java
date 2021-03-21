@@ -43,7 +43,7 @@ public class ScratchableLinearLayout extends LinearLayout implements Scratchable
 
     @Override
     protected void onRestoreInstanceState(Parcelable state) {
-        controller.restore(state);
+        controller.setStateRestorationParcel(state);
 
         super.onRestoreInstanceState(state);
     }

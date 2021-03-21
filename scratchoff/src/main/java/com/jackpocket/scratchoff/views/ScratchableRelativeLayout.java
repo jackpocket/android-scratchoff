@@ -43,7 +43,7 @@ public class ScratchableRelativeLayout extends RelativeLayout implements Scratch
 
     @Override
     protected void onRestoreInstanceState(Parcelable state) {
-        controller.restore(state);
+        controller.setStateRestorationParcel(state);
 
         super.onRestoreInstanceState(state);
     }

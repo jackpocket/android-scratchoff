@@ -11,11 +11,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator
-import com.jackpocket.scratchoff.processors.ThresholdProcessor
 import com.jackpocket.scratchoff.views.ScratchableLayout
 import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import com.jackpocket.scratchoff.views.ScratchableRelativeLayout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -33,36 +33,29 @@ class ScratchoffControllerTests {
     private val loggingDelegate = LoggingThresholdChangedListener()
 
     @Test
-    fun testStopsProcessorsInstantiatesRequirementsOnAttach() {
-        var stopCount: Int = 0
+    fun testInstantiatesRequirementsOnAttach() {
         var createProcessorCount: Int = 0
         var createLayoutDrawerCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStopProcessors() {
-                stopCount += 1
-            }
-
             override fun createLayoutDrawer(): ScratchableLayoutDrawer {
                 createLayoutDrawerCount += 1
 
                 return super.createLayoutDrawer()
             }
 
-            override fun createThresholdProcessor(): ThresholdProcessor {
+            override fun createThresholdProcessor(): ScratchoffThresholdProcessor {
                 createProcessorCount += 1
 
                 return super.createThresholdProcessor()
             }
         }
 
-        assertEquals(0, stopCount)
         assertEquals(0, createProcessorCount)
         assertEquals(0, createLayoutDrawerCount)
 
         controller.attach()
 
-        assertEquals(1, stopCount)
         assertEquals(1, createProcessorCount)
         assertEquals(1, createLayoutDrawerCount)
     }
@@ -108,61 +101,29 @@ class ScratchoffControllerTests {
     }
 
     @Test
-    fun testClearStopsProcessors() {
-        var stopCount: Int = 0
+    fun testClearMakesScratchableLayoutUnavailable() {
+        val controller = ScratchoffController(mockScratchableLayout)
+        controller.onScratchableLayoutAvailable(1, 1)
 
-        val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStopProcessors() {
-                stopCount += 1
-            }
-        }
+        assert(controller.isScratchableLayoutAvailable)
 
         controller.clear()
 
-        assertEquals(1, stopCount)
-        assert(controller.isScratchableLayoutAvailable.not())
+        assertFalse(controller.isScratchableLayoutAvailable)
     }
 
     @Test
-    fun testPauseCallsStopProcessors() {
-        var stopCount: Int = 0
+    fun testDestroyCallsRemovesObservers() {
+        var count: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStopProcessors() {
-                stopCount += 1
-            }
-        }
-        controller.onPause()
-
-        assertEquals(1, stopCount)
-    }
-
-    @Test
-    fun testDestroyCallsStopProcessors() {
-        var stopCount: Int = 0
-
-        val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStopProcessors() {
-                stopCount += 1
+            override fun removeTouchObservers() {
+                count += 1
             }
         }
         controller.onDestroy()
 
-        assertEquals(1, stopCount)
-    }
-
-    @Test
-    fun testResumeCallsStartProcessors() {
-        var startCount: Int = 0
-
-        val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStartProcessors() {
-                startCount += 1
-            }
-        }
-        controller.onResume()
-
-        assertEquals(1, startCount)
+        assertEquals(1, count)
     }
 
     @Test
@@ -251,16 +212,11 @@ class ScratchoffControllerTests {
     }
 
     @Test
-    fun testLayoutAvailableStartsProcessorsAndAttemptsRestore() {
-        var startCount: Int = 0
+    fun testLayoutAvailableAttemptsRestoreWhenParcelExistsOnLayoutAvailable() {
         var restoreAttemptCount: Int = 0
         var restoreCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStartProcessors() {
-                startCount += 1
-            }
-
             override fun performStateRestoration() {
                 restoreAttemptCount += 1
 
@@ -271,7 +227,7 @@ class ScratchoffControllerTests {
                 restoreCount += 1
             }
         }
-        controller.restore(
+        controller.setStateRestorationParcel(
                 ScratchoffState(
                         AbsSavedState.EMPTY_STATE,
                         intArrayOf(10, 20),
@@ -279,7 +235,6 @@ class ScratchoffControllerTests {
                         listOf()))
         controller.onScratchableLayoutAvailable(10, 20)
 
-        assertEquals(1, startCount)
         assertEquals(1, restoreAttemptCount)
         assertEquals(1, restoreCount)
     }
@@ -296,7 +251,7 @@ class ScratchoffControllerTests {
                 super.performStateRestoration(state)
             }
         }
-        controller.restore(
+        controller.setStateRestorationParcel(
                 ScratchoffState(
                         AbsSavedState.EMPTY_STATE,
                         intArrayOf(10, 20),
@@ -311,7 +266,7 @@ class ScratchoffControllerTests {
         assertEquals(false, state.isThresholdReached)
 
         controller.clear()
-        controller.restore(state)
+        controller.setStateRestorationParcel(state)
         controller.onScratchableLayoutAvailable(10, 20)
 
         assertEquals(10, restoredState!!.layoutSize[0])
@@ -322,16 +277,11 @@ class ScratchoffControllerTests {
     }
 
     @Test
-    fun testRestoreNotAttemptedWhenPendingStateRemoved() {
-        var startCount: Int = 0
+    fun testRestoreNotAttemptedWhenPendingStateRemovedOnLayoutAvailable() {
         var restoreAttemptCount: Int = 0
         var restoreCount: Int = 0
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStartProcessors() {
-                startCount += 1
-            }
-
             override fun performStateRestoration() {
                 restoreAttemptCount += 1
 
@@ -342,32 +292,26 @@ class ScratchoffControllerTests {
                 restoreCount += 1
             }
         }
-        controller.removePendingStateRestoration()
+        controller.removePendingStateRestorationParcel()
         controller.onScratchableLayoutAvailable(10, 20)
 
-        assertEquals(1, startCount)
         assertEquals(1, restoreAttemptCount)
         assertEquals(0, restoreCount)
     }
 
     @Test
     fun testRestoreWithThresholdReachedClearsWithoutAnimation() {
-        var startCount: Int = 0
         var clearCount: Int = 0
         var animationEnabled: Boolean? = null
 
         val controller = object: ScratchoffController(mockScratchableLayout) {
-            override fun safelyStartProcessors() {
-                startCount += 1
-            }
-
             override fun clearLayoutDrawer(clearAnimationEnabled: Boolean) {
                 clearCount += 1
                 animationEnabled = clearAnimationEnabled
             }
         }
         controller.setClearAnimationEnabled(true)
-        controller.restore(
+        controller.setStateRestorationParcel(
                 ScratchoffState(
                         AbsSavedState.EMPTY_STATE,
                         intArrayOf(10, 20),
@@ -375,7 +319,6 @@ class ScratchoffControllerTests {
                         listOf()))
         controller.onScratchableLayoutAvailable(10, 20)
 
-        assertEquals(1, startCount)
         assertEquals(1, clearCount)
         assertEquals(false, animationEnabled)
     }

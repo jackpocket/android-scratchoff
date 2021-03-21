@@ -2,8 +2,7 @@ package com.jackpocket.scratchoff.tools
 
 import android.graphics.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.jackpocket.scratchoff.processors.ThresholdProcessor
-import org.junit.Assert
+import com.jackpocket.scratchoff.ScratchoffThresholdProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +33,7 @@ class ThresholdCalculatorTests {
         val expected = Rect(0, 0, subject.width, subject.height)
 
         assertEquals(expected, ThresholdCalculator.createFullSizeThresholdRegion(subject).first())
-        assertEquals(expected, ThresholdProcessor.SimpleTargetRegionsProvider().createScratchableRegions(subject).first())
+        assertEquals(expected, ScratchoffThresholdProcessor.SimpleTargetRegionsProvider().createScratchableRegions(subject).first())
     }
 
     @Test

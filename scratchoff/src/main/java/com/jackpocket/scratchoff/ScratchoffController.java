@@ -17,8 +17,6 @@ import android.view.animation.LinearInterpolator;
 
 import com.jackpocket.scratchoff.paths.ScratchPathPoint;
 import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
-import com.jackpocket.scratchoff.processors.Processor;
-import com.jackpocket.scratchoff.processors.ThresholdProcessor;
 import com.jackpocket.scratchoff.views.ScratchableLayout;
 
 import java.lang.ref.WeakReference;
@@ -31,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ScratchoffController implements OnTouchListener,
         ScratchableLayoutDrawer.Delegate,
-        ThresholdProcessor.Delegate,
+        ScratchoffThresholdProcessor.Delegate,
         ScratchPathPointsAggregator {
 
     public interface ThresholdChangedListener {
@@ -59,9 +57,9 @@ public class ScratchoffController implements OnTouchListener,
 
     private int touchRadiusPx;
 
-    private ThresholdProcessor thresholdProcessor;
-    private ThresholdProcessor.Quality thresholdAccuracyQuality = ThresholdProcessor.Quality.HIGH;
-    private ThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider = new ThresholdProcessor.SimpleTargetRegionsProvider();
+    private ScratchoffThresholdProcessor thresholdProcessor;
+    private ScratchoffThresholdProcessor.Quality thresholdAccuracyQuality = ScratchoffThresholdProcessor.Quality.HIGH;
+    private ScratchoffThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider = new ScratchoffThresholdProcessor.SimpleTargetRegionsProvider();
     private float thresholdCompletionPercent;
     private boolean thresholdReached = false;
 
@@ -138,8 +136,6 @@ public class ScratchoffController implements OnTouchListener,
         if (scratchableLayout == null)
             throw new IllegalStateException("Cannot attach to a null View!");
 
-        safelyStopProcessors();
-
         this.history.clear();
 
         this.layoutDrawer = createLayoutDrawer()
@@ -158,8 +154,8 @@ public class ScratchoffController implements OnTouchListener,
                 .setClearAnimationInterpolator(clearAnimationInterpolator);
     }
 
-    protected ThresholdProcessor createThresholdProcessor() {
-        return new ThresholdProcessor(
+    protected ScratchoffThresholdProcessor createThresholdProcessor() {
+        return new ScratchoffThresholdProcessor(
                 getTouchRadiusPx(),
                 getThresholdCompletionPercent(),
                 getThresholdAccuracyQuality(),
@@ -173,8 +169,15 @@ public class ScratchoffController implements OnTouchListener,
         this.scratchableLayoutAvailable = true;
         this.thresholdReached = false;
 
+        prepareThresholdProcessor();
         performStateRestoration();
-        safelyStartProcessors();
+    }
+
+    protected void prepareThresholdProcessor() {
+        ScratchoffThresholdProcessor thresholdProcessor = this.thresholdProcessor;
+
+        if (thresholdProcessor != null)
+            thresholdProcessor.prepare(gridSize);
     }
 
     @Override
@@ -199,7 +202,7 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Add the collection of {@link ScratchPathPoint} instances to the
-     * {@Link ScratchableLayoutDrawer}, the {@link ThresholdProcessor},
+     * {@link ScratchableLayoutDrawer}, the {@link ScratchoffThresholdProcessor},
      * and the internal history queue; then invalidate the scratchable layout.
      * <br /><br />
      * Warning: this method does not ensure the layout or aggregators
@@ -231,20 +234,12 @@ public class ScratchoffController implements OnTouchListener,
             layoutDrawer.draw(canvas);
     }
 
-    public ScratchoffController onPause() {
-        safelyStopProcessors();
-
-        return this;
-    }
-
-    public ScratchoffController onResume() {
-        safelyStartProcessors();
-
-        return this;
-    }
-
     public ScratchoffController onDestroy() {
-        safelyStopProcessors();
+        ScratchoffThresholdProcessor thresholdProcessor = this.thresholdProcessor;
+
+        if (thresholdProcessor != null)
+            thresholdProcessor.destroy();
+
         removeTouchObservers();
 
         ScratchableLayoutDrawer layoutDrawer = this.layoutDrawer;
@@ -280,7 +275,6 @@ public class ScratchoffController implements OnTouchListener,
         this.scratchableLayoutAvailable = false;
 
         clearLayoutDrawer(clearAnimationEnabled);
-        safelyStopProcessors();
 
         return this;
     }
@@ -404,14 +398,14 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set the {@link ThresholdProcessor.Quality} for the underlying {@link ThresholdProcessor}.
-     * The default is {@link ThresholdProcessor.Quality#HIGH}, which implies no reduction in quality.
+     * Set the {@link ScratchoffThresholdProcessor.Quality} for the underlying {@link ScratchoffThresholdProcessor}.
+     * The default is {@link ScratchoffThresholdProcessor.Quality#HIGH}, which implies no reduction in quality.
      * <br /><br />
-     * {@link ThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
-     * {@link ThresholdProcessor.Quality#LOW} will use the lowest-supported quality value at runtime
+     * {@link ScratchoffThresholdProcessor.Quality#MEDIUM} will attempt to reduce the quality to 50%, while
+     * {@link ScratchoffThresholdProcessor.Quality#LOW} will use the lowest-supported quality value at runtime
      * (1 / min ({@link #touchRadiusPx}, width, height)).
      * <br /><br />
-     * This reduction is solely applied to elements of the {@link ThresholdProcessor}, and does not
+     * This reduction is solely applied to elements of the {@link ScratchoffThresholdProcessor}, and does not
      * affect the drawing quality in any way.
      * <br /><br />
      * If the supplied quality value is below the runtime-calculated minimum of
@@ -420,34 +414,34 @@ public class ScratchoffController implements OnTouchListener,
      * <br /><br />
      * Note: this must be called before {@link #attach()} or it will have no effect.
      */
-    public ScratchoffController setThresholdAccuracyQuality(ThresholdProcessor.Quality thresholdAccuracyQuality) {
+    public ScratchoffController setThresholdAccuracyQuality(ScratchoffThresholdProcessor.Quality thresholdAccuracyQuality) {
         this.thresholdAccuracyQuality = thresholdAccuracyQuality;
 
         return this;
     }
 
-    public ThresholdProcessor.Quality getThresholdAccuracyQuality() {
+    public ScratchoffThresholdProcessor.Quality getThresholdAccuracyQuality() {
         return thresholdAccuracyQuality;
     }
 
     /**
-     * Override the default {@link ThresholdProcessor.TargetRegionsProvider} for the underlying
-     * {@link ThresholdProcessor} to define specific regions of the {@link Bitmap} that should
+     * Override the default {@link ScratchoffThresholdProcessor.TargetRegionsProvider} for the underlying
+     * {@link ScratchoffThresholdProcessor} to define specific regions of the {@link Bitmap} that should
      * be used to calculate the scratched percentage.
      * <br /><br />
-     * The size the Bitmap used by the {@link ThresholdProcessor} is determined by the
-     * {@link ThresholdProcessor.Quality} and runtime conditions of the scratchable layout. If
-     * the quality is not set to {@link ThresholdProcessor.Quality#HIGH}, the Bitmap will likely be
+     * The size the Bitmap used by the {@link ScratchoffThresholdProcessor} is determined by the
+     * {@link ScratchoffThresholdProcessor.Quality} and runtime conditions of the scratchable layout. If
+     * the quality is not set to {@link ScratchoffThresholdProcessor.Quality#HIGH}, the Bitmap will likely be
      * much smaller than the size on screen.
      * <br /><br />
      * It is recommended that you calculate the positions of the desired areas by their relative
      * positioning from the edges of the original Bitmap. e.g. left = 0.25 * bitmap.width
      * <br /><br />
      * Warning: If any of the regions returned by the call to
-     * {@link ThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
+     * {@link ScratchoffThresholdProcessor.TargetRegionsProvider#createScratchableRegions(Bitmap)}
      * exceed the boundaries of the supplied Bitmap, the Threshold processor will break.
      */
-    public ScratchoffController setThresholdTargetRegionsProvider(ThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider) {
+    public ScratchoffController setThresholdTargetRegionsProvider(ScratchoffThresholdProcessor.TargetRegionsProvider thresholdTargetRegionsProvider) {
         this.thresholdTargetRegionsProvider = thresholdTargetRegionsProvider;
 
         return this;
@@ -475,17 +469,6 @@ public class ScratchoffController implements OnTouchListener,
 
     public View getViewBehind() {
         return behindView.get();
-    }
-
-    protected void safelyStartProcessors() {
-        if (!scratchableLayoutAvailable)
-            return;
-
-        Processor.startNotActive(thresholdProcessor);
-    }
-
-    protected void safelyStopProcessors() {
-        Processor.stop(thresholdProcessor);
     }
 
     public ScratchableLayoutDrawer getLayoutDrawer(){
@@ -535,7 +518,6 @@ public class ScratchoffController implements OnTouchListener,
         return thresholdTargetRegionsProvider.createScratchableRegions(source);
     }
 
-    @Override
     public int[] getScratchableLayoutSize() {
         final int[] gridSize = this.gridSize;
 
@@ -606,7 +588,7 @@ public class ScratchoffController implements OnTouchListener,
         return Arrays.asList(history.toArray(new ScratchPathPoint[0]));
     }
 
-    public void restore(Parcelable state) {
+    public void setStateRestorationParcel(Parcelable state) {
         if (!(stateRestorationEnabled && state instanceof ScratchoffState))
             return;
 
@@ -617,9 +599,9 @@ public class ScratchoffController implements OnTouchListener,
      * Remove any pending restoration data. Calling this will ensure
      * that a subsequent call to {@link #attach()} will reset to a pre-scratched state.
      * <br /><br />
-     * If {@link #restore(Parcelable)} is called again, this call will have no effect.
+     * If {@link #setStateRestorationParcel(Parcelable)} is called again, this call will have no effect.
      */
-    public ScratchoffController removePendingStateRestoration() {
+    public ScratchoffController removePendingStateRestorationParcel() {
         this.statePendingReload = null;
 
         return this;

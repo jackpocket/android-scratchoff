@@ -48,14 +48,12 @@ class MainActivity: AppCompatActivity(), ScratchoffController.ThresholdChangedLi
     override fun onResume() {
         super.onResume()
 
-        this.controller.onResume()
         this.controller.addTouchObserver(this)
     }
 
     override fun onPause() {
         super.onPause()
 
-        this.controller.onPause()
         this.controller.removeTouchObservers()
     }
 
