@@ -73,6 +73,7 @@ public class ScratchoffController implements OnTouchListener,
     private long clearAnimationDurationMs;
 
     private boolean scratchableLayoutAvailable = false;
+    private boolean touchInteractionIgnored = false;
 
     private List<OnTouchListener> touchObservers = new ArrayList<>();
 
@@ -179,6 +180,9 @@ public class ScratchoffController implements OnTouchListener,
     @Override
     @SuppressLint("ClickableViewAccessibility")
     public boolean onTouch(View view, MotionEvent event) {
+        if (touchInteractionIgnored)
+            return false;
+
         for (OnTouchListener observer : touchObservers) {
             observer.onTouch(view, event);
         }
@@ -193,6 +197,14 @@ public class ScratchoffController implements OnTouchListener,
         return true;
     }
 
+    /**
+     * Add the collection of {@link ScratchPathPoint} instances to the
+     * {@Link ScratchableLayoutDrawer}, the {@link ThresholdProcessor},
+     * and the internal history queue; then invalidate the scratchable layout.
+     * <br /><br />
+     * Warning: this method does not ensure the layout or aggregators
+     * are actually available, yet.
+     */
     @Override
     public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
         addScratchPathPoints(events, layoutDrawer);
@@ -363,6 +375,22 @@ public class ScratchoffController implements OnTouchListener,
             throw new IllegalArgumentException("touchRadius must be greater than 0");
 
         this.touchRadiusPx = touchRadius;
+
+        return this;
+    }
+
+    /**
+     * Set to `true` to block all {@link MotionEvent} instances from being passed to any
+     * touch observers or processors. Touches will continue to be ignored until this is
+     * called again with a value of `false`.
+     * <br /><br />
+     * This is useful for instrumentation testing or feature demonstration in conjunction
+     * with {@link ScratchoffController.addScratchPathPoints(Collection<ScratchPathPoint>)}.
+     *
+     * @param touchInteractionIgnored flag indicating if touches should be ignored
+     */
+    public ScratchoffController setTouchInteractionIgnored(boolean touchInteractionIgnored) {
+        this.touchInteractionIgnored = touchInteractionIgnored;
 
         return this;
     }

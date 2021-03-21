@@ -166,7 +166,7 @@ class ScratchoffControllerTests {
     }
 
     @Test
-    fun testMotionEventsAreAlwaysPassedToObservers() {
+    fun testMotionEventsAreAlwaysPassedToObserversUnlessIgnoreFlagSet() {
         val event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
         val touchLogger = LoggingOnTouchListener()
 
@@ -181,6 +181,20 @@ class ScratchoffControllerTests {
                 })
 
         assertEquals(expectedCallCount, touchLogger.touchCallCount)
+
+        controller.setTouchInteractionIgnored(true)
+
+        0.until(3)
+                .forEach({
+                    controller.onTouch(mockScratchableLayout, event)
+                })
+
+        assertEquals(expectedCallCount, touchLogger.touchCallCount)
+
+        controller.setTouchInteractionIgnored(false)
+        controller.onTouch(mockScratchableLayout, event)
+
+        assertEquals(expectedCallCount + 1, touchLogger.touchCallCount)
     }
 
     @Test
