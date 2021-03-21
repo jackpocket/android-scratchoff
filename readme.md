@@ -148,23 +148,9 @@ If the `ScratchableLayout` View has been restored, the dimensions match the pers
 
 ### Lifecycle
 
-Ensure the correct lifecycle methods for `onPause()`, `onResume()`, and `onDestroy()` are called, so that the processors will stop/restart without running needlessly in the background.
+Ensure that `onDestroy()` is called from the correct lifecycle method so that resources can be properly recycled.
 
 ```java
-@Override
-public void onPause(){
-    controller.onPause();
-
-    super.onPause();
-}
-
-@Override
-public void onResume(){
-    super.onResume();
-
-    controller.onResume();
-}
-
 @Override
 public void onDestroy(){
     controller.onDestroy();
@@ -188,13 +174,13 @@ public void onScratchThresholdReached(ScratchoffController controller) {
 
     // Reset after a delay, as the clearing animation may still be running at this point
     new Handler(Looper.getMainLooper())
-        .postDelayed(() -> controller.reset(), 2000);
+        .postDelayed(() -> controller.attach(), 2000);
 }
 ```
 
 ### Extra: Observing MotionEvents
 
-You can add an `OnTouchListener` to the `ScratchoffController` to observe `MotionEvents` as they come in, regardless of enabled state. When adding these observers, it'd be a good idea to remove them in the appropriate lifecycle methods.
+You can add an `OnTouchListener` to the `ScratchoffController` to observe `MotionEvents` as they come in, regardless of enabled state. When adding these observers, make sure to remove them in the appropriate lifecycle methods.
 
 ```java
 @Override
@@ -219,6 +205,25 @@ public void onResume(){
 **Note 1**: the return values of `onTouch` will be ignored, as the `ScratchoffController` must maintain control of the touch event collection.
 
 **Note 2**: all touch observers will automatically be removed when calling `ScratchoffController.onDestroy()`
+
+### Extra: Evaluating Scratched Percentage Of Specific Regions
+
+The `ScratchoffController` can be configured to calculate the thresholds of specific rectangular regions by supplying it with a `ScratchoffThresholdProcessor.TargetRegionsProvider`. Only regions returned by the call to `createScratchableRegions` would be used for evaluating which areas of a scratchable layout are used when determining the total scratched percentage.
+
+```java
+ScratchoffController.findByViewId(activity, R.id.scratch_view)
+    ...
+    .setThresholdTargetRegionsProvider((source) -> {
+        ArrayList<Rect> regions = new ArrayList<>();
+        regions.add(Rect(0, 0, source.getWidth(), source.getHeight()))
+
+        return regions;
+    })
+```
+
+The size of the Bitmap used by the `ScratchoffThresholdProcessor` is determined by the `ScratchoffThresholdProcessor.Quality` and the runtime conditions of the scratchable layout. If the quality is not set to `ScratchoffThresholdProcessor.Quality#HIGH`, the Bitmap will likely be much smaller than the size on screen.
+
+It is recommended that you calculate the positions of the desired regions by their relative positioning from the edges of the original Bitmap. e.g. left = 0.25 * bitmap.width
 
 ## Upgrading from Version 1.x to Version 2.0.0
 

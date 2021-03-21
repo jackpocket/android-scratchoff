@@ -112,7 +112,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * When set, the system will adjust the width/height of scratchable layout's LayoutParams
+     * When set, the system will adjust the width/height of the {@link #scratchableLayout} LayoutParams
      * to match that of the view supplied here. If null, no layout-matching will be
      * performed.
      */
@@ -125,7 +125,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Attach (or reset) to the pre-scratched state.
      * <br /><br />
-     * If the backing scratchable layout's state is available, and
+     * If the backing {@link #scratchableLayout} state is available, and
      * {@link #stateRestorationEnabled} is true, the history will be
      * automatically restored on the condition that the layout is the
      * same width/height.
@@ -203,7 +203,7 @@ public class ScratchoffController implements OnTouchListener,
     /**
      * Add the collection of {@link ScratchPathPoint} instances to the
      * {@link ScratchableLayoutDrawer}, the {@link ScratchoffThresholdProcessor},
-     * and the internal history queue; then invalidate the scratchable layout.
+     * and the internal history queue; then invalidate the {@link #scratchableLayout}.
      * <br /><br />
      * Warning: this method does not ensure the layout or aggregators
      * are actually available, yet.
@@ -303,7 +303,7 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set whether automatic clearing of the scratchable layout should be performed on reaching the
+     * Set whether automatic clearing of the {@link #scratchableLayout} should be performed on reaching the
      * {@link #thresholdCompletionPercent}. If false, no clearing or animations will be performed,
      * and you must manually call {@link #clear()}.
      */
@@ -315,7 +315,7 @@ public class ScratchoffController implements OnTouchListener,
 
     /**
      * Set whether to use the fade-out AlphaAnimation, or immediately hide
-     * the scratchable layout, on clearing.
+     * the {@link #scratchableLayout}, on clearing.
      * <br /><br />
      * If {@link #clearOnThresholdReachedEnabled} is false, this will have no effect.
      */
@@ -379,7 +379,7 @@ public class ScratchoffController implements OnTouchListener,
      * called again with a value of `false`.
      * <br /><br />
      * This is useful for instrumentation testing or feature demonstration in conjunction
-     * with {@link ScratchoffController.addScratchPathPoints(Collection<ScratchPathPoint>)}.
+     * with {@link ScratchoffController#addScratchPathPoints(Collection)}.
      *
      * @param touchInteractionIgnored flag indicating if touches should be ignored
      */
@@ -429,8 +429,8 @@ public class ScratchoffController implements OnTouchListener,
      * {@link ScratchoffThresholdProcessor} to define specific regions of the {@link Bitmap} that should
      * be used to calculate the scratched percentage.
      * <br /><br />
-     * The size the Bitmap used by the {@link ScratchoffThresholdProcessor} is determined by the
-     * {@link ScratchoffThresholdProcessor.Quality} and runtime conditions of the scratchable layout. If
+     * The size of the Bitmap used by the {@link ScratchoffThresholdProcessor} is determined by the
+     * {@link ScratchoffThresholdProcessor.Quality} and the runtime conditions of the scratchable layout. If
      * the quality is not set to {@link ScratchoffThresholdProcessor.Quality#HIGH}, the Bitmap will likely be
      * much smaller than the size on screen.
      * <br /><br />
