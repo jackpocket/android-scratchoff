@@ -62,7 +62,7 @@ public class ScratchPathPoint implements Parcelable {
         final int historySize = event.getHistorySize();
         final int pointersCount = event.getPointerCount();
 
-        ArrayList<ScratchPathPoint> events = new ArrayList<>();
+        ArrayList<ScratchPathPoint> events = new ArrayList<ScratchPathPoint>((historySize * pointersCount) + pointersCount);
 
         for (int historyIndex = 0; historyIndex < historySize; historyIndex++) {
             for (int pointerIndex = 0; pointerIndex < pointersCount; pointerIndex++) {
