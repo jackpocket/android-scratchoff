@@ -206,6 +206,16 @@ public void onResume(){
 
 **Note 2**: all touch observers will automatically be removed when calling `ScratchoffController.onDestroy()`
 
+### Extra: Threshold Evaluation Memory Reduction
+
+By default, the `ScratchoffController` will use a Bitmap of the same size as the actual scratchable layout. To reduce the memory impact, you can set a `ScratchoffThresholdProcessor.Quality` value other than `HIGH`. A `MEDIUM` `Quality` would attempt a 50% reduction in size, while `LOW` will attempt to go as low as `1 / min(touchRadius, width, height)`. The scalar is then applied to both the x and y coordinates of the touch events used to calculate the threshold.
+
+```java
+ScratchoffController.findByViewId(activity, R.id.scratch_view)
+    ...
+    .setThresholdAccuracyQuality(ScratchoffThresholdProcessor.Quality.LOW)
+```
+
 ### Extra: Evaluating Scratched Percentage Of Specific Regions
 
 The `ScratchoffController` can be configured to calculate the thresholds of specific rectangular regions by supplying it with a `ScratchoffThresholdProcessor.TargetRegionsProvider`. Only regions returned by the call to `createScratchableRegions` would be used for evaluating which areas of a scratchable layout are used when determining the total scratched percentage.

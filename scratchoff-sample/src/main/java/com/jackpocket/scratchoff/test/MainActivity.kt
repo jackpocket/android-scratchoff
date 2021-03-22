@@ -32,7 +32,7 @@ class MainActivity: AppCompatActivity(), ScratchoffController.ThresholdChangedLi
                 .setClearAnimationDuration(1, TimeUnit.SECONDS)
                 .setClearAnimationInterpolator(LinearInterpolator())
                 // .setTouchRadiusPx(25)
-                // .setThresholdAccuracyQuality(ThresholdProcessor.Quality.LOW)
+                // .setThresholdAccuracyQuality(Quality.LOW)
                 // .setThresholdTargetRegionsProvider({
                 //     val inset = (min(it.width, it.height) * 0.15F).toInt()
                 //
