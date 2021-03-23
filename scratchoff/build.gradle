@@ -64,6 +64,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     setArchiveClassifier('javadoc')
 }
 
+Properties localProperties = new Properties()
+localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+if (localProperties.getProperty("bintray.release_mode", "false") != "true") {
+    return
+}
+
 afterEvaluate {
     publishing {
         publications {
@@ -103,12 +110,9 @@ afterEvaluate {
     }
 }
 
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-
 bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
+    user = localProperties.getProperty("bintray.user")
+    key = localProperties.getProperty("bintray.apikey")
 
     publications = ['release']
 
