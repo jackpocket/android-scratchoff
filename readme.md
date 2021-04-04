@@ -1,5 +1,7 @@
 # Scratchoff
 
+[![Download](https://img.shields.io/maven-central/v/com.jackpocket/scratchoff)](https://search.maven.org/artifact/com.jackpocket/scratchoff)
+
 A simple library for implementing scratchable Views.
 
 ![Scratchoff Sample](https://github.com/jackpocket/android_scratchoff/raw/master/scratchoff.gif)
@@ -8,7 +10,7 @@ A simple library for implementing scratchable Views.
 
 ```groovy
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -238,6 +240,10 @@ It is recommended that you calculate the positions of the desired regions by the
 ## Upgrading from Version 1.x to Version 2.0.0
 
 Follow the [upgrade guide](https://github.com/jackpocket/android_scratchoff/raw/master/upgrade_1.x-2.0.md).
+
+### Moved to MavenCentral
+
+As of version 2.0.0, scratchoff will be hosted on MavenCentral. Versions 1.x and below will remain on JCenter.
 
 ## Additional credits:
 + [scratchoff-test/src/res/drawable/ic_touch_indicator.xml](https://www.svgrepo.com/svg/9543/touch)
