@@ -1,17 +1,5 @@
 apply plugin: 'com.android.library'
-
-// Kotlin is only used for androidTestImplementation, but applying
-// the plugin will add a compile dependency for the kotlin-stdlib
-// to the release publication.
-def kolinEnabledVariant = getGradle()
-        .getStartParameter()
-        .getTaskRequests()
-        .toString()
-        .contains("Debug")
-
-if (kolinEnabledVariant) {
-    apply plugin: 'kotlin-android'
-}
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion rootProject.ext.targetSdkVersion
