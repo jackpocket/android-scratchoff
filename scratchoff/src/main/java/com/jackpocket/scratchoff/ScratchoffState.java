@@ -10,9 +10,10 @@ import java.util.List;
 
 public class ScratchoffState extends View.BaseSavedState {
 
-    private int[] size;
-    private boolean thresholdReached;
-    private List<ScratchPathPoint> events;
+    private final int[] size;
+    private final boolean thresholdReached;
+
+    private final List<ScratchPathPoint> events;
 
     public ScratchoffState(
             Parcelable state,

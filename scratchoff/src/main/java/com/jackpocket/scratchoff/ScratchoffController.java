@@ -48,7 +48,7 @@ public class ScratchoffController implements OnTouchListener,
         public void onScratchThresholdReached(ScratchoffController controller);
     }
 
-    private WeakReference<View> scratchableLayout;
+    private final WeakReference<View> scratchableLayout;
     private WeakReference<View> behindView = new WeakReference<>(null);
 
     private WeakReference<ThresholdChangedListener> thresholdChangedListener = new WeakReference<>(null);
@@ -73,7 +73,7 @@ public class ScratchoffController implements OnTouchListener,
     private boolean scratchableLayoutAvailable = false;
     private boolean touchInteractionIgnored = false;
 
-    private List<OnTouchListener> touchObservers = new ArrayList<>();
+    private final List<OnTouchListener> touchObservers = new ArrayList<>();
 
     private ScratchoffState statePendingReload;
     private final LinkedBlockingQueue<ScratchPathPoint> history = new LinkedBlockingQueue<ScratchPathPoint>();

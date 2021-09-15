@@ -45,14 +45,14 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private Canvas pathStrippedCanvas;
     private Bitmap pathStrippedImage;
 
-    private WeakReference<Delegate> delegate;
+    private final WeakReference<Delegate> delegate;
 
     private Paint clearPaint = new Paint();
 
     private Interpolator clearAnimationInterpolator = new LinearInterpolator();
     private long clearAnimationDurationMs = 1000;
 
-    private ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
+    private final ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
 
     private final ArrayList<ScratchPathPoint> pendingPathPoints = new ArrayList<ScratchPathPoint>();
     private final ScratchPathManager pathManager = new ScratchPathManager();

@@ -37,8 +37,6 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
         HIGH
     }
 
-    private static final int SLEEP_DELAY_START = 100;
-
     private static final int MARKER_UNTOUCHED = 0xFFFFFFFF;
     private static final int MARKER_SCRATCHED = 0xFF000000;
 

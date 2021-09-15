@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ThresholdCalculator {
 
-    private int unscratchedColor;
+    private final int unscratchedColor;
 
     public ThresholdCalculator(int unscratchedColor) {
         this.unscratchedColor = unscratchedColor;

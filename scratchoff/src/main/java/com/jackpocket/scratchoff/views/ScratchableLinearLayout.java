@@ -11,7 +11,7 @@ import com.jackpocket.scratchoff.ScratchoffController;
 
 public class ScratchableLinearLayout extends LinearLayout implements ScratchableLayout {
 
-    private ScratchoffController controller;
+    private final ScratchoffController controller;
 
     public ScratchableLinearLayout(Context context) {
         super(context);
