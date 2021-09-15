@@ -10,5 +10,6 @@
             androidx.test,
             androidx.test.core,
             androidx.test.runner,
-            androidx.test.monitor" />
+            androidx.test.monitor,
+            androidx.test.services.storage" />
 </manifest>

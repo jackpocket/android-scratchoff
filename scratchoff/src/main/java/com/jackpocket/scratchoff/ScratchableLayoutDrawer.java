@@ -21,7 +21,9 @@ import com.jackpocket.scratchoff.paths.ScratchPathPointsAggregator;
 import com.jackpocket.scratchoff.tools.ViewGroupVisibilityController;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Animation.AnimationListener {
 
@@ -52,6 +54,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     private ViewGroupVisibilityController visibilityController = new ViewGroupVisibilityController();
 
+    private final ArrayList<ScratchPathPoint> pendingPathPoints = new ArrayList<ScratchPathPoint>();
     private final ScratchPathManager pathManager = new ScratchPathManager();
 
     private Long activeClearTag = 0L;
@@ -165,6 +168,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             }
 
             this.state = State.SCRATCHABLE;
+
+            addPendingScratchPathPointsAndClear();
         }
     }
 
@@ -182,6 +187,21 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         return bitmap;
     }
 
+    protected void addPendingScratchPathPointsAndClear() {
+        final List<ScratchPathPoint> pendingPoints;
+
+        synchronized (pathManager) {
+            if (this.pendingPathPoints.isEmpty())
+                return;
+
+            pendingPoints = new ArrayList<ScratchPathPoint>(this.pendingPathPoints);
+
+            this.pendingPathPoints.clear();
+        }
+
+        addScratchPathPoints(pendingPoints);
+    }
+
     @Override
     public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
         final State state;
@@ -194,14 +214,16 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             pathStrippedCanvas = this.pathStrippedCanvas;
         }
 
-        if (pathStrippedImage == null || pathStrippedCanvas == null)
-            return;
-
         switch (state) {
             case UNATTACHED:
-            case PREPARING:
             case CLEARED:
-                return;
+                break;
+            case PREPARING:
+                synchronized (pathManager) {
+                    this.pendingPathPoints.addAll(events);
+                }
+
+                break;
             default:
                 pathManager.addScratchPathPoints(events);
                 pathManager.drawAndReset(pathStrippedCanvas, clearPaint);
@@ -244,6 +266,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             pathStrippedCanvas = null;
 
+            pendingPathPoints.clear();
             pathManager.clear();
         }
     }
