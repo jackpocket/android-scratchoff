@@ -28,7 +28,7 @@ ext {
     mavScmConnection = "scm:git:git://github.com:jackpocket/android_scratchoff.git"
     mavScmDeveloperConnection = "scm:git:ssh://github.com:jackpocket/android_scratchoff.git"
 
-    mavDeploymentRepo = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    mavDeploymentRepo = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
 
     mavenCentralUsername = localProperties.getProperty("mavenCentralUsername")
     mavenCentralPassword = localProperties.getProperty("mavenCentralPassword")
