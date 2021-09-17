@@ -1,5 +1,11 @@
+def localPropertiesFile = new File(project.rootProject.getRootDir(), 'local.properties')
+
+if (!localPropertiesFile.exists()) {
+    return
+}
+
 Properties localProperties = new Properties()
-localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+localProperties.load(localPropertiesFile.newDataInputStream())
 
 if (localProperties.getProperty("release_mode", "false") != "true") {
     return
