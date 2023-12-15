@@ -1,0 +1,63 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  unit_test:
+    name: Run Unit Tests
+    uses: ./.github/workflows/unit-test.yml
+
+  publish_to_maven_central:
+    name: Publish to Maven Central Repository
+    needs:
+      - unit_test
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.1.1
+
+      - name: Publish to Maven Central Staging Repository
+        env:
+          LIBRARY_RELEASE_MODE: true
+          MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          RELEASE_SIGNING_KEY_ID: ${{ secrets.RELEASE_SIGNING_KEY_ID }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
+        run: ./gradlew scratchoff:publishReleasePublicationToMavenCentralRepository
+
+  create_release_for_tag:
+    name: Create Github Release
+    needs:
+      - publish_to_maven_central
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4.1.1
+
+      - name: Generate Github App Token for Release Creation Access
+        uses: tibdex/github-app-token@v2.1.0
+        id: generate_release_token
+        with:
+          app_id: ${{ secrets.APP_RELEASES_APP_ID }}
+          private_key: ${{ secrets.APP_RELEASES_APP_PRIVATE_KEY }}
+
+      - name: Generate Changelog for Release Body
+        id: generate_changelog
+        uses: mikepenz/release-changelog-builder-action@v4.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          configuration: ".github/changelog_config.json"
+          toTag: ${{ github.sha }}
+
+      - name: Create Release For Tag
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          token: ${{ steps.generate_release_token.outputs.token }}
+          body: ${{ steps.generate_changelog.outputs.changelog }}
