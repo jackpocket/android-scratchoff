@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
@@ -376,10 +377,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
                                 @Override
                                 public void onGlobalLayout() {
                                     triggerOrPostRunnableOnLaidOut(view, runnable);
-
-                                    view
-                                            .getViewTreeObserver()
-                                            .removeOnGlobalLayoutListener(this);
+                                    removeGlobalLayoutListener(view, this);
                                 }
                             }
                     );
@@ -403,6 +401,19 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         }
 
         runnable.run();
+    }
+
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    private void removeGlobalLayoutListener(View view, ViewTreeObserver.OnGlobalLayoutListener listener) {
+        if (Build.VERSION.SDK_INT < 16) {
+            view.getViewTreeObserver()
+                    .removeGlobalOnLayoutListener(listener);
+
+            return;
+        }
+
+        view.getViewTreeObserver()
+                .removeOnGlobalLayoutListener(listener);
     }
 
     @SuppressWarnings("WeakerAccess")

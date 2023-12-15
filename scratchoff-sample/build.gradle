@@ -12,7 +12,7 @@ android {
     defaultConfig {
         applicationId "com.jackpocket.scratchoff.test"
 
-        minSdkVersion 16
+        minSdkVersion 14
         targetSdkVersion rootProject.ext.targetSdkVersion
 
         versionCode 1
