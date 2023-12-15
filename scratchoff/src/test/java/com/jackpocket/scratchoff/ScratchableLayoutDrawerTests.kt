@@ -8,8 +8,8 @@ import android.graphics.Paint
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.jackpocket.scratchoff.paths.ScratchPathManager
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import com.jackpocket.scratchoff.tools.ThresholdCalculator
@@ -17,15 +17,19 @@ import com.jackpocket.scratchoff.views.ScratchableLinearLayout
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.LooperMode
+import org.robolectric.shadows.ShadowLooper
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ScratchableLayoutDrawerTests {
 
-    private val context: Context by lazy {
-        InstrumentationRegistry.getInstrumentation().context
-    }
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Test
     fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy() {
@@ -145,5 +149,55 @@ class ScratchableLayoutDrawerTests {
 
         assertEquals(10, scratchView.layoutParams.width)
         assertEquals(20, scratchView.layoutParams.height)
+    }
+
+    @Test
+    fun testTriggerOrPostRunnableOnLaidOutTriggersImmediatelyWhenAttemptPostDisabledAndWidthHeightZero() {
+        val delegate = mock<() -> Unit>()
+
+        val view = View(context)
+        view.layout(0, 0, 0, 0)
+
+        val drawer = ScratchableLayoutDrawer(null)
+        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+
+        verify(delegate, times(1))
+            .invoke()
+    }
+
+    @Test
+    fun testTriggerOrPostRunnableOnLaidOutTriggersImmediatelyWhenAttemptPostEnabledAndWidthHeightNotZero() {
+        val delegate = mock<() -> Unit>()
+
+        val view = View(context)
+        view.layout(0, 0, 1, 1)
+
+        val drawer = ScratchableLayoutDrawer(null)
+        drawer.setAttemptLastDitchPostForLayoutResolutionFailure(true)
+        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+
+        verify(delegate, times(1))
+            .invoke()
+    }
+
+    @Test
+    @LooperMode(LooperMode.Mode.PAUSED)
+    fun testTriggerOrPostRunnableOnLaidOutTriggersDelayedWhenAttemptPostEnabledAndWidthHeightZero() {
+        val delegate = mock<() -> Unit>()
+
+        val view = View(context)
+        view.layout(0, 0, 0, 0)
+
+        val drawer = ScratchableLayoutDrawer(null)
+        drawer.setAttemptLastDitchPostForLayoutResolutionFailure(true)
+        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+
+        verify(delegate, never())
+            .invoke()
+
+        ShadowLooper.runUiThreadTasks()
+
+        verify(delegate, times(1))
+            .invoke()
     }
 }
