@@ -80,6 +80,7 @@ public class ScratchoffController implements OnTouchListener,
     private boolean stateRestorationEnabled;
 
     private boolean usePreDrawForLayoutEnabled = false;
+    private boolean attemptPostForIncompleteLayout = false;
 
     /**
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
@@ -154,7 +155,8 @@ public class ScratchoffController implements OnTouchListener,
         return new ScratchableLayoutDrawer(this)
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
                 .setClearAnimationInterpolator(clearAnimationInterpolator)
-                .setUsePreDrawForLayoutEnabled(usePreDrawForLayoutEnabled);
+                .setUsePreDrawForLayoutEnabled(usePreDrawForLayoutEnabled)
+                .setAttemptPostForIncompleteLayout(attemptPostForIncompleteLayout);
     }
 
     protected ScratchoffThresholdProcessor createThresholdProcessor() {
@@ -480,6 +482,20 @@ public class ScratchoffController implements OnTouchListener,
      */
     public ScratchoffController setUsePreDrawForLayoutEnabled(boolean usePreDrawForLayoutEnabled) {
         this.usePreDrawForLayoutEnabled = usePreDrawForLayoutEnabled;
+
+        return this;
+    }
+
+    /**
+     * Set whether or not to attempt one final last-ditch {@link View#post} when determining the
+     * layout sizing of our {@link #layoutDrawer} if our {@link android.view.ViewTreeObserver}
+     * attempt ran while the {@link #scratchableLayout}'s width or height is still zero.
+     * This is in attempt to fix #19 caused by the width or height of the View being
+     * zero when attempting to create the scratchable {@link Bitmap} instances.
+     * The default for this value is false for the original (crashing) behavior.
+     */
+    public ScratchoffController setAttemptPostForIncompleteLayout(boolean attemptPostForIncompleteLayout) {
+        this.attemptPostForIncompleteLayout = attemptPostForIncompleteLayout;
 
         return this;
     }

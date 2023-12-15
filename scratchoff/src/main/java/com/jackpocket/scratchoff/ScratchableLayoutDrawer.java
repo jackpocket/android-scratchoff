@@ -59,6 +59,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private Long activeClearTag = 0L;
 
     private boolean usePreDrawForLayoutEnabled = false;
+    private boolean attemptPostForIncompleteLayout = false;
 
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
@@ -354,10 +355,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
                             new ViewTreeObserver.OnPreDrawListener() {
                                 @Override
                                 public boolean onPreDraw() {
-                                    if (runnable != null) {
-                                        runnable.run();
-                                    }
-
+                                    triggerOrPostRunnableOnLaidOut(view, runnable);
 
                                     view
                                             .getViewTreeObserver()
@@ -375,10 +373,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
                             new ViewTreeObserver.OnGlobalLayoutListener() {
                                 @Override
                                 public void onGlobalLayout() {
-                                    if (runnable != null) {
-                                        runnable.run();
-                                    }
-
+                                    triggerOrPostRunnableOnLaidOut(view, runnable);
 
                                     view
                                             .getViewTreeObserver()
@@ -389,6 +384,22 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         }
 
         view.requestLayout();
+    }
+
+    private void triggerOrPostRunnableOnLaidOut(View view, Runnable runnable) {
+        if (runnable == null) {
+            return;
+        }
+
+        if (attemptPostForIncompleteLayout) {
+            if (view.getWidth() < 1 || view.getHeight() < 1) {
+                view.post(runnable);
+
+                return;
+            }
+        }
+
+        runnable.run();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -408,6 +419,13 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setUsePreDrawForLayoutEnabled(boolean usePreDrawForLayoutEnabled) {
         this.usePreDrawForLayoutEnabled = usePreDrawForLayoutEnabled;
+
+        return this;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer setAttemptPostForIncompleteLayout(boolean attemptPostForIncompleteLayout) {
+        this.attemptPostForIncompleteLayout = attemptPostForIncompleteLayout;
 
         return this;
     }
