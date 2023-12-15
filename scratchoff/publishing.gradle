@@ -20,10 +20,10 @@ ext {
     mavDeveloperOrg = "Jackpocket"
     mavDeveloperOrgUrl = "https://jackpocket.com"
 
-    mavSiteUrl = "https://github.com/jackpocket/android_scratchoff"
-    mavGitUrl = "https://github.com/jackpocket/android_scratchoff.git"
-    mavScmConnection = "scm:git:git://github.com:jackpocket/android_scratchoff.git"
-    mavScmDeveloperConnection = "scm:git:ssh://github.com:jackpocket/android_scratchoff.git"
+    mavSiteUrl = "https://github.com/jackpocket/android-scratchoff"
+    mavGitUrl = "https://github.com/jackpocket/android-scratchoff.git"
+    mavScmConnection = "scm:git:git://github.com:jackpocket/android-scratchoff.git"
+    mavScmDeveloperConnection = "scm:git:ssh://github.com:jackpocket/android-scratchoff.git"
 }
 
 afterEvaluate {

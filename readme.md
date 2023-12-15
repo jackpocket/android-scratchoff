@@ -4,7 +4,7 @@
 
 A simple library for implementing scratchable Views.
 
-![Scratchoff Sample](https://github.com/jackpocket/android_scratchoff/raw/master/scratchoff.gif)
+![Scratchoff Sample](https://github.com/jackpocket/android-scratchoff/raw/main/scratchoff.gif)
 
 ## Installation
 
@@ -239,7 +239,7 @@ It is recommended that you calculate the positions of the desired regions by the
 
 ## Upgrading from Version 1.x to Version 2.0.0
 
-Follow the [upgrade guide](https://github.com/jackpocket/android_scratchoff/raw/master/upgrade_1.x-2.0.md).
+Follow the [upgrade guide](https://github.com/jackpocket/android-scratchoff/raw/main/upgrade_1.x-2.0.md).
 
 ### Moved to MavenCentral
 
