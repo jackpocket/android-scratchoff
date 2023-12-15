@@ -1,5 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.kotlinAndroid)
+}
 
 android {
     namespace "com.jackpocket.scratchoff.test"
@@ -37,6 +39,5 @@ android {
 dependencies {
     implementation project(path: ':scratchoff')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     implementation "androidx.appcompat:appcompat:1.3.1"
 }
