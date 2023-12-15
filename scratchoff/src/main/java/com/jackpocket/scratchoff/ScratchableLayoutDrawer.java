@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -58,6 +57,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private final ScratchPathManager pathManager = new ScratchPathManager();
 
     private Long activeClearTag = 0L;
+
+    private boolean usePreDrawForLayoutEnabled = false;
 
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
@@ -120,7 +121,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             return;
         }
 
-        addGlobalLayoutRequest(
+        deferRunnableUntilViewIsLaidOut(
                 behindView,
                 new Runnable() {
                     public void run() {
@@ -141,7 +142,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     @SuppressWarnings("WeakerAccess")
     protected void enqueueScratchableViewInitializationOnGlobalLayout(final View scratchView) {
-        addGlobalLayoutRequest(
+        deferRunnableUntilViewIsLaidOut(
                 scratchView,
                 new Runnable() {
                     public void run() {
@@ -345,31 +346,49 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         visibilityController.showChildren(view);
     }
 
-    private void addGlobalLayoutRequest(final View view, final Runnable runnable) {
-        view.getViewTreeObserver()
-                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    public void onGlobalLayout() {
-                        if(runnable != null)
-                            runnable.run();
+    private void deferRunnableUntilViewIsLaidOut(final View view, final Runnable runnable) {
+        if (usePreDrawForLayoutEnabled) {
+            view
+                    .getViewTreeObserver()
+                    .addOnPreDrawListener(
+                            new ViewTreeObserver.OnPreDrawListener() {
+                                @Override
+                                public boolean onPreDraw() {
+                                    if (runnable != null) {
+                                        runnable.run();
+                                    }
 
-                        removeGlobalLayoutListener(view, this);
-                    }
-                });
 
-        view.requestLayout();
-    }
+                                    view
+                                            .getViewTreeObserver()
+                                            .removeOnPreDrawListener(this);
 
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private void removeGlobalLayoutListener(View view, ViewTreeObserver.OnGlobalLayoutListener listener) {
-        if (Build.VERSION.SDK_INT < 16) {
-            view.getViewTreeObserver()
-                    .removeGlobalOnLayoutListener(listener);
+                                    return true;
+                                }
+                            }
+                    );
+        }
+        else {
+            view
+                    .getViewTreeObserver()
+                    .addOnGlobalLayoutListener(
+                            new ViewTreeObserver.OnGlobalLayoutListener() {
+                                @Override
+                                public void onGlobalLayout() {
+                                    if (runnable != null) {
+                                        runnable.run();
+                                    }
 
-            return;
+
+                                    view
+                                            .getViewTreeObserver()
+                                            .removeOnGlobalLayoutListener(this);
+                                }
+                            }
+                    );
         }
 
-        view.getViewTreeObserver()
-                .removeOnGlobalLayoutListener(listener);
+        view.requestLayout();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -382,6 +401,13 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
         this.clearAnimationInterpolator = clearAnimationInterpolator;
+
+        return this;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer setUsePreDrawForLayoutEnabled(boolean usePreDrawForLayoutEnabled) {
+        this.usePreDrawForLayoutEnabled = usePreDrawForLayoutEnabled;
 
         return this;
     }
