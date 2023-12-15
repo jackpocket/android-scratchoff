@@ -1,5 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.kotlinAndroid)
+}
 
 android {
     namespace "com.jackpocket.scratchoff.test"
@@ -17,6 +19,8 @@ android {
         versionName "1.0.0"
 
         vectorDrawables.useSupportLibrary = true
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -35,8 +39,5 @@ android {
 dependencies {
     implementation project(path: ':scratchoff')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     implementation "androidx.appcompat:appcompat:1.3.1"
-
-    testImplementation "junit:junit:4.13.2"
 }

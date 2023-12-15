@@ -2,19 +2,14 @@ buildscript {
     ext {
         targetSdkVersion = 34
         buildToolsVersion = "34.0.0"
-        kotlinVersion = "1.9.21"
     }
+}
 
-    repositories {
-        maven { url "https://maven.google.com/" }
-        mavenCentral()
-        gradlePluginPortal()
-    }
-
-    dependencies {
-        classpath "com.android.tools.build:gradle:8.2.0"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-    }
+plugins {
+    alias(libs.plugins.kotlinAndroid) apply false
+    alias(libs.plugins.androidApplication) apply false
+    alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.kover) apply true
 }
 
 allprojects {

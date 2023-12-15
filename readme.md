@@ -1,6 +1,6 @@
 # Scratchoff
 
-[![Download](https://img.shields.io/maven-central/v/com.jackpocket/scratchoff)](https://search.maven.org/artifact/com.jackpocket/scratchoff)
+[![Download](https://img.shields.io/maven-central/v/com.jackpocket/scratchoff)](https://search.maven.org/artifact/com.jackpocket/scratchoff) [![codecov](https://codecov.io/gh/jackpocket/android-scratchoff/graph/badge.svg?token=bLQlZ7Rh8x)](https://codecov.io/gh/jackpocket/android-scratchoff)
 
 A simple library for implementing scratchable Views.
 
