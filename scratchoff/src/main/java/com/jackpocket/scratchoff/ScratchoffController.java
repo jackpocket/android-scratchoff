@@ -79,8 +79,8 @@ public class ScratchoffController implements OnTouchListener,
     private final LinkedBlockingQueue<ScratchPathPoint> history = new LinkedBlockingQueue<ScratchPathPoint>();
     private boolean stateRestorationEnabled;
 
-    private boolean usePreDrawForLayoutEnabled = false;
-    private boolean attemptPostForIncompleteLayout = false;
+    private boolean usePreDrawOverGlobalLayoutEnabled = false;
+    private boolean attemptLastDitchPostForLayoutResolutionFailure = false;
 
     /**
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
@@ -155,8 +155,8 @@ public class ScratchoffController implements OnTouchListener,
         return new ScratchableLayoutDrawer(this)
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
                 .setClearAnimationInterpolator(clearAnimationInterpolator)
-                .setUsePreDrawForLayoutEnabled(usePreDrawForLayoutEnabled)
-                .setAttemptPostForIncompleteLayout(attemptPostForIncompleteLayout);
+                .setUsePreDrawOverGlobalLayoutEnabled(usePreDrawOverGlobalLayoutEnabled)
+                .setAttemptLastDitchPostForLayoutResolutionFailure(attemptLastDitchPostForLayoutResolutionFailure);
     }
 
     protected ScratchoffThresholdProcessor createThresholdProcessor() {
@@ -480,8 +480,8 @@ public class ScratchoffController implements OnTouchListener,
      * zero when attempting to create the scratchable {@link Bitmap} instances.
      * The default for this value is false for the original (crashing) behavior.
      */
-    public ScratchoffController setUsePreDrawForLayoutEnabled(boolean usePreDrawForLayoutEnabled) {
-        this.usePreDrawForLayoutEnabled = usePreDrawForLayoutEnabled;
+    public ScratchoffController setUsePreDrawOverGlobalLayoutEnabled(boolean usePreDrawOverGlobalLayoutEnabled) {
+        this.usePreDrawOverGlobalLayoutEnabled = usePreDrawOverGlobalLayoutEnabled;
 
         return this;
     }
@@ -494,8 +494,11 @@ public class ScratchoffController implements OnTouchListener,
      * zero when attempting to create the scratchable {@link Bitmap} instances.
      * The default for this value is false for the original (crashing) behavior.
      */
-    public ScratchoffController setAttemptPostForIncompleteLayout(boolean attemptPostForIncompleteLayout) {
-        this.attemptPostForIncompleteLayout = attemptPostForIncompleteLayout;
+    public ScratchoffController setAttemptLastDitchPostForLayoutResolutionFailure(
+            boolean attemptLastDitchPostForLayoutResolutionFailure
+    ) {
+
+        this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;
 
         return this;
     }

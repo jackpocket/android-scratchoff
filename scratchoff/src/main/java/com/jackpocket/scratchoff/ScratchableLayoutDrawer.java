@@ -58,8 +58,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     private Long activeClearTag = 0L;
 
-    private boolean usePreDrawForLayoutEnabled = false;
-    private boolean attemptPostForIncompleteLayout = false;
+    private boolean usePreDrawOverGlobalLayoutEnabled = false;
+    private boolean attemptLastDitchPostForLayoutResolutionFailure = false;
 
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
@@ -348,7 +348,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     }
 
     private void deferRunnableUntilViewIsLaidOut(final View view, final Runnable runnable) {
-        if (usePreDrawForLayoutEnabled) {
+        if (usePreDrawOverGlobalLayoutEnabled) {
             view
                     .getViewTreeObserver()
                     .addOnPreDrawListener(
@@ -391,7 +391,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             return;
         }
 
-        if (attemptPostForIncompleteLayout) {
+        if (attemptLastDitchPostForLayoutResolutionFailure) {
             if (view.getWidth() < 1 || view.getHeight() < 1) {
                 view.post(runnable);
 
@@ -417,15 +417,18 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer setUsePreDrawForLayoutEnabled(boolean usePreDrawForLayoutEnabled) {
-        this.usePreDrawForLayoutEnabled = usePreDrawForLayoutEnabled;
+    public ScratchableLayoutDrawer setUsePreDrawOverGlobalLayoutEnabled(boolean usePreDrawOverGlobalLayoutEnabled) {
+        this.usePreDrawOverGlobalLayoutEnabled = usePreDrawOverGlobalLayoutEnabled;
 
         return this;
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer setAttemptPostForIncompleteLayout(boolean attemptPostForIncompleteLayout) {
-        this.attemptPostForIncompleteLayout = attemptPostForIncompleteLayout;
+    public ScratchableLayoutDrawer setAttemptLastDitchPostForLayoutResolutionFailure(
+            boolean attemptLastDitchPostForLayoutResolutionFailure
+    ) {
+
+        this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;
 
         return this;
     }

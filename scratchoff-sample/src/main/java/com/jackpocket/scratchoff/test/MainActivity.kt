@@ -31,8 +31,8 @@ class MainActivity: AppCompatActivity(), ScratchoffController.ThresholdChangedLi
                 .setClearAnimationEnabled(true)
                 .setClearAnimationDuration(1, TimeUnit.SECONDS)
                 .setClearAnimationInterpolator(LinearInterpolator())
-                .setUsePreDrawForLayoutEnabled(true)
-                .setAttemptPostForIncompleteLayout(true)
+                .setUsePreDrawOverGlobalLayoutEnabled(true)
+                .setAttemptLastDitchPostForLayoutResolutionFailure(true)
                 // .setTouchRadiusPx(25)
                 // .setThresholdAccuracyQuality(Quality.LOW)
                 // .setThresholdTargetRegionsProvider({
