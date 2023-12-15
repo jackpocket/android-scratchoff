@@ -3,10 +3,13 @@ package com.jackpocket.scratchoff
 import android.os.Parcel
 import android.view.AbsSavedState
 import android.view.MotionEvent
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jackpocket.scratchoff.paths.ScratchPathPoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class ScratchoffStateTests {
 
     @Test

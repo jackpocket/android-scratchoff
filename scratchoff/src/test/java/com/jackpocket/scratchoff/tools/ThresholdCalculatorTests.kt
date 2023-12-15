@@ -6,8 +6,10 @@ import com.jackpocket.scratchoff.ScratchoffThresholdProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ThresholdCalculatorTests {
 
     @Test
