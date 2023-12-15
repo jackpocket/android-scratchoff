@@ -10,6 +10,7 @@ jobs:
   unit_test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.1

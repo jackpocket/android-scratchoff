@@ -1,0 +1,18 @@
+{
+  "categories": [
+    {
+      "title": "## 🔨 Fixes and Improvements",
+      "labels": [
+        "bug",
+        "enhancement"
+      ]
+    }
+  ],
+  "ignore_labels": [],
+  "template": "${{CHANGELOG}}\n---\n${{UNCATEGORIZED}}",
+  "pr_template": "- ${{TITLE}} (PR: #${{NUMBER}})",
+  "empty_template": "- no changes",
+  "label_extractor": [],
+  "transformers": [],
+  "exclude_merge_branches": []
+}
