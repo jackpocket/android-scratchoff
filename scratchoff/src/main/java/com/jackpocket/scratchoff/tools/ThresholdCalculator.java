@@ -19,9 +19,10 @@ public class ThresholdCalculator {
 
         for (Rect region : regions) {
             matchesSum += calculate(
-                    countNotMatching(bitmap, region),
-                    region.width(),
-                    region.height());
+                countNotMatching(bitmap, region),
+                region.width(),
+                region.height()
+            );
         }
 
         return matchesSum / regions.size();
@@ -36,13 +37,14 @@ public class ThresholdCalculator {
         int[] pixels = new int[pixelCount];
 
         bitmap.getPixels(
-                pixels,
-                0,
-                region.width(),
-                region.left,
-                region.top,
-                region.width(),
-                region.height());
+            pixels,
+            0,
+            region.width(),
+            region.left,
+            region.top,
+            region.width(),
+            region.height()
+        );
 
         return pixelCount - countMatching(pixels);
     }
@@ -51,8 +53,9 @@ public class ThresholdCalculator {
         int scratched = 0;
 
         for (int pixel : pixels) {
-            if (pixel == unscratchedColor)
+            if (pixel == unscratchedColor) {
                 scratched++;
+            }
         }
 
         return scratched;

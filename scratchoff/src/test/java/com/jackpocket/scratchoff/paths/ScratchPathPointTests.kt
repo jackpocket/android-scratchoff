@@ -15,47 +15,50 @@ class ScratchPathPointTests {
     fun testMotionEventWithMultiplePointersMapsToScratchPathPoint() {
         val pointerCount = 10
         val expectedActions = listOf(
-                MotionEvent.ACTION_DOWN,
-                MotionEvent.ACTION_MOVE,
-                MotionEvent.ACTION_UP
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_MOVE,
+            MotionEvent.ACTION_UP
         )
 
         val events = expectedActions
-                .map({ action ->
-                    val properties = 0.until(pointerCount)
-                            .map({
-                                PointerPropertiesBuilder
-                                        .newBuilder()
-                                        .setId(it)
-                                        .build()
-                            })
-                            .toTypedArray()
-
-                    val coordinates = 0.until(pointerCount)
-                            .map({
-                                PointerCoordsBuilder
-                                        .newBuilder()
-                                        .setCoords(10f, 20f)
-                                        .build()
-                            })
-                            .toTypedArray()
-
-                    MotionEvent.obtain(0, 0, action, pointerCount, properties, coordinates, 0, 0, 0f, 0f, 0, 0, 0, 0)
-                })
-                .map(ScratchPathPoint::create)
-                .flatten()
-
-        events.chunked(pointerCount)
-                .forEachIndexed({ actionIndex, groupedEvents ->
-                    groupedEvents.forEachIndexed({ index, event ->
-                        val pointerIndex = index.rem(pointerCount)
-
-                        assertEquals(pointerIndex, event.pointerIndex)
-                        assertEquals(10f, event.x)
-                        assertEquals(20f, event.y)
-                        assertEquals(expectedActions[actionIndex], event.action)
+            .map({ action ->
+                val properties = 0
+                    .until(pointerCount)
+                    .map({
+                        PointerPropertiesBuilder
+                            .newBuilder()
+                            .setId(it)
+                            .build()
                     })
-        })
+                    .toTypedArray()
+
+                val coordinates = 0
+                    .until(pointerCount)
+                    .map({
+                        PointerCoordsBuilder
+                            .newBuilder()
+                            .setCoords(10f, 20f)
+                            .build()
+                    })
+                    .toTypedArray()
+
+                MotionEvent.obtain(0, 0, action, pointerCount, properties, coordinates, 0, 0, 0f, 0f, 0, 0, 0, 0)
+            })
+            .map(ScratchPathPoint::create)
+            .flatten()
+
+        events
+            .chunked(pointerCount)
+            .forEachIndexed({ actionIndex, groupedEvents ->
+                groupedEvents.forEachIndexed({ index, event ->
+                    val pointerIndex = index.rem(pointerCount)
+
+                    assertEquals(pointerIndex, event.pointerIndex)
+                    assertEquals(10f, event.x)
+                    assertEquals(20f, event.y)
+                    assertEquals(expectedActions[actionIndex], event.action)
+                })
+            })
     }
 
     @Test

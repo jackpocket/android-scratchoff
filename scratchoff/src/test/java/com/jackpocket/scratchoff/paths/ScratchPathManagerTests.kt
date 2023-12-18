@@ -43,9 +43,9 @@ class ScratchPathManagerTests {
         val manager = ScratchPathManager()
 
         val events = listOf(
-                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_POINTER_UP),
-                ScratchPathPoint(0, 3f, 3f, MotionEvent.ACTION_MOVE)
+            ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+            ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_POINTER_UP),
+            ScratchPathPoint(0, 3f, 3f, MotionEvent.ACTION_MOVE)
         )
 
         manager.addScratchPathPoints(events)
@@ -64,12 +64,20 @@ class ScratchPathManagerTests {
     @Test
     fun testTouchDownAndMovePassthroughIncludesScalar() {
         val manager = object: ScratchPathManager() {
-            override fun handleTouchDown(pointerIndex: Int, x: Float, y: Float) {
+            override fun handleTouchDown(
+                pointerIndex: Int,
+                x: Float,
+                y: Float,
+            ) {
                 assertEquals(0.5f, x)
                 assertEquals(0.5f, y)
             }
 
-            override fun handleTouchMove(pointerIndex: Int, x: Float, y: Float) {
+            override fun handleTouchMove(
+                pointerIndex: Int,
+                x: Float,
+                y: Float,
+            ) {
                 assertEquals(1f, x)
                 assertEquals(1f, y)
             }
@@ -77,8 +85,8 @@ class ScratchPathManagerTests {
         manager.setScale(0.5f)
 
         val events = listOf(
-                ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
-                ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
+            ScratchPathPoint(0, 1f, 1f, MotionEvent.ACTION_DOWN),
+            ScratchPathPoint(0, 2f, 2f, MotionEvent.ACTION_MOVE)
         )
 
         manager.addScratchPathPoints(events)

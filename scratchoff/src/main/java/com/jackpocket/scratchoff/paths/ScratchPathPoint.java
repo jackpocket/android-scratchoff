@@ -15,10 +15,10 @@ public class ScratchPathPoint implements Parcelable {
     public final int action;
 
     public ScratchPathPoint(
-            int pointerIndex,
-            float x,
-            float y,
-            int action) {
+        int pointerIndex,
+        float x,
+        float y,
+        int action) {
 
         this.pointerIndex = pointerIndex;
         this.x = x;
@@ -48,14 +48,15 @@ public class ScratchPathPoint implements Parcelable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ScratchPathPoint))
+        if (!(obj instanceof ScratchPathPoint)) {
             return false;
+        }
 
         ScratchPathPoint another = (ScratchPathPoint) obj;
 
         return another.x == this.x
-                && another.y == this.y
-                && another.action == this.action;
+            && another.y == this.y
+            && another.action == this.action;
     }
 
     public static List<ScratchPathPoint> create(MotionEvent event) {
@@ -67,21 +68,23 @@ public class ScratchPathPoint implements Parcelable {
         for (int historyIndex = 0; historyIndex < historySize; historyIndex++) {
             for (int pointerIndex = 0; pointerIndex < pointersCount; pointerIndex++) {
                 events.add(
-                        new ScratchPathPoint(
-                                pointerIndex,
-                                event.getHistoricalX(pointerIndex, historyIndex),
-                                event.getHistoricalY(pointerIndex, historyIndex),
-                                MotionEvent.ACTION_MOVE));
+                    new ScratchPathPoint(
+                        pointerIndex,
+                        event.getHistoricalX(pointerIndex, historyIndex),
+                        event.getHistoricalY(pointerIndex, historyIndex),
+                        MotionEvent.ACTION_MOVE
+                    ));
             }
         }
 
         for (int pointerIndex = 0; pointerIndex < pointersCount; pointerIndex++) {
             events.add(
-                    new ScratchPathPoint(
-                            pointerIndex,
-                            event.getX(pointerIndex),
-                            event.getY(pointerIndex),
-                            event.getActionMasked()));
+                new ScratchPathPoint(
+                    pointerIndex,
+                    event.getX(pointerIndex),
+                    event.getY(pointerIndex),
+                    event.getActionMasked()
+                ));
         }
 
         return events;

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,7 +10,7 @@
         android:id="@+id/scratch_view_behind"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#818B8D" >
+        android:background="#818B8D">
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,7 +31,7 @@
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:layout_marginBottom="22dp"
-            android:onClick="resetActionClicked"/>
+            android:onClick="resetActionClicked" />
 
     </RelativeLayout>
 
@@ -49,7 +48,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             app:srcCompat="@drawable/ic_touch_indicator"
-            app:tint="#FFFFFF"/>
+            app:tint="#FFFFFF" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -59,7 +58,7 @@
             android:text="SCRATCH ME"
             android:textColor="#FFFFFF"
             android:textSize="20dip"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
     </com.jackpocket.scratchoff.views.ScratchableLinearLayout>
 

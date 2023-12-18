@@ -51,9 +51,9 @@ dependencies {
 kover {
     instrumentation {
         excludeTasks.addAll(
-                [
-                        "testReleaseUnitTest",
-                ]
+            [
+                "testReleaseUnitTest",
+            ]
         )
     }
 }

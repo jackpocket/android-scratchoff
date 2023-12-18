@@ -79,9 +79,9 @@ afterEvaluate {
 
     signing {
         useInMemoryPgpKeys(
-                System.getenv("RELEASE_SIGNING_KEY_ID"),
-                System.getenv("RELEASE_SIGNING_KEY"),
-                System.getenv("RELEASE_SIGNING_KEY_PASSWORD")
+            System.getenv("RELEASE_SIGNING_KEY_ID"),
+            System.getenv("RELEASE_SIGNING_KEY"),
+            System.getenv("RELEASE_SIGNING_KEY_PASSWORD")
         )
 
         sign publishing.publications
