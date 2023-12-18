@@ -402,7 +402,8 @@ class ScratchoffControllerTests {
         val bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
 
         assertEquals(
-            Rect(0, 0, 10, 10), controller
+            Rect(0, 0, 10, 10),
+            controller
                 .createScratchableRegions(bitmap)
                 .first()
         )
@@ -414,7 +415,8 @@ class ScratchoffControllerTests {
         })
 
         assertEquals(
-            Rect(0, 0, 5, 5), controller
+            Rect(0, 0, 5, 5),
+            controller
                 .createScratchableRegions(bitmap)
                 .first()
         )

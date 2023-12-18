@@ -73,7 +73,8 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
         int touchRadiusPx,
         float completionThreshold,
         Quality accuracyQuality,
-        Delegate delegate) {
+        Delegate delegate
+    ) {
 
         this.originalTouchRadius = touchRadiusPx;
         this.completionThreshold = completionThreshold;
@@ -134,7 +135,8 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     protected static float constrainAccuracyQuality(
         int touchRadius,
         Quality quality,
-        int[] layoutSize) {
+        int[] layoutSize
+    ) {
 
         switch (quality) {
             case LOW:
@@ -149,7 +151,8 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     protected static float constrainAccuracyQuality(
         int touchRadius,
         float accuracyQuality,
-        int[] layoutSize) {
+        int[] layoutSize
+    ) {
 
         float minimumAccuracyQuality = 1 / (float) Math.min(touchRadius, Math.min(layoutSize[0], layoutSize[1]));
 
