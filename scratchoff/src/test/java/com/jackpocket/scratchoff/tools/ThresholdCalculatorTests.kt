@@ -34,8 +34,19 @@ class ThresholdCalculatorTests {
         val subject = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         val expected = Rect(0, 0, subject.width, subject.height)
 
-        assertEquals(expected, ThresholdCalculator.createFullSizeThresholdRegion(subject).first())
-        assertEquals(expected, ScratchoffThresholdProcessor.SimpleTargetRegionsProvider().createScratchableRegions(subject).first())
+        assertEquals(
+            expected,
+            ThresholdCalculator
+                .createFullSizeThresholdRegion(subject)
+                .first()
+        )
+        assertEquals(
+            expected,
+            ScratchoffThresholdProcessor
+                .SimpleTargetRegionsProvider()
+                .createScratchableRegions(subject)
+                .first()
+        )
     }
 
     @Test
@@ -57,8 +68,8 @@ class ThresholdCalculatorTests {
         val calculator = ThresholdCalculator(Color.WHITE)
         val subject = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         val topLeftAndBottomRight = listOf(
-                Rect(0, 0, 5, 5),
-                Rect(5, 5, 10, 10)
+            Rect(0, 0, 5, 5),
+            Rect(5, 5, 10, 10)
         )
 
         val canvas = Canvas(subject)

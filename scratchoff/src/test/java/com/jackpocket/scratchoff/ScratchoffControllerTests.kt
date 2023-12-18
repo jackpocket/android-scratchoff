@@ -136,19 +136,21 @@ class ScratchoffControllerTests {
 
         val expectedCallCount = 3
 
-        0.until(3)
-                .forEach({
-                    controller.onTouch(mockScratchableLayout, event)
-                })
+        0
+            .until(3)
+            .forEach({
+                controller.onTouch(mockScratchableLayout, event)
+            })
 
         assertEquals(expectedCallCount, touchLogger.touchCallCount)
 
         controller.setTouchInteractionIgnored(true)
 
-        0.until(3)
-                .forEach({
-                    controller.onTouch(mockScratchableLayout, event)
-                })
+        0
+            .until(3)
+            .forEach({
+                controller.onTouch(mockScratchableLayout, event)
+            })
 
         assertEquals(expectedCallCount, touchLogger.touchCallCount)
 
@@ -191,7 +193,10 @@ class ScratchoffControllerTests {
                 super.addScratchPathPoints(events)
             }
 
-            override fun addScratchPathPoints(events: MutableCollection<ScratchPathPoint>?, listener: ScratchPathPointsAggregator?) {
+            override fun addScratchPathPoints(
+                events: MutableCollection<ScratchPathPoint>?,
+                listener: ScratchPathPointsAggregator?,
+            ) {
                 // This should be called twice; once with the ScratchableLayoutDrawer, and once
                 // with the ThresholdProcessor
                 enqueueSpecificListenerCallCount += 1
@@ -228,11 +233,13 @@ class ScratchoffControllerTests {
             }
         }
         controller.setStateRestorationParcel(
-                ScratchoffState(
-                        AbsSavedState.EMPTY_STATE,
-                        intArrayOf(10, 20),
-                        false,
-                        listOf()))
+            ScratchoffState(
+                AbsSavedState.EMPTY_STATE,
+                intArrayOf(10, 20),
+                false,
+                listOf()
+            )
+        )
         controller.onScratchableLayoutAvailable(10, 20)
 
         assertEquals(1, restoreAttemptCount)
@@ -252,11 +259,13 @@ class ScratchoffControllerTests {
             }
         }
         controller.setStateRestorationParcel(
-                ScratchoffState(
-                        AbsSavedState.EMPTY_STATE,
-                        intArrayOf(10, 20),
-                        false,
-                        listOf(expectedPoint)))
+            ScratchoffState(
+                AbsSavedState.EMPTY_STATE,
+                intArrayOf(10, 20),
+                false,
+                listOf(expectedPoint)
+            )
+        )
         controller.onScratchableLayoutAvailable(10, 20)
 
         val state = controller.parcelize(AbsSavedState.EMPTY_STATE)
@@ -312,11 +321,13 @@ class ScratchoffControllerTests {
         }
         controller.setClearAnimationEnabled(true)
         controller.setStateRestorationParcel(
-                ScratchoffState(
-                        AbsSavedState.EMPTY_STATE,
-                        intArrayOf(10, 20),
-                        true,
-                        listOf()))
+            ScratchoffState(
+                AbsSavedState.EMPTY_STATE,
+                intArrayOf(10, 20),
+                true,
+                listOf()
+            )
+        )
         controller.onScratchableLayoutAvailable(10, 20)
 
         assertEquals(1, clearCount)
@@ -390,15 +401,23 @@ class ScratchoffControllerTests {
         val controller = ScratchoffController(mockScratchableLayout)
         val bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
 
-        assertEquals(Rect(0, 0, 10, 10), controller.createScratchableRegions(bitmap).first())
+        assertEquals(
+            Rect(0, 0, 10, 10), controller
+                .createScratchableRegions(bitmap)
+                .first()
+        )
 
         controller.setThresholdTargetRegionsProvider({
             listOf(
-                    Rect(0, 0, 5, 5)
+                Rect(0, 0, 5, 5)
             )
         })
 
-        assertEquals(Rect(0, 0, 5, 5), controller.createScratchableRegions(bitmap).first())
+        assertEquals(
+            Rect(0, 0, 5, 5), controller
+                .createScratchableRegions(bitmap)
+                .first()
+        )
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -426,7 +445,10 @@ class ScratchoffControllerTests {
         var completions: Int = 0
             private set
 
-        override fun onScratchPercentChanged(controller: ScratchoffController, percentCompleted: Float) {
+        override fun onScratchPercentChanged(
+            controller: ScratchoffController,
+            percentCompleted: Float,
+        ) {
             threshold = percentCompleted
         }
 
@@ -442,7 +464,10 @@ class ScratchoffControllerTests {
 
         var touchReturnValue: Boolean = true
 
-        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        override fun onTouch(
+            v: View?,
+            event: MotionEvent?,
+        ): Boolean {
             touchCallCount += 1
 
             return touchReturnValue

@@ -16,10 +16,11 @@ public class ScratchoffState extends View.BaseSavedState {
     private final List<ScratchPathPoint> events;
 
     public ScratchoffState(
-            Parcelable state,
-            int[] size,
-            boolean thresholdReached,
-            List<ScratchPathPoint> events) {
+        Parcelable state,
+        int[] size,
+        boolean thresholdReached,
+        List<ScratchPathPoint> events
+    ) {
 
         super(state);
 

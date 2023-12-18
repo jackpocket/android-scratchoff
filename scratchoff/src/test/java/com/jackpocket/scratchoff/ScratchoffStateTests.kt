@@ -16,10 +16,11 @@ class ScratchoffStateTests {
     fun testStateRestorationFromParcel() {
         val expectedPathPoint = ScratchPathPoint(0, 5f, 5f, MotionEvent.ACTION_DOWN)
         val origin = ScratchoffState(
-                AbsSavedState.EMPTY_STATE,
-                intArrayOf(10, 20),
-                true,
-                listOf(expectedPathPoint))
+            AbsSavedState.EMPTY_STATE,
+            intArrayOf(10, 20),
+            true,
+            listOf(expectedPathPoint)
+        )
 
         val parcel = parcelizeForRead(origin)
         val state = ScratchoffState.CREATOR.createFromParcel(parcel)

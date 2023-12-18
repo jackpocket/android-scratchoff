@@ -18,7 +18,8 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
     private final ArrayList<Path> paths = new ArrayList<>();
     private float scale = 1f;
 
-    public ScratchPathManager() { }
+    public ScratchPathManager() {
+    }
 
     public ScratchPathManager setScale(float scale) {
         this.scale = scale;
@@ -28,13 +29,15 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
 
     @Override
     public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
-        for (ScratchPathPoint event : events)
+        for (ScratchPathPoint event : events) {
             addScratchPathPoint(event);
+        }
     }
 
     public void addScratchPathPoint(ScratchPathPoint event) {
-        if (POINTER_LIMIT <= event.pointerIndex)
+        if (POINTER_LIMIT <= event.pointerIndex) {
             return;
+        }
 
         synchronized (paths) {
             switch (event.action) {
@@ -45,16 +48,18 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
                 case MotionEvent.ACTION_DOWN:
                 case MotionEvent.ACTION_POINTER_DOWN:
                     handleTouchDown(
-                            event.pointerIndex,
-                            event.x * scale,
-                            event.y * scale);
+                        event.pointerIndex,
+                        event.x * scale,
+                        event.y * scale
+                    );
 
                     break;
                 default:
                     handleTouchMove(
-                            event.pointerIndex,
-                            event.x * scale,
-                            event.y * scale);
+                        event.pointerIndex,
+                        event.x * scale,
+                        event.y * scale
+                    );
 
                     break;
             }
@@ -71,14 +76,16 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
         // If the last event for this pointer was MotionEvent.ACTION_POINTER_UP
         // then it's possible the position has changed, so we should recreate
         // the Path to avoid errors
-        if (MotionEvent.ACTION_POINTER_UP == lastActiveActions[pointerIndex])
+        if (MotionEvent.ACTION_POINTER_UP == lastActiveActions[pointerIndex]) {
             createPath(pointerIndex, x, y);
+        }
 
         Path activePath = this.activePaths[pointerIndex];
 
         // If the active Path has been drawn, it would have been reset to an empty state
-        if (activePath.isEmpty())
+        if (activePath.isEmpty()) {
             activePath.moveTo(x, y);
+        }
 
         activePath.lineTo(x, y);
     }

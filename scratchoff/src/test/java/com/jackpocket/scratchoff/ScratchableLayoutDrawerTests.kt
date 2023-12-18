@@ -43,30 +43,38 @@ class ScratchableLayoutDrawerTests {
 
         val drawer = object: ScratchableLayoutDrawer(null) {
             override fun createClearPaint(touchRadiusPx: Int): Paint {
-                return ScratchPathManager.createBaseScratchoffPaint(touchRadiusPx)
-                        .apply({ this.color = Color.BLACK })
+                return ScratchPathManager
+                    .createBaseScratchoffPaint(touchRadiusPx)
+                    .apply({ this.color = Color.BLACK })
             }
 
-            override fun enqueueViewInitializationOnGlobalLayout(scratchView: View?, behindView: View?) {
+            override fun enqueueViewInitializationOnGlobalLayout(
+                scratchView: View?,
+                behindView: View?,
+            ) {
                 // Pretend we did this
             }
         }
         drawer.attach(1, view, null)
         drawer.initializeLaidOutScratchableView(view)
-        drawer.addScratchPathPoints(listOf(
+        drawer.addScratchPathPoints(
+            listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
-        ))
+            )
+        )
         drawer.draw(resultCanvas)
 
         assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
 
         drawer.destroy()
 
-        drawer.addScratchPathPoints(listOf(
+        drawer.addScratchPathPoints(
+            listOf(
                 ScratchPathPoint(0, 10f, 0f, MotionEvent.ACTION_DOWN),
                 ScratchPathPoint(0, 10f, 10f, MotionEvent.ACTION_MOVE)
-        ))
+            )
+        )
         drawer.draw(resultCanvas)
 
         assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
@@ -110,7 +118,10 @@ class ScratchableLayoutDrawerTests {
         var hideAndMarkClearedCount: Int = 0
 
         val drawer = object: ScratchableLayoutDrawer(null) {
-            override fun enqueueViewInitializationOnGlobalLayout(scratchView: View?, behindView: View?) {
+            override fun enqueueViewInitializationOnGlobalLayout(
+                scratchView: View?,
+                behindView: View?,
+            ) {
                 // Pretend this happened
             }
 

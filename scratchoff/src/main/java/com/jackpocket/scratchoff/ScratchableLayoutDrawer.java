@@ -38,6 +38,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     }
 
     public interface Delegate {
+
         public void onScratchableLayoutAvailable(int width, int height);
     }
 
@@ -70,20 +71,23 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer attach(
-            ScratchoffController controller,
-            View scratchView,
-            View behindView) {
+        ScratchoffController controller,
+        View scratchView,
+        View behindView
+    ) {
 
         return attach(
-                controller.getTouchRadiusPx(),
-                scratchView,
-                behindView);
+            controller.getTouchRadiusPx(),
+            scratchView,
+            behindView
+        );
     }
 
     public ScratchableLayoutDrawer attach(
-            int touchRadiusPx,
-            final View scratchView,
-            final View behindView) {
+        int touchRadiusPx,
+        final View scratchView,
+        final View behindView
+    ) {
 
         synchronized (pathManager) {
             this.scratchView = new WeakReference<>(scratchView);
@@ -100,8 +104,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             scratchView.invalidate();
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
                 scratchView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            }
 
             enqueueViewInitializationOnGlobalLayout(scratchView, behindView);
 
@@ -126,13 +131,14 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         }
 
         deferRunnableUntilViewIsLaidOut(
-                behindView,
-                new Runnable() {
-                    public void run() {
-                        performLayoutDimensionMatching(scratchView, behindView);
-                        enqueueScratchableViewInitializationOnGlobalLayout(scratchView);
-                    }
-                });
+            behindView,
+            new Runnable() {
+                public void run() {
+                    performLayoutDimensionMatching(scratchView, behindView);
+                    enqueueScratchableViewInitializationOnGlobalLayout(scratchView);
+                }
+            }
+        );
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -147,12 +153,13 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     protected void enqueueScratchableViewInitializationOnGlobalLayout(final View scratchView) {
         deferRunnableUntilViewIsLaidOut(
-                scratchView,
-                new Runnable() {
-                    public void run() {
-                        initializeLaidOutScratchableView(scratchView);
-                    }
-                });
+            scratchView,
+            new Runnable() {
+                public void run() {
+                    initializeLaidOutScratchableView(scratchView);
+                }
+            }
+        );
     }
 
     protected void initializeLaidOutScratchableView(final View scratchView) {
@@ -168,8 +175,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             if (delegate != null) {
                 delegate.onScratchableLayoutAvailable(
-                        pathStrippedImage.getWidth(),
-                        pathStrippedImage.getHeight());
+                    pathStrippedImage.getWidth(),
+                    pathStrippedImage.getHeight()
+                );
             }
 
             this.state = State.SCRATCHABLE;
@@ -181,9 +189,10 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     protected Bitmap createBitmapFromScratchableView(final View scratchView) {
         Bitmap bitmap = Bitmap.createBitmap(
-                scratchView.getWidth(),
-                scratchView.getHeight(),
-                Bitmap.Config.ARGB_8888);
+            scratchView.getWidth(),
+            scratchView.getHeight(),
+            Bitmap.Config.ARGB_8888
+        );
 
         Canvas canvas = new Canvas(bitmap);
 
@@ -196,8 +205,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         final List<ScratchPathPoint> pendingPoints;
 
         synchronized (pathManager) {
-            if (this.pendingPathPoints.isEmpty())
+            if (this.pendingPathPoints.isEmpty()) {
                 return;
+            }
 
             pendingPoints = new ArrayList<ScratchPathPoint>(this.pendingPathPoints);
 
@@ -246,8 +256,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             pathStrippedImage = this.pathStrippedImage;
         }
 
-        if (pathStrippedImage == null)
+        if (pathStrippedImage == null) {
             return;
+        }
 
         switch (state) {
             case UNATTACHED:
@@ -263,8 +274,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         synchronized (pathManager) {
             this.state = State.UNATTACHED;
 
-            if (pathStrippedImage == null)
+            if (pathStrippedImage == null) {
                 return;
+            }
 
             pathStrippedImage.recycle();
             pathStrippedImage = null;
@@ -291,8 +303,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     protected void performFadeOutClear() {
         final View view = scratchView.get();
 
-        if (view == null)
+        if (view == null) {
             return;
+        }
 
         this.state = State.CLEARING;
 
@@ -327,15 +340,18 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     public void onAnimationEnd(Animation animation) {
         final View view = scratchView.get();
 
-        if (view == null)
+        if (view == null) {
             return;
+        }
 
-        if (!activeClearTag.equals(view.getTag(R.id.scratch__clear_animation_tag)))
+        if (!activeClearTag.equals(view.getTag(R.id.scratch__clear_animation_tag))) {
             return;
+        }
 
         synchronized (pathManager) {
-            if (ScratchableLayoutDrawer.this.state != State.CLEARING)
+            if (ScratchableLayoutDrawer.this.state != State.CLEARING) {
                 return;
+            }
 
             hideAndMarkScratchableSurfaceViewCleared();
         }
@@ -353,34 +369,34 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private void deferRunnableUntilViewIsLaidOut(final View view, final Runnable runnable) {
         if (usePreDrawOverGlobalLayoutEnabled) {
             view
-                    .getViewTreeObserver()
-                    .addOnPreDrawListener(
-                            new ViewTreeObserver.OnPreDrawListener() {
-                                @Override
-                                public boolean onPreDraw() {
-                                    triggerOrPostRunnableOnLaidOut(view, runnable);
+                .getViewTreeObserver()
+                .addOnPreDrawListener(
+                    new ViewTreeObserver.OnPreDrawListener() {
+                        @Override
+                        public boolean onPreDraw() {
+                            triggerOrPostRunnableOnLaidOut(view, runnable);
 
-                                    view
-                                            .getViewTreeObserver()
-                                            .removeOnPreDrawListener(this);
+                            view
+                                .getViewTreeObserver()
+                                .removeOnPreDrawListener(this);
 
-                                    return true;
-                                }
-                            }
-                    );
+                            return true;
+                        }
+                    }
+                );
         }
         else {
             view
-                    .getViewTreeObserver()
-                    .addOnGlobalLayoutListener(
-                            new ViewTreeObserver.OnGlobalLayoutListener() {
-                                @Override
-                                public void onGlobalLayout() {
-                                    triggerOrPostRunnableOnLaidOut(view, runnable);
-                                    removeGlobalLayoutListener(view, this);
-                                }
-                            }
-                    );
+                .getViewTreeObserver()
+                .addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            triggerOrPostRunnableOnLaidOut(view, runnable);
+                            removeGlobalLayoutListener(view, this);
+                        }
+                    }
+                );
         }
 
         view.requestLayout();
@@ -403,17 +419,17 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
         runnable.run();
     }
 
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    @SuppressWarnings({ "deprecation", "RedundantSuppression" })
     private void removeGlobalLayoutListener(View view, ViewTreeObserver.OnGlobalLayoutListener listener) {
         if (Build.VERSION.SDK_INT < 16) {
             view.getViewTreeObserver()
-                    .removeGlobalOnLayoutListener(listener);
+                .removeGlobalOnLayoutListener(listener);
 
             return;
         }
 
         view.getViewTreeObserver()
-                .removeOnGlobalLayoutListener(listener);
+            .removeOnGlobalLayoutListener(listener);
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -439,7 +455,7 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setAttemptLastDitchPostForLayoutResolutionFailure(
-            boolean attemptLastDitchPostForLayoutResolutionFailure
+        boolean attemptLastDitchPostForLayoutResolutionFailure
     ) {
 
         this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;

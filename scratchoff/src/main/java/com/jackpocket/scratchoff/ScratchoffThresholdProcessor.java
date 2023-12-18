@@ -23,11 +23,14 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator, Runnable {
 
     public interface TargetRegionsProvider {
+
         public List<Rect> createScratchableRegions(Bitmap source);
     }
 
     public interface Delegate extends TargetRegionsProvider {
+
         public void postScratchPercentChanged(float percent);
+
         public void postScratchThresholdReached();
     }
 
@@ -67,10 +70,10 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
 
     @SuppressWarnings("WeakerAccess")
     public ScratchoffThresholdProcessor(
-            int touchRadiusPx,
-            float completionThreshold,
-            Quality accuracyQuality,
-            Delegate delegate) {
+        int touchRadiusPx,
+        float completionThreshold,
+        Quality accuracyQuality,
+        Delegate delegate) {
 
         this.originalTouchRadius = touchRadiusPx;
         this.completionThreshold = completionThreshold;
@@ -86,13 +89,15 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
         synchronized (pathManager) {
             Delegate delegate = this.delegate.get();
 
-            if (delegate == null || layoutSize[0] < 1 || layoutSize[1] < 1)
+            if (delegate == null || layoutSize[0] < 1 || layoutSize[1] < 1) {
                 return;
+            }
 
             float accuracyQuality = constrainAccuracyQuality(
-                    this.originalTouchRadius,
-                    this.accuracyQuality,
-                    layoutSize);
+                this.originalTouchRadius,
+                this.accuracyQuality,
+                layoutSize
+            );
 
             float width = layoutSize[0] * accuracyQuality;
             float aspectRatio = layoutSize[1] / (float) layoutSize[0];
@@ -100,9 +105,10 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
             float touchRadius = originalTouchRadius * accuracyQuality;
 
             this.currentBitmap = Bitmap.createBitmap(
-                    (int) width,
-                    (int) height,
-                    Bitmap.Config.RGB_565);
+                (int) width,
+                (int) height,
+                Bitmap.Config.RGB_565
+            );
 
             this.markerPaint.setStrokeWidth(touchRadius * 2);
             this.pathManager.setScale(accuracyQuality);
@@ -126,9 +132,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     }
 
     protected static float constrainAccuracyQuality(
-            int touchRadius,
-            Quality quality,
-            int[] layoutSize) {
+        int touchRadius,
+        Quality quality,
+        int[] layoutSize) {
 
         switch (quality) {
             case LOW:
@@ -141,9 +147,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     }
 
     protected static float constrainAccuracyQuality(
-            int touchRadius,
-            float accuracyQuality,
-            int[] layoutSize) {
+        int touchRadius,
+        float accuracyQuality,
+        int[] layoutSize) {
 
         float minimumAccuracyQuality = 1 / (float) Math.min(touchRadius, Math.min(layoutSize[0], layoutSize[1]));
 
@@ -153,8 +159,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     @Override
     public void addScratchPathPoints(Collection<ScratchPathPoint> events) {
         synchronized (pathManager) {
-            if (currentBitmap == null || thresholdReached)
+            if (currentBitmap == null || thresholdReached) {
                 return;
+            }
         }
 
         queue.addAll(events);
@@ -183,11 +190,13 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     @Override
     public void run() {
         synchronized (pathManager) {
-            if (currentBitmap == null || thresholdReached)
+            if (currentBitmap == null || thresholdReached) {
                 return;
+            }
 
-            if (!(drawQueuedScratchMotionEvents() || lastPercentScratched == PERCENT_SCRATCHED_UNTOUCHED))
+            if (!(drawQueuedScratchMotionEvents() || lastPercentScratched == PERCENT_SCRATCHED_UNTOUCHED)) {
                 return;
+            }
 
             processScratchedImagePercent();
         }
@@ -198,8 +207,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
 
         queue.drainTo(dequeuedEvents);
 
-        if (dequeuedEvents.size() < 1)
+        if (dequeuedEvents.size() < 1) {
             return false;
+        }
 
         pathManager.addScratchPathPoints(dequeuedEvents);
         pathManager.drawAndReset(canvas, markerPaint);
@@ -211,8 +221,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
         Delegate delegate = this.delegate.get();
         Bitmap currentBitmap = this.currentBitmap;
 
-        if (delegate == null || currentBitmap == null || thresholdReached)
+        if (delegate == null || currentBitmap == null || thresholdReached) {
             return;
+        }
 
         float percentScratched = calculator.calculate(currentBitmap, thresholdRegions);
 
@@ -232,8 +243,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
     public void destroy() {
         try {
             synchronized (pathManager) {
-                if (currentBitmap == null)
+                if (currentBitmap == null) {
                     return;
+                }
 
                 currentBitmap.recycle();
                 currentBitmap = null;
@@ -241,7 +253,9 @@ public class ScratchoffThresholdProcessor implements ScratchPathPointsAggregator
                 canvas = null;
             }
         }
-        catch(Exception e){ e.printStackTrace(); }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected Delegate getDelegate() {
