@@ -79,6 +79,9 @@ public class ScratchoffController implements OnTouchListener,
     private final LinkedBlockingQueue<ScratchPathPoint> history = new LinkedBlockingQueue<ScratchPathPoint>();
     private boolean stateRestorationEnabled;
 
+    private boolean usePreDrawOverGlobalLayoutEnabled = false;
+    private boolean attemptLastDitchPostForLayoutResolutionFailure = false;
+
     /**
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
      */
@@ -151,7 +154,9 @@ public class ScratchoffController implements OnTouchListener,
     protected ScratchableLayoutDrawer createLayoutDrawer() {
         return new ScratchableLayoutDrawer(this)
                 .setClearAnimationDurationMs(clearAnimationDurationMs)
-                .setClearAnimationInterpolator(clearAnimationInterpolator);
+                .setClearAnimationInterpolator(clearAnimationInterpolator)
+                .setUsePreDrawOverGlobalLayoutEnabled(usePreDrawOverGlobalLayoutEnabled)
+                .setAttemptLastDitchPostForLayoutResolutionFailure(attemptLastDitchPostForLayoutResolutionFailure);
     }
 
     protected ScratchoffThresholdProcessor createThresholdProcessor() {
@@ -463,6 +468,38 @@ public class ScratchoffController implements OnTouchListener,
      */
     public ScratchoffController setStateRestorationEnabled(boolean stateRestorationEnabled) {
         this.stateRestorationEnabled = stateRestorationEnabled;
+
+        return this;
+    }
+
+    /**
+     * Set whether or not to use the new {@link android.view.ViewTreeObserver.OnPreDrawListener}
+     * code paths to determine the layout sizing, instead of the original
+     * {@link android.view.ViewTreeObserver.OnGlobalLayoutListener} implementation.
+     * This is in attempt to fix #19 caused by the width or height of the View being
+     * zero when attempting to create the scratchable {@link Bitmap} instances.
+     * The default for this value is false for the original (crashing) behavior.
+     */
+    public ScratchoffController setUsePreDrawOverGlobalLayoutEnabled(boolean usePreDrawOverGlobalLayoutEnabled) {
+        this.usePreDrawOverGlobalLayoutEnabled = usePreDrawOverGlobalLayoutEnabled;
+
+        return this;
+    }
+
+    /**
+     * Set whether or not to attempt one final last-ditch {@link android.os.Handler#post} on
+     * the main Thread when determining the layout sizing of our {@link #layoutDrawer} if
+     * our {@link android.view.ViewTreeObserver} attempt ran while the {@link #scratchableLayout}'s
+     * width or height is still zero.
+     * This is in attempt to fix #19 caused by the width or height of the View being
+     * zero when attempting to create the scratchable {@link Bitmap} instances.
+     * The default for this value is false for the original (crashing) behavior.
+     */
+    public ScratchoffController setAttemptLastDitchPostForLayoutResolutionFailure(
+            boolean attemptLastDitchPostForLayoutResolutionFailure
+    ) {
+
+        this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;
 
         return this;
     }
