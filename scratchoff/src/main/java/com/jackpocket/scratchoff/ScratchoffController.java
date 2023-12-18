@@ -487,9 +487,10 @@ public class ScratchoffController implements OnTouchListener,
     }
 
     /**
-     * Set whether or not to attempt one final last-ditch {@link View#post} when determining the
-     * layout sizing of our {@link #layoutDrawer} if our {@link android.view.ViewTreeObserver}
-     * attempt ran while the {@link #scratchableLayout}'s width or height is still zero.
+     * Set whether or not to attempt one final last-ditch {@link android.os.Handler#post} on
+     * the main Thread when determining the layout sizing of our {@link #layoutDrawer} if
+     * our {@link android.view.ViewTreeObserver} attempt ran while the {@link #scratchableLayout}'s
+     * width or height is still zero.
      * This is in attempt to fix #19 caused by the width or height of the View being
      * zero when attempting to create the scratchable {@link Bitmap} instances.
      * The default for this value is false for the original (crashing) behavior.
