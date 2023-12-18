@@ -27,11 +27,12 @@ jobs:
           NEXT_VERSION: ${{ inputs.next-version }}
         run: |
           currentVersionName=$(
-            cat app/build.gradle \
-              | grep 'mavLibraryVersion "' \
-              | sed -E 's/.*mavLibraryVersion *"([0-9\.]+)".*$/\1/'
+            cat ./scratchoff/publishing.gradle \
+              | grep 'mavLibraryVersion = "' \
+              | sed -E 's/.*mavLibraryVersion = *"([0-9\.]+)".*$/\1/'
           )
           sed -i -e "s/mavLibraryVersion = \"${currentVersionName}\"/mavLibraryVersion = \"${NEXT_VERSION}\"/g" ./scratchoff/publishing.gradle
+          sed -i -e "s/com.jackpocket:scratchoff:${currentVersionName}/com.jackpocket:scratchoff:${NEXT_VERSION}/g" ./readme.md
 
       - name: Build Changelog for PR body
         id: build_changelog
@@ -53,3 +54,4 @@ jobs:
           commit-message: Auto-Bump Version to ${{ inputs.next-version }}
           add-paths: |
             ./scratchoff/publishing.gradle
+            ./readme.md
