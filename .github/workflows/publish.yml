@@ -54,7 +54,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           configuration: ".github/changelog_config.json"
-          toTag: ${{ github.sha }}
 
       - name: Create Release For Tag
         uses: ncipollo/release-action@v1.13.0
