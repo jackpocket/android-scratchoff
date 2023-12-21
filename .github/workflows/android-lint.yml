@@ -17,6 +17,9 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@v1.0.6
+
       - name: Cache Gradle Files
         uses: actions/cache@v3.3.2
         with:
@@ -28,10 +31,11 @@ jobs:
       - name: Run Android Lint
         run: ./gradlew scratchoff:lintDebug
 
-      - name: Review Android Lint Results
-        uses: DVDAndroid/action-android-lint@v1.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          lint_xml_file: scratchoff/build/reports/lint-results-debug.html
-          reporter: github-pr-review
-          level: warning
+      - name: Review Lint Results
+        run: |
+          cat scratchoff/build/reports/lint-results-debug.sarif \
+            | reviewdog \
+              -name=android-lint \
+              -f=sarif \
+              -reporter=github-pr-review \
+              -level=warning
