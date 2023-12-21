@@ -104,10 +104,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             scratchView.invalidate();
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-                scratchView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-            }
-
             enqueueViewInitializationOnGlobalLayout(scratchView, behindView);
 
             return this;
