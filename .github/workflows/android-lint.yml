@@ -32,6 +32,8 @@ jobs:
         run: ./gradlew scratchoff:lintDebug
 
       - name: Review Lint Results
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cat scratchoff/build/reports/lint-results-debug.sarif \
             | reviewdog \
