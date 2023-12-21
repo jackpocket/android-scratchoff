@@ -40,12 +40,12 @@ android {
 }
 
 dependencies {
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${libs.versions.kotlin.get()}"
-    testImplementation "androidx.test.ext:junit:1.1.5"
-    testImplementation "androidx.test:runner:1.5.2"
-    testImplementation "androidx.test:core:1.5.0"
-    testImplementation "org.mockito.kotlin:mockito-kotlin:5.2.1"
-    testImplementation "org.robolectric:robolectric:4.11.1"
+    testImplementation libs.kotlin.stdlib.jdk7
+    testImplementation libs.androidx.junit
+    testImplementation libs.androidx.runner
+    testImplementation libs.androidx.core
+    testImplementation libs.mockito.kotlin
+    testImplementation libs.robolectric
 }
 
 kover {
