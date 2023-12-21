@@ -7,6 +7,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.any
+import org.mockito.Mockito.`when` as WHEN
+import org.mockito.kotlin.mock
 
 @RunWith(AndroidJUnit4::class)
 class ScratchPathPointTests {
@@ -59,6 +62,47 @@ class ScratchPathPointTests {
                     assertEquals(expectedActions[actionIndex], event.action)
                 })
             })
+    }
+
+    @Test
+    fun testMotionEventWithHistoricalDataInsertsScratchPathPointsBeforeLatest() {
+        val event = mock<MotionEvent>()
+
+        WHEN(event.actionMasked)
+            .thenReturn(MotionEvent.ACTION_MOVE)
+
+        WHEN(event.getX(any()))
+            .thenReturn(1F)
+
+        WHEN(event.getY(any()))
+            .thenReturn(2F)
+
+        WHEN(event.pointerCount)
+            .thenReturn(1)
+
+        WHEN(event.historySize)
+            .thenReturn(2)
+
+        WHEN(event.getHistoricalX(any(), any()))
+            .thenReturn(3F)
+
+        WHEN(event.getHistoricalY(any(), any()))
+            .thenReturn(4F)
+
+        val paths = ScratchPathPoint.create(event)
+
+        assertEquals(3, paths.size)
+
+        assertEquals(3F, paths[0].x)
+        assertEquals(4F, paths[0].y)
+
+        assertEquals(3F, paths[1].x)
+        assertEquals(4F, paths[1].y)
+
+        assertEquals(1F, paths[2].x)
+        assertEquals(2F, paths[2].y)
+
+        assertTrue(paths.all({ it.action == MotionEvent.ACTION_MOVE }))
     }
 
     @Test
