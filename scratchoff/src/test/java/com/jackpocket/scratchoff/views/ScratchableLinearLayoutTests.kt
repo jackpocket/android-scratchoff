@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.jackpocket.scratchoff.LoggingScratchoffController
 import com.jackpocket.scratchoff.ScratchoffController
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -23,6 +24,12 @@ class ScratchableLinearLayoutTests {
     }
 
     val controller = layout.scratchoffController as LoggingScratchoffController
+
+    @Test
+    fun testConstructorOverloads() {
+        assertNotNull(ScratchableLinearLayout(context, null).scratchoffController)
+        assertNotNull(ScratchableLinearLayout(context, null, 0).scratchoffController)
+    }
 
     @Test
     fun testViewsDelegateOnDrawEvents() {
