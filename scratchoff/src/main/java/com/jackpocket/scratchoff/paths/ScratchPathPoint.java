@@ -18,7 +18,8 @@ public class ScratchPathPoint implements Parcelable {
         int pointerIndex,
         float x,
         float y,
-        int action) {
+        int action
+    ) {
 
         this.pointerIndex = pointerIndex;
         this.x = x;
@@ -73,7 +74,8 @@ public class ScratchPathPoint implements Parcelable {
                         event.getHistoricalX(pointerIndex, historyIndex),
                         event.getHistoricalY(pointerIndex, historyIndex),
                         MotionEvent.ACTION_MOVE
-                    ));
+                    )
+                );
             }
         }
 
@@ -84,7 +86,8 @@ public class ScratchPathPoint implements Parcelable {
                     event.getX(pointerIndex),
                     event.getY(pointerIndex),
                     event.getActionMasked()
-                ));
+                )
+            );
         }
 
         return events;
