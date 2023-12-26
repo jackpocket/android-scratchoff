@@ -12,15 +12,11 @@ jobs:
   create_release_pull_request:
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4.1.1
-
-      - name: Generate Github App Token for Release Creation Access
-        uses: tibdex/github-app-token@v2.1.0
-        id: generate_token
-        with:
-          app_id: ${{ secrets.APP_RELEASES_APP_ID }}
-          private_key: ${{ secrets.APP_RELEASES_APP_PRIVATE_KEY }}
 
       - name: Bump Version Name In Source
         env:
@@ -46,7 +42,7 @@ jobs:
       - name: Create Pull Request with changes
         uses: peter-evans/create-pull-request@v5.0.2
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           base: main
           title: Bumps Version to ${{ inputs.next-version }}
           branch: bump-version-${{ inputs.next-version }}
