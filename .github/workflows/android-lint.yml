@@ -18,7 +18,7 @@ jobs:
           java-version: 17
 
       - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1.0.6
+        uses: reviewdog/action-setup@v1.1.0
 
       - name: Cache Gradle Files
         uses: actions/cache@v3.3.2
