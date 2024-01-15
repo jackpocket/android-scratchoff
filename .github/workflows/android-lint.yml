@@ -21,7 +21,7 @@ jobs:
         uses: reviewdog/action-setup@v1.1.0
 
       - name: Cache Gradle Files
-        uses: actions/cache@v3.3.2
+        uses: actions/cache@v3.3.3
         with:
           path: |
             ~/.gradle/caches
