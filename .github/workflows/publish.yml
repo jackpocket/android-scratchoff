@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.1
 
+      - uses: actions/setup-java@v4.0.0
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
       - name: Publish to Maven Central Staging Repository
         env:
           LIBRARY_RELEASE_MODE: true
