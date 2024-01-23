@@ -42,15 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4.1.1
-
-      - name: Generate Github App Token for Release Creation Access
-        uses: tibdex/github-app-token@v2.1.0
-        id: generate_release_token
-        with:
-          app_id: ${{ secrets.APP_RELEASES_APP_ID }}
-          private_key: ${{ secrets.APP_RELEASES_APP_PRIVATE_KEY }}
 
       - name: Generate Changelog for Release Body
         id: generate_changelog
@@ -63,5 +58,4 @@ jobs:
       - name: Create Release For Tag
         uses: ncipollo/release-action@v1.13.0
         with:
-          token: ${{ steps.generate_release_token.outputs.token }}
           body: ${{ steps.generate_changelog.outputs.changelog }}
