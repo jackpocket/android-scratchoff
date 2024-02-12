@@ -56,6 +56,6 @@ jobs:
           configuration: ".github/changelog_config.json"
 
       - name: Create Release For Tag
-        uses: ncipollo/release-action@v1.13.0
+        uses: ncipollo/release-action@v1.14.0
         with:
           body: ${{ steps.generate_changelog.outputs.changelog }}
