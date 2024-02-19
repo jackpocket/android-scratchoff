@@ -5,7 +5,7 @@ appcompat = "1.6.1"
 androidx-core = "1.5.0"
 androidx-junit = "1.1.5"
 androidx-test-runner = "1.5.2"
-kover = "0.7.5"
+kover = "0.7.6"
 robolectric = "4.11.1"
 mockito-kotlin = "5.2.1"
 
