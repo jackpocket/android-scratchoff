@@ -33,13 +33,46 @@ class ScratchableLayoutDrawerTests {
 
     @Test
     fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy() {
+        testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
+            usePreDrawListener = false,
+            keepListeningUntilLaidOut = false
+        )
+    }
+
+    @Test
+    fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroyPreDraw() {
+        testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
+            usePreDrawListener = true,
+            keepListeningUntilLaidOut = false
+        )
+    }
+
+    @Test
+    fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroyPreDrawAndKeepListening() {
+        testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
+            usePreDrawListener = true,
+            keepListeningUntilLaidOut = true
+        )
+    }
+
+    private fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
+        usePreDrawListener: Boolean,
+        keepListeningUntilLaidOut: Boolean
+    ) {
+
         val result = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         val resultCanvas = Canvas(result)
         val fullSizeRegion = ThresholdCalculator.createFullSizeThresholdRegion(result)
 
         val view = View(context)
-        view.layout(0, 0, 10, 10)
         view.setBackgroundColor(Color.WHITE)
+
+        if (keepListeningUntilLaidOut) {
+            view.layout(0, 0, 0, 10)
+        }
+        else {
+            view.layout(0, 0, 10, 10)
+        }
 
         val drawer = object: ScratchableLayoutDrawer(null) {
             override fun createClearPaint(touchRadiusPx: Int): Paint {
@@ -47,16 +80,26 @@ class ScratchableLayoutDrawerTests {
                     .createBaseScratchoffPaint(touchRadiusPx)
                     .apply({ this.color = Color.BLACK })
             }
-
-            override fun enqueueViewInitializationOnGlobalLayout(
-                scratchView: View?,
-                behindView: View?,
-            ) {
-                // Pretend we did this
-            }
         }
+        drawer.setUsePreDrawOverGlobalLayoutEnabled(usePreDrawListener)
+        drawer.setKeepListeningForDrawUntilValidSizeDiscovered(keepListeningUntilLaidOut)
         drawer.attach(1, view, null)
-        drawer.initializeLaidOutScratchableView(view)
+
+        if (usePreDrawListener) {
+            view.viewTreeObserver.dispatchOnPreDraw()
+        }
+        else {
+            view.viewTreeObserver.dispatchOnGlobalLayout()
+        }
+
+        // We can remove this to confirm the tests fail as the
+        // view will never have laid out with a valid size
+        if (keepListeningUntilLaidOut) {
+            view.layout(0, 0, 10, 10)
+
+            view.viewTreeObserver.dispatchOnPreDraw()
+        }
+
         drawer.addScratchPathPoints(
             listOf(
                 ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
@@ -78,6 +121,61 @@ class ScratchableLayoutDrawerTests {
         drawer.draw(resultCanvas)
 
         assertEquals(0.1f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
+    }
+
+    @Test
+    fun testRemovesGlobalLayoutInitListenerOnDestroy() {
+        testRemovesInitListenerOnDestroy(
+            usePreDrawListener = false
+        )
+    }
+
+    @Test
+    fun testRemovesPreDrawInitListenerOnDestroy() {
+        testRemovesInitListenerOnDestroy(
+            usePreDrawListener = true
+        )
+    }
+
+    private fun testRemovesInitListenerOnDestroy(
+        usePreDrawListener: Boolean
+    ) {
+
+        val result = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+        val resultCanvas = Canvas(result)
+        val fullSizeRegion = ThresholdCalculator.createFullSizeThresholdRegion(result)
+
+        val view = View(context)
+        view.setBackgroundColor(Color.WHITE)
+        view.layout(0, 0, 10, 10)
+
+        val drawer = object: ScratchableLayoutDrawer(null) {
+            override fun createClearPaint(touchRadiusPx: Int): Paint {
+                return ScratchPathManager
+                    .createBaseScratchoffPaint(touchRadiusPx)
+                    .apply({ this.color = Color.BLACK })
+            }
+        }
+        drawer.setUsePreDrawOverGlobalLayoutEnabled(usePreDrawListener)
+        drawer.attach(1, view, null)
+        drawer.destroy()
+
+        if (usePreDrawListener) {
+            view.viewTreeObserver.dispatchOnPreDraw()
+        }
+        else {
+            view.viewTreeObserver.dispatchOnGlobalLayout()
+        }
+
+        drawer.addScratchPathPoints(
+            listOf(
+                ScratchPathPoint(0, 0f, 0f, MotionEvent.ACTION_DOWN),
+                ScratchPathPoint(0, 0f, 10f, MotionEvent.ACTION_MOVE)
+            )
+        )
+        drawer.draw(resultCanvas)
+
+        assertEquals(1.0f, ThresholdCalculator(Color.WHITE).calculate(result, fullSizeRegion))
     }
 
     @Test
@@ -170,7 +268,7 @@ class ScratchableLayoutDrawerTests {
         view.layout(0, 0, 0, 0)
 
         val drawer = ScratchableLayoutDrawer(null)
-        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+        drawer.triggerOrPostRunnableOnLaidOut(delegate, false)
 
         verify(delegate, times(1))
             .invoke()
@@ -185,7 +283,7 @@ class ScratchableLayoutDrawerTests {
 
         val drawer = ScratchableLayoutDrawer(null)
         drawer.setAttemptLastDitchPostForLayoutResolutionFailure(true)
-        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+        drawer.triggerOrPostRunnableOnLaidOut(delegate, true)
 
         verify(delegate, times(1))
             .invoke()
@@ -201,7 +299,7 @@ class ScratchableLayoutDrawerTests {
 
         val drawer = ScratchableLayoutDrawer(null)
         drawer.setAttemptLastDitchPostForLayoutResolutionFailure(true)
-        drawer.triggerOrPostRunnableOnLaidOut(view, delegate)
+        drawer.triggerOrPostRunnableOnLaidOut(delegate, false)
 
         verify(delegate, never())
             .invoke()

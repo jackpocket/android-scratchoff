@@ -81,6 +81,7 @@ public class ScratchoffController implements OnTouchListener,
 
     private boolean usePreDrawOverGlobalLayoutEnabled = false;
     private boolean attemptLastDitchPostForLayoutResolutionFailure = false;
+    private boolean keepListeningForDrawUntilValidSizeDiscovered = false;
 
     /**
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
@@ -157,7 +158,8 @@ public class ScratchoffController implements OnTouchListener,
             .setClearAnimationDurationMs(clearAnimationDurationMs)
             .setClearAnimationInterpolator(clearAnimationInterpolator)
             .setUsePreDrawOverGlobalLayoutEnabled(usePreDrawOverGlobalLayoutEnabled)
-            .setAttemptLastDitchPostForLayoutResolutionFailure(attemptLastDitchPostForLayoutResolutionFailure);
+            .setAttemptLastDitchPostForLayoutResolutionFailure(attemptLastDitchPostForLayoutResolutionFailure)
+            .setKeepListeningForDrawUntilValidSizeDiscovered(keepListeningForDrawUntilValidSizeDiscovered);
     }
 
     protected ScratchoffThresholdProcessor createThresholdProcessor() {
@@ -513,6 +515,24 @@ public class ScratchoffController implements OnTouchListener,
     ) {
 
         this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;
+
+        return this;
+    }
+
+    /**
+     * Set whether or not to continue listening for {@link android.view.ViewTreeObserver.OnGlobalLayoutListener}
+     * or {@link android.view.ViewTreeObserver.OnPreDrawListener} events when the callbacks are
+     * triggered with a size that is invalid for initialization. Setting this to true will override the
+     * behavior for {@link setAttemptLastDitchPostForLayoutResolutionFailure}.
+     * This is in attempt to fix #19 caused by the width or height of the View being
+     * zero when attempting to create the scratchable {@link Bitmap} instances.
+     * The default for this value is false for the original (crashing) behavior.
+     */
+    public ScratchoffController setKeepListeningForDrawUntilValidSizeDiscovered(
+        boolean keepListeningForDrawUntilValidSizeDiscovered
+    ) {
+
+        this.keepListeningForDrawUntilValidSizeDiscovered = keepListeningForDrawUntilValidSizeDiscovered;
 
         return this;
     }
