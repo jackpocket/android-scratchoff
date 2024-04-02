@@ -9,7 +9,7 @@ ext {
     mavPublishGroupId = "com.jackpocket"
     mavProjectName = "scratchoff"
     mavLibraryDescription = "A Scratchoff View system."
-    mavLibraryVersion = "3.0.0"
+    mavLibraryVersion = "3.1.0"
 
     mavLicenseName = "The Apache License, Version 2.0"
     mavLicenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt"
