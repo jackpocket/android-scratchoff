@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew scratchoff:testDebugUnitTest
 
       - name: Evaluate Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
+        uses: mikepenz/action-junit-report@v4.2.1
         if: always()
         with:
           report_paths: 'scratchoff/build/test-results/testDebugUnitTest/TEST-*.xml'
