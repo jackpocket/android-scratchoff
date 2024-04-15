@@ -40,7 +40,7 @@ jobs:
           toTag: ${{ github.sha }}
 
       - name: Create Pull Request with changes
-        uses: peter-evans/create-pull-request@v6.0.2
+        uses: peter-evans/create-pull-request@v6.0.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
