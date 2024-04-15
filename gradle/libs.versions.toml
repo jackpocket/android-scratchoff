@@ -7,7 +7,7 @@ androidx-junit = "1.1.5"
 androidx-test-runner = "1.5.2"
 kover = "0.7.5"
 robolectric = "4.12.1"
-mockito-kotlin = "5.2.1"
+mockito-kotlin = "5.3.1"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
