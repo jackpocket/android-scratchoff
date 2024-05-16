@@ -435,7 +435,6 @@ class ScratchoffControllerTests {
         // be no actual assertions made in this test, which will ultimately be removed.
         val controller = ScratchoffController(mockScratchableLayout)
         controller.setUsePreDrawOverGlobalLayoutEnabled(true)
-        controller.setAttemptLastDitchPostForLayoutResolutionFailure(true)
         controller.createLayoutDrawer()
     }
 
