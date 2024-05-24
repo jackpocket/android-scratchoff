@@ -28,29 +28,18 @@ class ScratchableLayoutDrawerTests {
     @Test
     fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy() {
         testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
-            usePreDrawListener = false,
             keepListeningUntilLaidOut = false
         )
     }
 
     @Test
-    fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroyPreDraw() {
+    fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroyAndKeepListening() {
         testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
-            usePreDrawListener = true,
-            keepListeningUntilLaidOut = false
-        )
-    }
-
-    @Test
-    fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroyPreDrawAndKeepListening() {
-        testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
-            usePreDrawListener = true,
             keepListeningUntilLaidOut = true
         )
     }
 
     private fun testSetsUpAndDrawsCorrectlyThenStopsDrawingAfterDestroy(
-        usePreDrawListener: Boolean,
         keepListeningUntilLaidOut: Boolean
     ) {
 
@@ -62,6 +51,8 @@ class ScratchableLayoutDrawerTests {
         view.setBackgroundColor(Color.WHITE)
 
         if (keepListeningUntilLaidOut) {
+            // Layout with an invalid size so we force the drawer
+            // to continue listening
             view.layout(0, 0, 0, 10)
         }
         else {
@@ -75,22 +66,16 @@ class ScratchableLayoutDrawerTests {
                     .apply({ this.color = Color.BLACK })
             }
         }
-        drawer.setUsePreDrawOverGlobalLayoutEnabled(usePreDrawListener)
         drawer.attach(1, view, null)
 
-        if (usePreDrawListener) {
-            view.viewTreeObserver.dispatchOnPreDraw()
-        }
-        else {
-            view.viewTreeObserver.dispatchOnGlobalLayout()
-        }
+        view.viewTreeObserver.dispatchOnGlobalLayout()
 
         // We can remove this to confirm the tests fail as the
         // view will never have laid out with a valid size
         if (keepListeningUntilLaidOut) {
             view.layout(0, 0, 10, 10)
 
-            view.viewTreeObserver.dispatchOnPreDraw()
+            view.viewTreeObserver.dispatchOnGlobalLayout()
         }
 
         drawer.addScratchPathPoints(
@@ -118,22 +103,6 @@ class ScratchableLayoutDrawerTests {
 
     @Test
     fun testRemovesGlobalLayoutInitListenerOnDestroy() {
-        testRemovesInitListenerOnDestroy(
-            usePreDrawListener = false
-        )
-    }
-
-    @Test
-    fun testRemovesPreDrawInitListenerOnDestroy() {
-        testRemovesInitListenerOnDestroy(
-            usePreDrawListener = true
-        )
-    }
-
-    private fun testRemovesInitListenerOnDestroy(
-        usePreDrawListener: Boolean
-    ) {
-
         val result = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         val resultCanvas = Canvas(result)
         val fullSizeRegion = ThresholdCalculator.createFullSizeThresholdRegion(result)
@@ -149,16 +118,10 @@ class ScratchableLayoutDrawerTests {
                     .apply({ this.color = Color.BLACK })
             }
         }
-        drawer.setUsePreDrawOverGlobalLayoutEnabled(usePreDrawListener)
         drawer.attach(1, view, null)
         drawer.destroy()
 
-        if (usePreDrawListener) {
-            view.viewTreeObserver.dispatchOnPreDraw()
-        }
-        else {
-            view.viewTreeObserver.dispatchOnGlobalLayout()
-        }
+        view.viewTreeObserver.dispatchOnGlobalLayout()
 
         drawer.addScratchPathPoints(
             listOf(

@@ -60,11 +60,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     private Long activeClearTag = 0L;
 
-    private boolean usePreDrawOverGlobalLayoutEnabled = false;
-
     private WeakReference<View> initializeLayoutTarget = new WeakReference<>(null);
     private ViewTreeObserver.OnGlobalLayoutListener initializationGlobalLayoutListener;
-    private ViewTreeObserver.OnPreDrawListener initializationPreDrawListener;
 
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
@@ -301,16 +298,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             this.initializationGlobalLayoutListener = null;
         }
-
-        ViewTreeObserver.OnPreDrawListener preDrawListener = this.initializationPreDrawListener;
-
-        if (preDrawListener != null) {
-            layoutTarget
-                .getViewTreeObserver()
-                .removeOnPreDrawListener(preDrawListener);
-
-            this.initializationPreDrawListener = null;
-        }
     }
 
     public void clear(boolean animationEnabled) {
@@ -394,45 +381,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private void deferRunnableUntilViewIsLaidOut(final View view, final Runnable runnable) {
         this.initializeLayoutTarget = new WeakReference<>(view);
 
-        if (usePreDrawOverGlobalLayoutEnabled) {
-            deferRunnableWithPreDrawListener(view, runnable);
-        }
-        else {
-            deferRunnableWithGlobalLayoutListener(view, runnable);
-        }
+        deferRunnableWithGlobalLayoutListener(view, runnable);
 
         view.requestLayout();
-    }
-
-    private void deferRunnableWithPreDrawListener(final View view, final Runnable runnable) {
-        ViewTreeObserver.OnPreDrawListener preDrawListenerForInit = new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                boolean sizeValid = isViewSizeValidForInitialization(view);
-
-                if (!sizeValid) {
-                    return true;
-                }
-
-                ScratchableLayoutDrawer.this.initializationPreDrawListener = null;
-
-                if (runnable != null) {
-                    runnable.run();
-                }
-
-                view
-                    .getViewTreeObserver()
-                    .removeOnPreDrawListener(this);
-
-                return true;
-            }
-        };
-
-        view
-            .getViewTreeObserver()
-            .addOnPreDrawListener(preDrawListenerForInit);
-
-        this.initializationPreDrawListener = preDrawListenerForInit;
     }
 
     private void deferRunnableWithGlobalLayoutListener(final View view, final Runnable runnable) {
@@ -489,13 +440,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
         this.clearAnimationInterpolator = clearAnimationInterpolator;
-
-        return this;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer setUsePreDrawOverGlobalLayoutEnabled(boolean usePreDrawOverGlobalLayoutEnabled) {
-        this.usePreDrawOverGlobalLayoutEnabled = usePreDrawOverGlobalLayoutEnabled;
 
         return this;
     }
