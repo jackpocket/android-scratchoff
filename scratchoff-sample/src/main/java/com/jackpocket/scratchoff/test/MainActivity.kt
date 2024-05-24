@@ -34,9 +34,6 @@ class MainActivity: AppCompatActivity(),
             .setClearAnimationEnabled(true)
             .setClearAnimationDuration(1, TimeUnit.SECONDS)
             .setClearAnimationInterpolator(LinearInterpolator())
-            .setUsePreDrawOverGlobalLayoutEnabled(true)
-            // .setAttemptLastDitchPostForLayoutResolutionFailure(true)
-            .setKeepListeningForDrawUntilValidSizeDiscovered(true)
             // .setTouchRadiusPx(25)
             // .setThresholdAccuracyQuality(Quality.LOW)
             // .setThresholdTargetRegionsProvider({
