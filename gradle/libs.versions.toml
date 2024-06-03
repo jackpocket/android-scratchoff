@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.23"
 agp = "8.3.2"
-appcompat = "1.6.1"
+appcompat = "1.7.0"
 androidx-core = "1.5.0"
 androidx-junit = "1.1.5"
 androidx-test-runner = "1.5.2"
