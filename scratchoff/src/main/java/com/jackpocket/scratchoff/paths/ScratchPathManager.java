@@ -82,6 +82,10 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
 
         Path activePath = this.activePaths[pointerIndex];
 
+        if (activePath == null) {
+              return;
+        }
+
         // If the active Path has been drawn, it would have been reset to an empty state
         if (activePath.isEmpty()) {
             activePath.moveTo(x, y);
