@@ -83,7 +83,8 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
         Path activePath = this.activePaths[pointerIndex];
 
         if (activePath == null) {
-              return;
+            createPath(pointerIndex, x, y);
+            activePath = this.activePaths[pointerIndex];
         }
 
         // If the active Path has been drawn, it would have been reset to an empty state
