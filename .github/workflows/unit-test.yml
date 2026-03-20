@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
 
 jobs:
   unit_test:

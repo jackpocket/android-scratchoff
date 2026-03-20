@@ -9,6 +9,8 @@ jobs:
   unit_test:
     name: Run Unit Tests
     uses: ./.github/workflows/unit-test.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   publish_to_maven_central:
     name: Publish to Maven Central Repository
