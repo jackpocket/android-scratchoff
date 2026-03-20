@@ -60,6 +60,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     private Long activeClearTag = 0L;
 
+    private boolean activePathRecoveryEnabled = false;
+
     private WeakReference<View> initializeLayoutTarget = new WeakReference<>(null);
     private ViewTreeObserver.OnGlobalLayoutListener initializationGlobalLayoutListener;
 
@@ -440,6 +442,15 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
         this.clearAnimationInterpolator = clearAnimationInterpolator;
+
+        return this;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ScratchableLayoutDrawer setActivePathRecoveryEnabled(boolean activePathRecoveryEnabled) {
+        this.activePathRecoveryEnabled = activePathRecoveryEnabled;
+
+        pathManager.setActivePathRecoveryEnabled(activePathRecoveryEnabled);
 
         return this;
     }
