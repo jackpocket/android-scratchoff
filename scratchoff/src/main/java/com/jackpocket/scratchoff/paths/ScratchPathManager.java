@@ -18,11 +18,19 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
     private final ArrayList<Path> paths = new ArrayList<>();
     private float scale = 1f;
 
+    private boolean activePathRecoveryEnabled = false;
+
     public ScratchPathManager() {
     }
 
     public ScratchPathManager setScale(float scale) {
         this.scale = scale;
+
+        return this;
+    }
+
+    public ScratchPathManager setActivePathRecoveryEnabled(boolean activePathRecoveryEnabled) {
+        this.activePathRecoveryEnabled = activePathRecoveryEnabled;
 
         return this;
     }
@@ -81,6 +89,17 @@ public class ScratchPathManager implements ScratchPathPointsAggregator {
         }
 
         Path activePath = this.activePaths[pointerIndex];
+
+        // Recover from a null activePath caused by a move event arriving without
+        // a preceding down event (e.g. due to race conditions during layout callbacks)
+        if (activePath == null) {
+            if (!activePathRecoveryEnabled) {
+                return;
+            }
+
+            createPath(pointerIndex, x, y);
+            activePath = this.activePaths[pointerIndex];
+        }
 
         // If the active Path has been drawn, it would have been reset to an empty state
         if (activePath.isEmpty()) {

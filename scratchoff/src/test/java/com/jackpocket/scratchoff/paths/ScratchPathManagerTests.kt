@@ -62,6 +62,29 @@ class ScratchPathManagerTests {
     }
 
     @Test
+    fun testMoveWithNullActivePathIsIgnoredWhenRecoveryDisabled() {
+        val manager = ScratchPathManager()
+
+        assertEquals(0, manager.paths.size)
+
+        manager.handleTouchMove(0, 1f, 1f)
+
+        assertEquals(0, manager.paths.size)
+    }
+
+    @Test
+    fun testMoveWithNullActivePathCreatesPathWhenRecoveryEnabled() {
+        val manager = ScratchPathManager()
+        manager.setActivePathRecoveryEnabled(true)
+
+        assertEquals(0, manager.paths.size)
+
+        manager.handleTouchMove(0, 1f, 1f)
+
+        assertEquals(1, manager.paths.size)
+    }
+
+    @Test
     fun testTouchDownAndMovePassthroughIncludesScalar() {
         val manager = object: ScratchPathManager() {
             override fun handleTouchDown(

@@ -79,6 +79,8 @@ public class ScratchoffController implements OnTouchListener,
     private final LinkedBlockingQueue<ScratchPathPoint> history = new LinkedBlockingQueue<ScratchPathPoint>();
     private boolean stateRestorationEnabled;
 
+    private boolean activePathRecoveryEnabled = false;
+
     /**
      * Create a new {@link ScratchoffController} instance targeting a scratchable layout.
      */
@@ -152,7 +154,8 @@ public class ScratchoffController implements OnTouchListener,
     protected ScratchableLayoutDrawer createLayoutDrawer() {
         return new ScratchableLayoutDrawer(this)
             .setClearAnimationDurationMs(clearAnimationDurationMs)
-            .setClearAnimationInterpolator(clearAnimationInterpolator);
+            .setClearAnimationInterpolator(clearAnimationInterpolator)
+            .setActivePathRecoveryEnabled(activePathRecoveryEnabled);
     }
 
     protected ScratchoffThresholdProcessor createThresholdProcessor() {
@@ -476,6 +479,22 @@ public class ScratchoffController implements OnTouchListener,
      */
     public ScratchoffController setStateRestorationEnabled(boolean stateRestorationEnabled) {
         this.stateRestorationEnabled = stateRestorationEnabled;
+
+        return this;
+    }
+
+    /**
+     * Set whether or not to recover from a null active {@link android.graphics.Path} during
+     * a touch-move event, instead of allowing a {@link NullPointerException} to be thrown.
+     * This can occur when a move event arrives without a preceding down event,
+     * e.g. due to race conditions during layout callbacks.
+     * The default for this value is false for the original (crashing) behavior.
+     */
+    public ScratchoffController setActivePathRecoveryEnabled(
+        boolean activePathRecoveryEnabled
+    ) {
+
+        this.activePathRecoveryEnabled = activePathRecoveryEnabled;
 
         return this;
     }
