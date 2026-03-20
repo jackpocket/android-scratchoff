@@ -28,12 +28,21 @@ jobs:
       - name: Publish to Maven Central Staging Repository
         env:
           LIBRARY_RELEASE_MODE: true
-          MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
           RELEASE_SIGNING_KEY_ID: ${{ secrets.RELEASE_SIGNING_KEY_ID }}
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
         run: ./gradlew scratchoff:publishReleasePublicationToMavenCentralRepository
+
+      - name: Transfer Deployment to Central Publisher Portal
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+        run: |
+          curl -X POST \
+            -u "${MAVEN_CENTRAL_USERNAME}:${MAVEN_CENTRAL_TOKEN}" \
+            https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/com.jackpocket
 
   create_release_for_tag:
     name: Create Github Release
