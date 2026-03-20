@@ -16,13 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5.0.0
 
-      - uses: actions/setup-java@v4.2.1
+      - uses: actions/setup-java@v5.2.0
         with:
           distribution: 'zulu'
           java-version: 17
 
       - name: Cache Gradle Files
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.4
         with:
           path: |
             ~/.gradle/caches
@@ -33,7 +33,7 @@ jobs:
         run: ./gradlew scratchoff:testDebugUnitTest
 
       - name: Evaluate Test Report
-        uses: mikepenz/action-junit-report@v4.2.1
+        uses: mikepenz/action-junit-report@v6.3.1
         if: always()
         with:
           report_paths: 'scratchoff/build/test-results/testDebugUnitTest/TEST-*.xml'
@@ -58,7 +58,7 @@ jobs:
         with:
           name: Test-Coverage
 
-      - uses: codecov/codecov-action@v4.3.0
+      - uses: codecov/codecov-action@v5.5.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: reportDebug.xml
