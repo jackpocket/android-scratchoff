@@ -428,17 +428,6 @@ class ScratchoffControllerTests {
         controller.setTouchRadiusPx(0)
     }
 
-    fun testCreateLayoutDrawerWithFix19ChangesEnabled() {
-        // This is purely to ensure the new ScratchoffController code paths run under our
-        // test environment even though they will be removed in a future release.
-        // We're not going to actively expose these temporary variables, so there will
-        // be no actual assertions made in this test, which will ultimately be removed.
-        val controller = ScratchoffController(mockScratchableLayout)
-        controller.setUsePreDrawOverGlobalLayoutEnabled(true)
-        controller.setAttemptLastDitchPostForLayoutResolutionFailure(true)
-        controller.createLayoutDrawer()
-    }
-
     private class LoggingThresholdChangedListener: ScratchoffController.ThresholdChangedListener {
 
         var threshold: Float = 0f

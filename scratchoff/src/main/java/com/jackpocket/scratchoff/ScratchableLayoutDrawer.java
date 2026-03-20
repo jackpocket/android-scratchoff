@@ -7,8 +7,6 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -62,13 +60,8 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
     private Long activeClearTag = 0L;
 
-    private boolean usePreDrawOverGlobalLayoutEnabled = false;
-    private boolean attemptLastDitchPostForLayoutResolutionFailure = false;
-    private boolean keepListeningForDrawUntilValidSizeDiscovered = false;
-
     private WeakReference<View> initializeLayoutTarget = new WeakReference<>(null);
     private ViewTreeObserver.OnGlobalLayoutListener initializationGlobalLayoutListener;
-    private ViewTreeObserver.OnPreDrawListener initializationPreDrawListener;
 
     public ScratchableLayoutDrawer(Delegate delegate) {
         this.delegate = new WeakReference<>(delegate);
@@ -305,16 +298,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
 
             this.initializationGlobalLayoutListener = null;
         }
-
-        ViewTreeObserver.OnPreDrawListener preDrawListener = this.initializationPreDrawListener;
-
-        if (preDrawListener != null) {
-            layoutTarget
-                .getViewTreeObserver()
-                .removeOnPreDrawListener(preDrawListener);
-
-            this.initializationPreDrawListener = null;
-        }
     }
 
     public void clear(boolean animationEnabled) {
@@ -398,43 +381,9 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     private void deferRunnableUntilViewIsLaidOut(final View view, final Runnable runnable) {
         this.initializeLayoutTarget = new WeakReference<>(view);
 
-        if (usePreDrawOverGlobalLayoutEnabled) {
-            deferRunnableWithPreDrawListener(view, runnable);
-        }
-        else {
-            deferRunnableWithGlobalLayoutListener(view, runnable);
-        }
+        deferRunnableWithGlobalLayoutListener(view, runnable);
 
         view.requestLayout();
-    }
-
-    private void deferRunnableWithPreDrawListener(final View view, final Runnable runnable) {
-        ViewTreeObserver.OnPreDrawListener preDrawListenerForInit = new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                boolean sizeValid = isViewSizeValidForInitialization(view);
-
-                if (keepListeningForDrawUntilValidSizeDiscovered && !sizeValid) {
-                    return true;
-                }
-
-                ScratchableLayoutDrawer.this.initializationPreDrawListener = null;
-
-                triggerOrPostRunnableOnLaidOut(runnable, sizeValid);
-
-                view
-                    .getViewTreeObserver()
-                    .removeOnPreDrawListener(this);
-
-                return true;
-            }
-        };
-
-        view
-            .getViewTreeObserver()
-            .addOnPreDrawListener(preDrawListenerForInit);
-
-        this.initializationPreDrawListener = preDrawListenerForInit;
     }
 
     private void deferRunnableWithGlobalLayoutListener(final View view, final Runnable runnable) {
@@ -443,13 +392,16 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             public void onGlobalLayout() {
                 boolean sizeValid = isViewSizeValidForInitialization(view);
 
-                if (keepListeningForDrawUntilValidSizeDiscovered && !sizeValid) {
+                if (!sizeValid) {
                     return;
                 }
 
                 ScratchableLayoutDrawer.this.initializationGlobalLayoutListener = null;
 
-                triggerOrPostRunnableOnLaidOut(runnable, sizeValid);
+                if (runnable != null) {
+                    runnable.run();
+                }
+
                 removeGlobalLayoutListener(view, this);
             }
         };
@@ -459,31 +411,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
             .addOnGlobalLayoutListener(globalLayoutListener);
 
         this.initializationGlobalLayoutListener = globalLayoutListener;
-    }
-
-    /**
-     * This function will be removed in 4.x, given {@link attemptLastDitchPostForLayoutResolutionFailure}
-     * did more harm than good, and replaced with directly calling ``run`` on the ``Runnable``.
-     */
-    protected void triggerOrPostRunnableOnLaidOut(
-        Runnable runnable,
-        boolean sizeValidForInitialization
-    ) {
-
-        if (runnable == null) {
-            return;
-        }
-
-        if (attemptLastDitchPostForLayoutResolutionFailure) {
-            if (!sizeValidForInitialization) {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(runnable);
-
-                return;
-            }
-        }
-
-        runnable.run();
     }
 
     private boolean isViewSizeValidForInitialization(View view) {
@@ -513,32 +440,6 @@ public class ScratchableLayoutDrawer implements ScratchPathPointsAggregator, Ani
     @SuppressWarnings("WeakerAccess")
     public ScratchableLayoutDrawer setClearAnimationInterpolator(Interpolator clearAnimationInterpolator) {
         this.clearAnimationInterpolator = clearAnimationInterpolator;
-
-        return this;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer setUsePreDrawOverGlobalLayoutEnabled(boolean usePreDrawOverGlobalLayoutEnabled) {
-        this.usePreDrawOverGlobalLayoutEnabled = usePreDrawOverGlobalLayoutEnabled;
-
-        return this;
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    public ScratchableLayoutDrawer setAttemptLastDitchPostForLayoutResolutionFailure(
-        boolean attemptLastDitchPostForLayoutResolutionFailure
-    ) {
-
-        this.attemptLastDitchPostForLayoutResolutionFailure = attemptLastDitchPostForLayoutResolutionFailure;
-
-        return this;
-    }
-
-    public ScratchableLayoutDrawer setKeepListeningForDrawUntilValidSizeDiscovered(
-        boolean keepListeningForDrawUntilValidSizeDiscovered
-    ) {
-
-        this.keepListeningForDrawUntilValidSizeDiscovered = keepListeningForDrawUntilValidSizeDiscovered;
 
         return this;
     }

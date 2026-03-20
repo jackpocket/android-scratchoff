@@ -22,7 +22,7 @@ dependencies {
 
 ### Layout Setup
 
-First, you need a parent `ViewGroup` that can vertically stack: 
+First, you need a parent `ViewGroup` that can vertically stack:
 
 1. a behind-View to be revealed
 2. a foreground-View to be scratched away
@@ -94,7 +94,7 @@ public class MainActivity extends Activity implements ScratchoffController.Thres
 }
 ```
 
-### Finding the `ScratchoffController` 
+### Finding the `ScratchoffController`
 
 Find the `ScratchoffController` from the `ScratchableLayout` instances defined in the layout resource.
 
@@ -108,7 +108,7 @@ ScratchoffController.findByViewId(view, R.id.scratch_view)
 // Find the ScratchoffController manually
 ((ScratchableLayout) activity.findViewById(R.id.scratch_view))
     .getScratchoffController()
-``` 
+```
 
 ### Listening for threshold change / completion events
 
@@ -138,7 +138,7 @@ ScratchoffController.findByViewId(activity, R.id.scratch_view)
 
 ### Attaching the `ScratchoffController`
 
-To start the processors and allow scratching, call `attach()` on the `ScratchoffController` instance. 
+To start the processors and allow scratching, call `attach()` on the `ScratchoffController` instance.
 
 ```java
 ScratchoffController.findByViewId(activity, R.id.scratch_view)
@@ -146,7 +146,7 @@ ScratchoffController.findByViewId(activity, R.id.scratch_view)
     .attach();
 ```
 
-If the `ScratchableLayout` View has been restored, the dimensions match the persisted values, and state-restoration is enabled on the `ScratchoffController` instance, then attaching will attempt to restore the scratched path history from the cached state. If the restored state's threshold has already been reached, the content will be automatically cleared, regardless of desired clear animation behavior. 
+If the `ScratchableLayout` View has been restored, the dimensions match the persisted values, and state-restoration is enabled on the `ScratchoffController` instance, then attaching will attempt to restore the scratched path history from the cached state. If the restored state's threshold has already been reached, the content will be automatically cleared, regardless of desired clear animation behavior.
 
 ### Lifecycle
 
@@ -163,13 +163,13 @@ public void onDestroy(){
 
 ### Re-using the `ScratchoffController`
 
-The `ScratchoffController` can be reset with the same call that started it: `ScratchController.attach()`. 
+The `ScratchoffController` can be reset with the same call that started it: `ScratchController.attach()`.
 
 However, **the background color of your scratchable layout must be manually set back to something opaque before calling it**, as the `ScratchableLayoutDrawer` will set the background to transparent when scratching is enabled.
 
 ```java
 public void onScratchThresholdReached(ScratchoffController controller) {
-    // Make sure to set the background of the foreground-View. 
+    // Make sure to set the background of the foreground-View.
     // Don't worry, it's hidden if it cleared or still clearing.
     findViewById(R.id.scratch_view)
         .setBackgroundColor(0xFF3C9ADF);
@@ -237,9 +237,10 @@ The size of the Bitmap used by the `ScratchoffThresholdProcessor` is determined 
 
 It is recommended that you calculate the positions of the desired regions by their relative positioning from the edges of the original Bitmap. e.g. left = 0.25 * bitmap.width
 
-## Upgrading from Version 1.x to Version 2.0.0
+## Migration Guides
 
-Follow the [upgrade guide](https://github.com/jackpocket/android-scratchoff/raw/main/upgrade_1.x-2.0.md).
+* [1.x-2.x](upgrade_1.x-2.0.md)
+* [3.x-4.x](upgrade_3.x-4.0.md)
 
 ### Moved to MavenCentral
 
