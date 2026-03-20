@@ -14,15 +14,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.5
+        uses: actions/checkout@v5.0.0
 
-      - uses: actions/setup-java@v4.2.1
+      - uses: actions/setup-java@v5.2.0
         with:
           distribution: 'zulu'
           java-version: 17
 
       - name: Cache Gradle Files
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.4
         with:
           path: |
             ~/.gradle/caches
@@ -33,7 +33,7 @@ jobs:
         run: ./gradlew scratchoff:testDebugUnitTest
 
       - name: Evaluate Test Report
-        uses: mikepenz/action-junit-report@v4.2.1
+        uses: mikepenz/action-junit-report@v6.3.1
         if: always()
         with:
           report_paths: 'scratchoff/build/test-results/testDebugUnitTest/TEST-*.xml'
@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew scratchoff:koverXmlReportDebug --stacktrace
 
       - name: Store Coverage Artifact
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: Test-Coverage
           path: scratchoff/build/reports/kover/reportDebug.xml
@@ -52,13 +52,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4.1.5
+      - uses: actions/checkout@v5.0.0
 
-      - uses: actions/download-artifact@v4.1.4
+      - uses: actions/download-artifact@v6.0.0
         with:
           name: Test-Coverage
 
-      - uses: codecov/codecov-action@v4.3.0
+      - uses: codecov/codecov-action@v5.5.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: reportDebug.xml
