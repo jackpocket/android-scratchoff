@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.2
 
       - uses: actions/setup-java@v5.2.0
         with:
